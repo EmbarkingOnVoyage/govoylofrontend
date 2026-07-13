@@ -7,6 +7,8 @@ import {
   GestureResponderEvent,
 } from "react-native";
 
+import { buttonStyles } from "./styles";
+
 interface ButtonProps {
   title: string;
   onPress: (event: GestureResponderEvent) => void;
@@ -27,11 +29,11 @@ const Button = ({
   return (
     <Pressable
       style={[
-        styles.button,
+        buttonStyles.button,
         variant === "primary"
-          ? styles.primaryButton
-          : styles.secondaryButton,
-        isDisabled && styles.disabledButton,
+          ? buttonStyles.primaryButton
+          : buttonStyles.secondaryButton,
+        isDisabled && buttonStyles.disabledButton,
       ]}
       onPress={onPress}
       disabled={isDisabled}
@@ -39,38 +41,10 @@ const Button = ({
       {loading ? (
         <ActivityIndicator color="#FFFFFF" />
       ) : (
-        <Text style={styles.buttonText}>{title}</Text>
+        <Text style={buttonStyles.buttonText}>{title}</Text>
       )}
     </Pressable>
   );
 };
-
-const styles = StyleSheet.create({
-  button: {
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  primaryButton: {
-    backgroundColor: "#007AFF",
-  },
-
-  secondaryButton: {
-    backgroundColor: "#6C757D",
-  },
-
-  disabledButton: {
-    backgroundColor: "#C4C4C4",
-  },
-
-  buttonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
 
 export default Button;
