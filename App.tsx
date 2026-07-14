@@ -8,12 +8,11 @@ export default function App() {
   const handlePress = () => {
     console.log("Button Pressed!");
   };
-
   return (
     <View style={styles.container}>
       <Card>
         <Text style={styles.title}>Login</Text>
-
+        
         <Input
           placeholder="Enter your email"
           onChangeText={(text) => console.log(text)}
@@ -27,7 +26,7 @@ export default function App() {
 
         <Button
           title="Login"
-          variant="primary"
+          variant="primaryButton"
           onPress={handlePress}
         />
       </Card>

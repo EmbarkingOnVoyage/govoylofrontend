@@ -12,7 +12,7 @@ import { buttonStyles } from "./styles";
 interface ButtonProps {
   title: string;
   onPress: (event: GestureResponderEvent) => void;
-  variant?: "primary" | "secondary";
+  variant?: "primaryButton" | "secondaryButton";
   loading?: boolean;
   disabled?: boolean;
 }
@@ -20,7 +20,7 @@ interface ButtonProps {
 const Button = ({
   title,
   onPress,
-  variant = "primary",
+  variant = "secondaryButton",
   loading = false,
   disabled = false,
 }: ButtonProps) => {
@@ -30,7 +30,7 @@ const Button = ({
     <Pressable
       style={[
         buttonStyles.button,
-        variant === "primary"
+        variant === "secondaryButton"
           ? buttonStyles.primaryButton
           : buttonStyles.secondaryButton,
         isDisabled && buttonStyles.disabledButton,
