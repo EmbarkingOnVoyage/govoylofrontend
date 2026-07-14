@@ -3,14 +3,33 @@ import { StyleSheet, Text, View } from 'react-native';
 import Button from "./packages/ui/src/features/bookings/components/ui/Button";
 import Input from "./packages/ui/src/features/bookings/components/ui/Input";
 import Card from "./packages/ui/src/features/bookings/components/ui/Card";
+import LocationAutocompleteDropdown from "./packages/ui/src/features/bookings/components/ui/LocationAutocompletedropdown";
 
 export default function App() {
   const handlePress = () => {
     console.log("Button Pressed!");
   };
 
+  const cities = [
+  "Pune",
+  "Mumbai",
+  "Delhi",
+  "Nagpur",
+  "Bangalore",
+  "Hyderabad",
+  "Chennai",
+  "Nashik",
+  "Ahmedabad",
+];
+
   return (
     <View style={styles.container}>
+<LocationAutocompleteDropdown
+       locations={cities}
+         placeholder="Enter your city"
+        onSelect={(city) => console.log("Selected City:", city)}
+        />
+
       <Card>
         <Text style={styles.title}>Login</Text>
 
@@ -27,7 +46,7 @@ export default function App() {
 
         <Button
           title="Login"
-          variant="primary"
+          variant="primaryButton"
           onPress={handlePress}
         />
       </Card>

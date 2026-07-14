@@ -52,8 +52,8 @@ export const inputStyles = StyleSheet.create({
 
 export const cardStyles = StyleSheet.create({
   card: {
-    width: 500,
-    height: 350,
+    width: 550,
+    height: 370,
     
     backgroundColor: "#f0eeee",
     borderRadius: 12,
@@ -70,5 +70,33 @@ export const cardStyles = StyleSheet.create({
     elevation: 3,
     
     marginVertical: 8,
+  },
+});
+
+export const locationStyles = StyleSheet.create({
+  container: {
+    width: "30%",
+    position: "relative",
+  },
+
+  input: {
+    borderWidth: 1,
+    borderColor: "#CCCCCC",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 16,
+    backgroundColor: "#FFFFFF",
+  },
+
+  item: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEEEEE",
+    backgroundColor: "#FFFFFF",
+  },
+
+  itemText: {
+    fontSize: 16,
   },
 });
