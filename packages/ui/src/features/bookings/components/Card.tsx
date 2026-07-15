@@ -16,7 +16,3 @@ const Card = ({ children, style }: CardProps) => {
 };
 
 export default Card;
-
-
-
-
