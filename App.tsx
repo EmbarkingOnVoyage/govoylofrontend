@@ -1,9 +1,9 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
-import Button from "./packages/ui/src/features/bookings/components/ui/Button";
-import Input from "./packages/ui/src/features/bookings/components/ui/Input";
-import Card from "./packages/ui/src/features/bookings/components/ui/Card";
-import LocationAutocompleteDropdown from "./packages/ui/src/features/bookings/components/ui/LocationAutocompletedropdown";
+import Button from "./packages/ui/src/features/bookings/components/Button";
+import Input from "./packages/ui/src/features/bookings/components/Input";
+import Card from "./packages/ui/src/features/bookings/components/Card";
+import LocationAutocompleteDropdown from "./packages/ui/src/features/bookings/components/LocationAutocompleteDropdown";
 
 export default function App() {
   const handlePress = () => {
