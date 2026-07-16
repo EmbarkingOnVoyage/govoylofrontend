@@ -4,6 +4,7 @@ import Button from "./packages/ui/src/features/bookings/components/Button";
 import Input from "./packages/ui/src/features/bookings/components/Input";
 import Card from "./packages/ui/src/features/bookings/components/Card";
 import LocationAutocompleteDropdown from "./packages/ui/src/features/bookings/components/LocationAutocompleteDropdown";
+import Calendar from "./packages/ui/src/features/bookings/components/Calendar";
 
 export default function App() {
   const handlePress = () => {
@@ -28,6 +29,13 @@ export default function App() {
        locations={cities}
          placeholder="Enter your city"
         onSelect={(city) => console.log("Selected City:", city)}
+        />
+
+        <Calendar
+          onDateChange={(checkIn, checkOut) => {
+            console.log("Check In:", checkIn);
+            console.log("Check Out:", checkOut);
+          }}
         />
 
       <Card>

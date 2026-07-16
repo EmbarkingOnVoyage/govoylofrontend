@@ -100,3 +100,37 @@ export const locationStyles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+export const calendarStyles = StyleSheet.create({
+  container: {
+    width: "30%",
+    marginVertical: 20,
+  },
+
+  title: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 12,
+  },
+
+  dateBox: {
+    borderWidth: 1,
+    borderColor: "#CCCCCC",
+    borderRadius: 10,
+    padding: 14,
+    marginBottom: 12,
+    backgroundColor: "#FFFFFF",
+  },
+
+  label: {
+    fontSize: 14,
+    color: "#666666",
+    marginBottom: 6,
+  },
+
+  date: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000000",
+  },
+});
