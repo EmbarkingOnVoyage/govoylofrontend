@@ -74,7 +74,7 @@ const Calendar = ({ onDateChange }: CalendarProps) => {
       {/* Check Out */}
 
       <Pressable
-        style={calendarStyles.dateBox}
+        style ={calendarStyles.dateBox}
         onPress={() => setShowCheckOutPicker(true)}
       >
         <Text style={calendarStyles.label}>
