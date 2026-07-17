@@ -5,38 +5,17 @@ import Input from "./packages/ui/src/features/bookings/components/Input";
 import Card from "./packages/ui/src/features/bookings/components/Card";
 import LocationAutocompleteDropdown from "./packages/ui/src/features/bookings/components/LocationAutocompleteDropdown";
 import Calendar from "./packages/ui/src/features/bookings/components/Calendar";
+import SearchWidget from "./packages/ui/src/features/bookings/components/SearchWidget";
 
 export default function App() {
   const handlePress = () => {
     console.log("Button Pressed!");
   };
 
-  const cities = [
-  "Pune",
-  "Mumbai",
-  "Delhi",
-  "Nagpur",
-  "Bangalore",
-  "Hyderabad",
-  "Chennai",
-  "Nashik",
-  "Ahmedabad",
-];
-
   return (
     <View style={styles.container}>
-<LocationAutocompleteDropdown
-       locations={cities}
-         placeholder="Enter your city"
-        onSelect={(city) => console.log("Selected City:", city)}
-        />
-
-        <Calendar
-          onDateChange={(checkIn, checkOut) => {
-            console.log("Check In:", checkIn);
-            console.log("Check Out:", checkOut);
-          }}
-        />
+      {/* Combining multiple components here */}
+        <SearchWidget />
 
       <Card>
         <Text style={styles.title}>Login</Text>
