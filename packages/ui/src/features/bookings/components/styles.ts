@@ -134,3 +134,20 @@ export const calendarStyles = StyleSheet.create({
     color: "#000000",
   },
 });
+
+export const flightCardStyles = StyleSheet.create({
+  card: {
+    width: 320,
+    backgroundColor: "#fff",
+    padding: 16,
+    marginVertical: 10,
+    borderRadius: 12,
+    elevation: 4,
+  },
+
+  airline: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+});

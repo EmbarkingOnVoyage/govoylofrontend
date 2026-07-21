@@ -45,10 +45,10 @@ const LocationAutocompleteDropdown = ({
   };
 
   return (
-    <View style={locationStyles.container}>
+    <View style ={locationStyles.container}>
       <TextInput
         style={locationStyles.input}
-        placeholder={placeholder}
+        placeholder ={placeholder}
         value={query}
         onChangeText={handleSearch}
       />
