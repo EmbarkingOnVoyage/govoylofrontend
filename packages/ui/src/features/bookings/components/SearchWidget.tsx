@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View } from "react-native";
 
-import Button from "./Button";
+import { Button } from "../../../components/Button";
 import Calendar from "./Calendar";
 import LocationAutocompleteDropdown from "./LocationAutocompleteDropdown";
 
@@ -22,7 +22,7 @@ const SearchWidget = () => {
 
     fetchLocations();
   }, []);
-  
+
   return (
     <View>
       {/* From */}
@@ -49,8 +49,8 @@ const SearchWidget = () => {
 
       {/* Search Button */}
       <Button
-        title="Search"
-        variant="primaryButton"
+        label="Search"
+        variant="primary"
         onPress={() => console.log("Searching...")}
       />
     </View>
