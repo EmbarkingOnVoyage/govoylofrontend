@@ -20,23 +20,6 @@ export default function App() {
   const [breakfast, setBreakfast] = useState(false);
   const [wifi, setWifi] = useState(false);
 
-// useEffect (() => {
-//   const loadFlights = async () => {
-//     try {
-//       const data = await getFlights();
-
-//       console.log(data);
-
-//       setFlights(data);
-//     } catch (err) {
-//       console.log(err);
-//     }
-//   };
-
-//   loadFlights();
-// }, []);
-
-
 useEffect(() => {
   const loadFlights = async () => {
     try {
@@ -66,6 +49,7 @@ useEffect(() => {
       {/* Combining multiple components here */}
         <SearchWidget />
 
+{/* use this for flightcard */}
       {/* {flights.map((flight) => (
   <FlightCard
     key={flight.id}
