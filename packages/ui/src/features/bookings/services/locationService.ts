@@ -1,3 +1,5 @@
+import { da } from "date-fns/locale";
+
 export const getLocations = async (): Promise<string[]> => {
   const response = await fetch("http://localhost:3001/locations");
 

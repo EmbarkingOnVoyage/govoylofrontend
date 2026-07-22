@@ -32,31 +32,5 @@ const Input = ({ error, style, ...props }: InputProps) => {
   );
 };
 
-// const styles = StyleSheet.create({
-//   container: {
-//     width: "100%",
-//     marginBottom: 16,
-//   },
-
-//   input: {
-//     borderWidth: 1,
-  
-//     borderColor: "#CCCCCC",
-//     borderRadius: 12,
-//     paddingHorizontal: 12,
-//     paddingVertical: 10,
-//     fontSize: 18,
-//   },
-
-//   inputError: {
-//     borderColor: "red",
-//   },
-
-//   errorText: {
-//     color: "red",
-//     marginTop: 4,
-//     fontSize: 12,
-//   },
-// });
 
 export default Input;

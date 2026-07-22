@@ -9,9 +9,15 @@ import Calendar from "./packages/ui/src/features/bookings/components/Calendar";
 import SearchWidget from "./packages/ui/src/features/bookings/components/SearchWidget";
 import FlightCard from "./packages/ui/src/features/bookings/components/flightcard";
 import { getFlights, Flight } from "./packages/ui/src/features/bookings/services/flightService";
+import Checkbox from "./packages/ui/src/features/bookings/components/Checkbox";
+import { beTarask } from "date-fns/locale";
 
 export default function App() {
   const [flights, setFlights] = useState<Flight[]>([]);
+
+  const [nonStop, setNonStop] = useState(false);
+  const [breakfast, setBreakfast] = useState(false);
+  const [wifi, setWifi] = useState(false);
 
 useEffect (() => {
   const loadFlights = async () => {
@@ -32,7 +38,7 @@ useEffect (() => {
   const handlePress = () => {
     console.log("Button Pressed!");
   };
-
+ 
   return (
     <View style={styles.container}>
       {/* Combining multiple components here */}
@@ -50,7 +56,21 @@ useEffect (() => {
     rating={flight.rating}
   />
 ))}
-                   
+      <Checkbox
+        label="Non-stop Flights"
+        checked={nonStop}
+        onToggle={() => setNonStop(!nonStop)}
+      />
+       <Checkbox
+       label = "5 star Hotel"
+       checked ={breakfast}
+       onToggle={()=> setBreakfast(!breakfast)}
+       />
+       <Checkbox 
+       label = "Free wifi"
+       checked = {wifi}
+       onToggle={()=> setWifi(!wifi)}
+       />
       <Card>
         <Text style={styles.title}>Login</Text>
 

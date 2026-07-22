@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { LogBox, StyleSheet } from "react-native";
 
 export const buttonStyles = StyleSheet.create({
   button: {
@@ -149,5 +149,49 @@ export const flightCardStyles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 10,
+  },
+});
+
+export const checkboxStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 8,
+  },
+
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderWidth: 2,
+    borderColor: "#333",
+    borderRadius: 4,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+
+checkmark: {
+    width: 6,
+    height: 12,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
+    borderColor: "#fff",
+    transform: [{ rotate: "45deg" }],
+  },
+
+  checkedBox: {
+    backgroundColor: "#007AFF",
+    borderColor: "#007AFF",
+  },
+
+  tick: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+
+  label: {
+    fontSize: 16,
+    color: "#333",
   },
 });
