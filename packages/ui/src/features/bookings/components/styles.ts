@@ -180,8 +180,8 @@ checkmark: {
   },
 
   checkedBox: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
+    backgroundColor: "#0bc442",
+    borderColor: "#0fca1e",
   },
 
   tick: {
@@ -193,5 +193,42 @@ checkmark: {
   label: {
     fontSize: 16,
     color: "#333",
+  },
+});
+
+// export const resultsListStyles = StyleSheet.create({
+//   emptyContainer: {
+//     flex: 1,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     padding: 20,
+//   },
+
+//   emptyText: {
+//     fontSize: 16,
+//     color: "#666",
+//   },
+// });
+export const resultsListStyles = StyleSheet.create({
+  list: {
+    width: "100%",
+    flexGrow: 0,
+  },
+
+  contentContainer: {
+    paddingVertical: 10,
+alignItems: "center",
+  },
+
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
   },
 });

@@ -41,8 +41,6 @@ const FlightCard = ({
         {departureTime} - {arrivalTime}
       </Text>
 
-      {/* <Text>{duration}</Text> */}
-
       <Text> Rs {price}</Text>
 
       <Text> * {rating}</Text>

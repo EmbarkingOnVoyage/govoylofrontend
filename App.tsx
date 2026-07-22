@@ -7,10 +7,11 @@ import Card from "./packages/ui/src/features/bookings/components/Card";
 import LocationAutocompleteDropdown from "./packages/ui/src/features/bookings/components/LocationAutocompleteDropdown";
 import Calendar from "./packages/ui/src/features/bookings/components/Calendar";
 import SearchWidget from "./packages/ui/src/features/bookings/components/SearchWidget";
-import FlightCard from "./packages/ui/src/features/bookings/components/flightcard";
+// import FlightCard from "./packages/ui/src/features/bookings/components/flightcard";
 import { getFlights, Flight } from "./packages/ui/src/features/bookings/services/flightService";
 import Checkbox from "./packages/ui/src/features/bookings/components/Checkbox";
-import { beTarask } from "date-fns/locale";
+// import { beTarask } from "date-fns/locale";
+import ResultsList from "./packages/ui/src/features/bookings/components/ResultsList";
 
 export default function App() {
   const [flights, setFlights] = useState<Flight[]>([]);
@@ -19,21 +20,42 @@ export default function App() {
   const [breakfast, setBreakfast] = useState(false);
   const [wifi, setWifi] = useState(false);
 
-useEffect (() => {
+// useEffect (() => {
+//   const loadFlights = async () => {
+//     try {
+//       const data = await getFlights();
+
+//       console.log(data);
+
+//       setFlights(data);
+//     } catch (err) {
+//       console.log(err);
+//     }
+//   };
+
+//   loadFlights();
+// }, []);
+
+
+useEffect(() => {
   const loadFlights = async () => {
     try {
       const data = await getFlights();
 
-      console.log(data);
+      console.log("API Response:", data);
 
       setFlights(data);
     } catch (err) {
-      console.log(err);
+      console.log("Error:", err);
     }
   };
 
   loadFlights();
 }, []);
+
+useEffect(() => {
+  console.log("Flights state updated:", flights);
+}, [flights]);
 
   const handlePress = () => {
     console.log("Button Pressed!");
@@ -44,7 +66,7 @@ useEffect (() => {
       {/* Combining multiple components here */}
         <SearchWidget />
 
-      {flights.map((flight) => (
+      {/* {flights.map((flight) => (
   <FlightCard
     key={flight.id}
     airline={flight.airline}
@@ -55,7 +77,10 @@ useEffect (() => {
     price={flight.price}
     rating={flight.rating}
   />
-))}
+))} */}
+
+<ResultsList flights={flights} />
+
       <Checkbox
         label="Non-stop Flights"
         checked={nonStop}
