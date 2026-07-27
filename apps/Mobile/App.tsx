@@ -2,11 +2,6 @@ import { UI_VERSION } from "@workspace/ui";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, Text, View } from "react-native";
 import { AppProvider, BookingDashboard, Button, Input, Card  } from '@workspace/ui';
-// import { Button } from '@workspace/ui';
-// import Button from "../../packages/ui/src/features/bookings/components/Button";
-// import Input from "../../packages/ui/src/features/bookings/components/Input";
-// import Card from "../../packages/ui/src/features/bookings/components/Card";
-
 import LocationAutocompleteDropdown from "../../packages/ui/src/features/bookings/components/LocationAutocompleteDropdown";
 
 export default function App() {

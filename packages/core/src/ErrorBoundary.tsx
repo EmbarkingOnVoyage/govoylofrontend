@@ -52,24 +52,28 @@ export class ErrorBoundary extends Component<IErrorBoundaryProps, IErrorBoundary
   }
 }
 
-const styles = StyleSheet.exports = {
+// ==========================================
+// CENTRALIZED ERROR LAYOUT DECLARATIONS
+// ==========================================
+const styles = StyleSheet.create({
   errorContainer: {
     flex: 1,
     padding: 24,
-    justifyContent: 'center' as const,
-    alignItems: 'center' as const,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#FFFFFF'
   },
   errorTitle: {
     fontSize: 20,
-    fontWeight: '700' as const,
+    fontWeight: '700',
     color: '#DA1E28',
     marginBottom: 8
   },
   errorSubtitle: {
     fontSize: 14,
     color: '#525252',
-    textAlign: 'center' as const,
+    textAlign: 'center',
     lineHeight: 20
   }
-};
+});
+
