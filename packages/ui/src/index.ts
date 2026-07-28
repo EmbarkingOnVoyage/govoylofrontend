@@ -5,6 +5,7 @@ export * from './components/Input';
 export * from './components/Card';
 export * from './components/Text';
 export * from './components/AppProvider';
+export * from './components/AutoCompleteDropdown';
 
 // Export domain features
 export * from './features/bookings/BookingDashboard';

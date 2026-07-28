@@ -3,7 +3,7 @@ import { View, TextInput, FlatList, Pressable } from "react-native";
 import { Text } from "./Text"; 
 import { styles } from "../styles/components/AutocompleteDropdown.styles"; // Consolidated style class instance reference
 
-export interface AutocompleteDropdownProps<T> {
+export interface AutoCompleteDropdownProps<T> {
   data: T[];
   placeholder?: string;
   onSelect: (item: T) => void;
@@ -11,13 +11,13 @@ export interface AutocompleteDropdownProps<T> {
   keyExtractor: (item: T) => string;   
 }
 
-export function AutocompleteDropdown<T,>({
+export function AutoCompleteDropdown<T,>({
   data,
   placeholder = "Search...",
   onSelect,
   labelExtractor,
   keyExtractor,
-}: AutocompleteDropdownProps<T>) {
+}: AutoCompleteDropdownProps<T>) {
   const [query, setQuery] = useState<string>("");
   const [filteredData, setFilteredData] = useState<T[]>([]);
 

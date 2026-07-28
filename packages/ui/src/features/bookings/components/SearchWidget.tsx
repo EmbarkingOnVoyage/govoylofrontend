@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View } from "react-native";
 import { Button } from "../../../components/Button";
-import { AutocompleteDropdown } from "../../../components/AutocompleteDropdown";
+import { AutoCompleteDropdown } from "../../../components/AutoCompleteDropdown";
 import { Calendar } from "./Calendar";
 import { useLocations } from "@workspace/api";
 import { styles } from "../../../styles/components/SearchWidget.styles"; // Direct Class Instance Binding
@@ -50,7 +50,7 @@ export function SearchWidget({ onSearchSubmit }: SearchWidgetProps) {
   return (
     <View style={styles.container}>
       {/* Reused Generic Dropdown for From Target Selection */}
-      <AutocompleteDropdown<string>
+      <AutoCompleteDropdown<string>
         data={cities}
         placeholder={isLoading ? "Loading cities..." : "From"}
         onSelect={(city) => setFromCity(city)}
@@ -59,7 +59,7 @@ export function SearchWidget({ onSearchSubmit }: SearchWidgetProps) {
       />
 
       {/* Reused Generic Dropdown for To Target Selection */}
-      <AutocompleteDropdown<string>
+      <AutoCompleteDropdown<string>
         data={cities}
         placeholder={isLoading ? "Loading cities..." : "To"}
         onSelect={(city) => setToCity(city)}

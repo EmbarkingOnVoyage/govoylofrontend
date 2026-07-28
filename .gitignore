@@ -42,3 +42,11 @@ yarn-error.*
 
 # Visual Studio
 .vs/
+
+# Turborepo local caches and logs
+.turbo/
+**/turbo-test.log
+
+# Vite local caches and builds
+.vite/
+dist/

@@ -2,11 +2,18 @@
   "name": "mobile-app",
   "version": "0.0.0",
   "private": true,
+  "main": "index.js",
   "dependencies": {
     "@workspace/ui": "*",
     "@workspace/api": "*",
     "@workspace/core": "*",
     "react": "18.3.1",
-    "react-native": "0.76.0"
+    "react-native": "0.76.9",
+    "expo": "~52.0.0"
+  },
+  "scripts": {
+    "dev": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios"
   }
 }

@@ -2,11 +2,21 @@
   "name": "web-app",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "test": "vitest"
+  },
   "dependencies": {
-    "@workspace/ui": "*",
     "@workspace/api": "*",
     "@workspace/core": "*",
+    "@workspace/ui": "*",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "react-native-web": "^0.19.13"
+  },
+  "devDependencies": {
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.4"
   }
 }

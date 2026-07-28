@@ -1,15 +1,15 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import { AutocompleteDropdown } from "./AutocompleteDropdown";
+import { AutoCompleteDropdown } from "./AutoCompleteDropdown";
 
-describe("Generic Component Contract: AutocompleteDropdown", () => {
+describe("Generic Component Contract: AutoCompleteDropdown", () => {
   it("should process structural filtering and item selection with a simple string array", () => {
     const mockOnSelect = vi.fn();
     const stringDataset = ["London", "New York", "Paris", "Tokyo"];
 
     const { getByPlaceholderText, getByLabelText, queryByText } = render(
-      <AutocompleteDropdown<string>
+      <AutoCompleteDropdown<string>
         data={stringDataset}
         placeholder="Select destination"
         onSelect={mockOnSelect}
@@ -51,7 +51,7 @@ describe("Generic Component Contract: AutocompleteDropdown", () => {
     ];
 
     const { getByPlaceholderText, getByLabelText } = render(
-      <AutocompleteDropdown<LocationModel>
+      <AutoCompleteDropdown<LocationModel>
         data={objectDataset}
         placeholder="Select Airport"
         onSelect={mockOnSelect}
