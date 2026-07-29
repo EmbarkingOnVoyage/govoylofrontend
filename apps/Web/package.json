@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "vite",
+    "dev:mobile-preview": "vite --mode mobile",
     "build": "tsc && vite build",
     "test": "vitest"
   },
@@ -11,6 +12,7 @@
     "@workspace/api": "*",
     "@workspace/core": "*",
     "@workspace/ui": "*",
+    "mobile": "*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-native-web": "^0.19.13"

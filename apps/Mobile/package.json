@@ -4,12 +4,13 @@
   "private": true,
   "main": "index.js",
   "dependencies": {
-    "@workspace/ui": "*",
     "@workspace/api": "*",
     "@workspace/core": "*",
+    "@workspace/ui": "*",
+    "expo": "~52.0.0",
+    "expo-linear-gradient": "^57.0.1",
     "react": "18.3.1",
-    "react-native": "0.76.9",
-    "expo": "~52.0.0"
+    "react-native": "0.76.9"
   },
   "scripts": {
     "dev": "expo start",

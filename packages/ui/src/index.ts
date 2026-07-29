@@ -9,3 +9,7 @@ export * from './components/AutoCompleteDropdown';
 
 // Export domain features
 export * from './features/bookings/BookingDashboard';
+
+// Export mobile-specific styles
+export * from './styles/mobile/MobileButtonStyles';
+export * from './assets/index';
