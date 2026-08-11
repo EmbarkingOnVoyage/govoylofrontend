@@ -6,5 +6,29 @@
     { "id": 4, "name": "Nagpur" },
     { "id": 5, "name": "Bangalore" },
     { "id": 6, "name": "Hyderabad" }
+  ],
+
+"flights": [
+    {
+      "id": 1,
+      "airline": "IndiGo",
+      "from": "Pune",
+      "to": "Delhi",
+      "departureTime": "10:00 AM",
+      "arrivalTime": "12:00 PM",
+      "price": 4500,
+      "rating": 4.5
+    },
+    {
+      "id": 2,
+      "airline": "Air India",
+      "from": "Mumbai",
+      "to": "Bangalore",
+      "departureTime": "02:30 PM",
+      "arrivalTime": "04:15 PM",
+      "price": 5200,
+      "rating": 4.3
+    }
   ]
+
 }
