@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Client Dashboard</title>
+    <!-- Contract Enforcement: Ensure the browser window roots expand to full height -->
+  <style>
+    html, body, #root {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background-color: #0F0F1A;
+    }
+  </style>
+  </head>
+  <body>
+    <!-- React will mount the entire application tree inside this div -->
+    <div id="root"></div>
+    
+    <!-- This module script instructs Vite where to start bundling compilation -->
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

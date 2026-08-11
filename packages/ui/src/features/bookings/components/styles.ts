@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { LogBox, StyleSheet } from "react-native";
 
 export const buttonStyles = StyleSheet.create({
   button: {
@@ -132,5 +132,103 @@ export const calendarStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     color: "#000000",
+  },
+});
+
+export const flightCardStyles = StyleSheet.create({
+  card: {
+    width: 320,
+    backgroundColor: "#fff",
+    padding: 16,
+    marginVertical: 10,
+    borderRadius: 12,
+    elevation: 4,
+  },
+
+  airline: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 10,
+  },
+});
+
+export const checkboxStyles = StyleSheet.create({
+  container: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 8,
+  },
+
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderWidth: 2,
+    borderColor: "#333",
+    borderRadius: 4,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 10,
+  },
+
+checkmark: {
+    width: 6,
+    height: 12,
+    borderRightWidth: 2,
+    borderBottomWidth: 2,
+    borderColor: "#fff",
+    transform: [{ rotate: "45deg" }],
+  },
+
+  checkedBox: {
+    backgroundColor: "#0bc442",
+    borderColor: "#0fca1e",
+  },
+
+  tick: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 14,
+  },
+
+  label: {
+    fontSize: 16,
+    color: "#333",
+  },
+});
+
+// export const resultsListStyles = StyleSheet.create({
+//   emptyContainer: {
+//     flex: 1,
+//     justifyContent: "center",
+//     alignItems: "center",
+//     padding: 20,
+//   },
+
+//   emptyText: {
+//     fontSize: 16,
+//     color: "#666",
+//   },
+// });
+export const resultsListStyles = StyleSheet.create({
+  list: {
+    width: "100%",
+    flexGrow: 0,
+  },
+
+  contentContainer: {
+    paddingVertical: 10,
+alignItems: "center",
+  },
+
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
+
+  emptyText: {
+    fontSize: 16,
+    color: "#666",
   },
 });
