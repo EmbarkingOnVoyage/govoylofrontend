@@ -7,6 +7,8 @@ import { NavigationRule } from '@workspace/core';
 
 interface ILandingScreenProps {
   onNavigate: (rule: NavigationRule) => void;
+  onLoginPress: () => void;
+  onGetStartedPress: () => void;
 }
 
 export const LandingScreen: React.FC<ILandingScreenProps> = ({ onNavigate }) => {
