@@ -9,6 +9,10 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "paths": {
+      "@workspace/styles": ["./packages/styles/src/index.ts"],
+      "@workspace/loginbuttonstyles": ["./packages/styles/src/styles/base/baseButtonstyles.ts"]
+    }
   }
 }

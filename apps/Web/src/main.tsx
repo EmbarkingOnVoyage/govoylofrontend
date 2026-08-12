@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { AppProvider, BookingDashboard } from "@workspace/ui";
+import { AppProvider, BookingDashboard, LoginFeature } from "@workspace/ui";
 import { ErrorBoundary, useFlowNavigation } from "@workspace/core"; // Added useFlowNavigation contract
 
 // Mobile Screen Preview View
@@ -28,13 +28,23 @@ if (process.env.NODE_ENV === "development") {
   };
 }
 const SCREENS: Record<string, React.FC<{ onNavigate: (rule: any) => void }>> = {
-  SearchWidget: () => <BookingDashboard />, 
-  BookingDashboard: () => <BookingDashboard />,
+  Landing: ({ onNavigate }) => (
+    <LandingScreen
+      onNavigate={onNavigate}
+      onLoginPress={() => onNavigate('ON_SIGN_IN_PRESS')}
+      onGetStartedPress={() => onNavigate('ON_CONTINUE')}
+    />
+  ),
+  SignIn: ({ onNavigate }) => (
+    <LoginFeature onNavigate={onNavigate} />
+  ),
+   OTP: ({ onNavigate }) => <div>OTP Screen Component Placeholder</div>,
+  Search: () => <div>Search Screen Component Placeholder</div>,
 };
 const AppWorkflowRouter: React.FC = () => {
   // If we are testing mobile flows, boot the state machine at 'Landing'; otherwise go straight to the dashboard features
   const { currentScreen, navigateByRule } = useFlowNavigation(
-    isMobilePreviewMode ? "Landing" : "BookingDashboard",
+    isMobilePreviewMode ? "Landing" : "SignIn",
   );
   const ActiveComponent = SCREENS[currentScreen];
    if (!ActiveComponent) {

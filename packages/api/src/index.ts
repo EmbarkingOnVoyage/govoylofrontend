@@ -8,3 +8,7 @@ export * from './hooks/useBookings';
 
 export * from './models/location.schema';
 export * from './hooks/useLocations';
+// packages/api/src/index.ts
+
+export * from './hooks';
+export * from './models/auth.schema';
