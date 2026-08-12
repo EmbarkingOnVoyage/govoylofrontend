@@ -28,7 +28,6 @@ if (process.env.NODE_ENV === "development") {
   };
 }
 const SCREENS: Record<string, React.FC<{ onNavigate: (rule: any) => void }>> = {
-  Landing: LandingScreen,
   SearchWidget: () => <BookingDashboard />, 
   BookingDashboard: () => <BookingDashboard />,
 };
