@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { AppScreen, NavigationRule, NAVIGATION_FLOW_ENGINE } from './NavigationConfig';
+import { AppScreen, NavigationRule, NAVIGATION_FLOW_ENGINE } from './navigationConfig';
 
 export function useFlowNavigation(initialScreen: AppScreen = 'Landing') {
   const [history, setHistory] = useState<AppScreen[]>([initialScreen]);

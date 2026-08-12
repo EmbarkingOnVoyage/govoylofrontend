@@ -1,14 +1,19 @@
+// packages/ui/src/components/Button.tsx
 import React from 'react';
-import { TouchableOpacity, TextStyle, ViewStyle } from 'react-native';
-import { Text as RNText } from 'react-native'; // Temporary internal representation
+import { TouchableOpacity, TextStyle, ViewStyle, StyleProp } from 'react-native';
+import { Text as RNText } from 'react-native'; 
 import { getThemeStyles, ThemeMode } from '../theme/tokens';
+
+// 💡 Clean, clean index import bypassing deep nested folder structures
+import { loginButtonStyles } from '../styles/base/BaseButtonStyles'; 
 
 export interface IButtonProps {
   label: string;
   onPress: () => void;
-  variant?: 'primary' | 'secondary';
+  variant?: 'primary' | 'secondary' | 'social';
   disabled?: boolean;
   mode?: ThemeMode;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function Button({
@@ -17,35 +22,19 @@ export function Button({
   variant = 'primary',
   disabled = false,
   mode = 'light',
+  style,
 }: IButtonProps) {
   const theme = getThemeStyles(mode);
 
-  const isPrimary = variant === 'primary';
-  const backgroundColor = isPrimary 
-    ? theme.colors.primary 
-    : theme.colors.surface;
-
-  const containerStyle: ViewStyle = {
-    backgroundColor: disabled ? '#CCCCCC' : backgroundColor,
-    paddingVertical: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    opacity: disabled ? 0.6 : 1,
-  };
-
-  const textStyle: TextStyle = {
-    fontSize: theme.typography.sizes.body,
-    fontWeight: theme.typography.weights.bold,
-    color: isPrimary ? '#FFFFFF' : theme.colors.text,
-  };
+  // Calls the dynamic layout calculation classes perfectly via the clean style instance
+  const containerStyle = loginButtonStyles.getDynamicContainerStyle(variant, disabled, theme);
+  const textStyle = loginButtonStyles.getDynamicTextStyle(variant, theme);
 
   return (
     <TouchableOpacity 
       onPress={onPress} 
       disabled={disabled} 
-      style={containerStyle}
+      style={[containerStyle, style]} 
       activeOpacity={0.7}
     >
       <RNText style={textStyle}>
