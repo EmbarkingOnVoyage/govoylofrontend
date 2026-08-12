@@ -2,7 +2,7 @@ import { ViewStyle, TextStyle } from "react-native";
 import { BaseInputStyles } from "../base/BaseInputStyles";
 import { ThemeMode } from "../../theme/tokens";
 
-export class AutocompleteDropdownStyles extends BaseInputStyles {
+export class AutoCompleteDropdownStyles extends BaseInputStyles {
   public container: ViewStyle;
   public input: TextStyle;
   public list: ViewStyle;
@@ -39,4 +39,4 @@ export class AutocompleteDropdownStyles extends BaseInputStyles {
 }
 
 // Export single immutable instance using default theme parameters
-export const styles = new AutocompleteDropdownStyles("light");
+export const styles = new AutoCompleteDropdownStyles("light");

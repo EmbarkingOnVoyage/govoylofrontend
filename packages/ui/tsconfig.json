@@ -1,8 +1,12 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src"
+    "rootDir": "./src",
+    "paths": {
+      "@workspace/styles": ["./src/styles/index.ts"],
+      "@workspace/loginbuttonstyles": ["./src/styles/base/baseButtonstyles.ts"]
+    }
   },
   "include": ["src/**/*"]
 }

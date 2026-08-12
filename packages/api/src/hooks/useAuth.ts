@@ -1,0 +1,62 @@
+// packages/api/src/hooks/useAuth.ts
+import { useMutation } from '@tanstack/react-query';
+import { 
+  LoginRequest, LoginResponse, LoginResponseSchema,
+  OtpRequest, OtpResponse, OtpResponseSchema // 💡 Import new models
+} from '../models/auth.schema';
+
+// --- Existing Password Login Engine ---
+async function loginUser(payload: LoginRequest): Promise<LoginResponse> {
+  const response = await fetch('https://yourbackend.com', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error('Authentication failed');
+  const rawData = await response.json();
+  return LoginResponseSchema.parse(rawData);
+}
+
+export function useLoginMutation() {
+  return useMutation({
+    mutationFn: (credentials: LoginRequest) => loginUser(credentials),
+    onSuccess: (data) => console.log('Login token assigned:', data.token),
+    onError: (error) => console.error('Login error:', error.message)
+  });
+}
+
+
+// --- 💡 NEW: Systematic Request OTP Mutation Engine ---
+
+async function requestOtp(payload: OtpRequest): Promise<OtpResponse> {
+  // Replace url string with your actual monorepo base client wrapper or API gateway path
+  const response = await fetch('https://yourbackend.com', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to send OTP verification email. Please try again.');
+  }
+
+  const rawData = await response.json();
+  
+  // Enforce schema validation contract at runtime
+  return OtpResponseSchema.parse(rawData);
+}
+
+/**
+ * Custom Hook to trigger the OTP sequence during login/sign up
+ */
+export function useRequestOtpMutation() {
+  return useMutation({
+    mutationFn: (payload: OtpRequest) => requestOtp(payload),
+    onSuccess: (data) => {
+      console.log('OTP request lifecycle success:', data.message || 'OTP dispatched');
+    },
+    onError: (error) => {
+      console.error('OTP request error intercepted:', error.message);
+    }
+  });
+}

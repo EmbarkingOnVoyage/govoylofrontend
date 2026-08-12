@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, TextInput, FlatList, Pressable } from "react-native";
 import { Text } from "./Text"; 
-import { styles } from "../styles/components/AutocompleteDropdown.styles"; // Consolidated style class instance reference
+import { styles } from "../styles/components/AutoCompleteDropdown.styles"; // Consolidated style class instance reference
 
 export interface AutoCompleteDropdownProps<T> {
   data: T[];

@@ -11,7 +11,8 @@ export default function App() {
         
         {/* Render our brand-new landing screen layout */}
         <LandingScreen 
-          onGetStarted={() => Alert.alert('Action', 'Navigating to onboarding registration...')}
+          onNavigate={() => Alert.alert('Action', 'Navigating to onboarding registration...')}
+          onGetStartedPress={() => Alert.alert('Action', 'Navigating to onboarding registration...')}
           onLoginPress={() => Alert.alert('Action', 'Navigating to secure authorization login...')}
         />
 
