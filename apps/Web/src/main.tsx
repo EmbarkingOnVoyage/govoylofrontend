@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { AppProvider, BookingDashboard, LoginFeature } from "@workspace/ui";
+import { AppProvider, BookingDashboard, LoginFeature, OtpFeature } from "@workspace/ui";
 import { ErrorBoundary, useFlowNavigation } from "@workspace/core"; // Added useFlowNavigation contract
 
 // Mobile Screen Preview View
@@ -38,7 +38,9 @@ const SCREENS: Record<string, React.FC<{ onNavigate: (rule: any) => void }>> = {
   SignIn: ({ onNavigate }) => (
     <LoginFeature onNavigate={onNavigate} />
   ),
-   OTP: ({ onNavigate }) => <div>OTP Screen Component Placeholder</div>,
+  OTP: ({ onNavigate }) => (
+  <OtpFeature onNavigate={onNavigate} />
+),
   Search: () => <div>Search Screen Component Placeholder</div>,
 };
 const AppWorkflowRouter: React.FC = () => {
