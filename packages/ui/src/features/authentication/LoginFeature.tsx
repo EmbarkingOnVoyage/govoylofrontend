@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
 import { useRequestOtpMutation } from "@workspace/api";
+import { authContextCache } from "./authContextCache";
 
 interface LoginFeatureProps {
   onNavigate: (rule: string) => void;
@@ -31,6 +32,8 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
   // 💡 Upgraded to Async/Await Try-Catch: This completely fixes TanStack callback error loops!
     const handleContinue = () => {
     if (!validateEmail(email)) return;
+
+    authContextCache.setEmail(email.trim().toLowerCase());
 
     // 💡 1. INSTANT REDIRECT: Fire your routing engine to go to the OTP screen immediately
     onNavigate("ON_SUBMIT_SUCCESS");
