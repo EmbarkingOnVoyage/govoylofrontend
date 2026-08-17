@@ -30,7 +30,7 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
   // Handle mock/simulated verification call (replace with your formal hook registration layer)
   const verifyMutation = useMutation({
     mutationFn: async (code: string) => {
-      const response = await fetch("http://localhost:5037/api/auth/verify-otp", {
+      const response = await fetch("https://localhost:5037/api/auth/verify-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ otp: code }),

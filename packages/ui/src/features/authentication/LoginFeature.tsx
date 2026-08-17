@@ -1,7 +1,15 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+} from "react-native";
 import { useRequestOtpMutation } from "@workspace/api";
 import { authContextCache } from "./authContextCache";
+import { LOGO_ASSETS } from "../../assets";
 
 interface LoginFeatureProps {
   onNavigate: (rule: string) => void;
@@ -11,7 +19,7 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
   const [email, setEmail] = useState("");
   const [validationError, setValidationError] = useState("");
   const [isApiLoading, setIsApiLoading] = useState(false);
-  
+
   // 💡 Pull both mutate (fire-and-forget) and mutateAsync (Promise-based) to be perfectly safe
   const mutation = useRequestOtpMutation();
 
@@ -30,39 +38,60 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
   };
 
   // 💡 Upgraded to Async/Await Try-Catch: This completely fixes TanStack callback error loops!
-    const handleContinue = () => {
+  const handleContinue = () => {
     if (!validateEmail(email)) return;
-
+    console.log("=== DEBUG STEP 1: handleContinue started ===");
+    console.log("Current Email Value:", email); // This line is for debugging purposes and can be removed in production
     authContextCache.setEmail(email.trim().toLowerCase());
-
+    console.log("=== DEBUG STEP 2: Navigating now ===");
     // 💡 1. INSTANT REDIRECT: Fire your routing engine to go to the OTP screen immediately
     onNavigate("ON_SUBMIT_SUCCESS");
-
-    // 💡 2. BACKGROUND FIRE-AND-FORGET API CALL: 
+    console.log("=== DEBUG STEP 3: Firing backend mutation call ===");
+    // 💡 2. BACKGROUND FIRE-AND-FORGET API CALL:
     // This runs completely in the background without making the user wait or blocking the UI.
-    mutation.mutateAsync({ email: email.trim().toLowerCase() })
+    mutation
+      .mutateAsync({ email: email.trim().toLowerCase() })
       .then((data) => {
+        console.log("=== DEBUG STEP 4a: Backend Answered! ===");
+        console.log("Raw Response Data:", data);
         if (data && data.success) {
-          console.log("Background OTP request lifecycle success:", data.message || "OTP dispatched");
+          console.log(
+            "Background OTP request lifecycle success:",
+            data.message || "OTP dispatched",
+          );
         } else {
           console.warn("Background API returned success=false:", data?.message);
         }
       })
       .catch((err) => {
+        console.log("=== DEBUG STEP 4b: Network Call Crashed! ===");
+        console.dir(err); 
         // 💡 3. CONSOLE LOGGING ONLY: If the API fails, it logs here silently instead of throwing a red error page
-        console.error("Background API Exception Intercepted:", err?.message || err);
+        console.error(
+          "Background API Exception Intercepted:",
+          err?.message || err,
+        );
       });
   };
 
-
   const isWorking = isApiLoading || mutation.isPending;
+  const SOCIAL_LOGIN_PROVIDERS = [
+    { id: "apple", onPress: () => alert("Apple Popup") },
+    { id: "google", onPress: () => alert("Google Popup") },
+    { id: "facebook", onPress: () => alert("Facebook Popup") },
+  ];
 
   return (
     <View style={s.backdrop}>
       <View style={s.container}>
         {/* Close Modal Trigger */}
-        <Text style={s.closeButton} onPress={() => console.log("Close Clicked")}>&times;</Text>
-        
+        <Text
+          style={s.closeButton}
+          onPress={() => console.log("Close Clicked")}
+        >
+          &times;
+        </Text>
+
         {/* Figma Brand Purple Logo Box Icon */}
         <View style={s.logoWrapper}>
           <Text style={s.logoText}>⚛️</Text>
@@ -86,12 +115,14 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
             autoCapitalize="none"
             keyboardType="email-address"
           />
-          {!!validationError && <Text style={s.errorText}>{validationError}</Text>}
-          
+          {!!validationError && (
+            <Text style={s.errorText}>{validationError}</Text>
+          )}
+
           {/* Main Form Interactive Continue Trigger Component */}
-          <TouchableOpacity 
-            style={[s.primaryButton, isWorking && s.disabledButton]} 
-            onPress={handleContinue} 
+          <TouchableOpacity
+            style={[s.primaryButton, isWorking && s.disabledButton]}
+            onPress={handleContinue}
             disabled={isWorking}
             activeOpacity={0.8}
           >
@@ -110,20 +141,25 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
 
         {/* Alternative Grid Selection Authentication Controls */}
         <View style={s.socialRow}>
-          <TouchableOpacity style={s.socialButton} onPress={() => console.log("Apple")} activeOpacity={0.7}>
-            <Text style={s.socialIcon}>🍏</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.socialButton} onPress={() => console.log("Google")} activeOpacity={0.7}>
-            <Text style={s.socialIcon}>🚀</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={s.socialButton} onPress={() => console.log("Facebook")} activeOpacity={0.7}>
-            <Text style={s.socialIcon}>🔷</Text>
-          </TouchableOpacity>
+          {SOCIAL_LOGIN_PROVIDERS.map((provider) => (
+            <TouchableOpacity
+              key={provider.id}
+              style={s.socialButton}
+              onPress={provider.onPress}
+              activeOpacity={0.7}
+            >
+              <Image
+                source={LOGO_ASSETS[provider.id]}
+                style={s.socialIcon as any}
+              />
+            </TouchableOpacity>
+          ))}
         </View>
 
         {/* Privacy Legal Guidelines Block */}
         <Text style={s.footerText}>
-          By continuing you agree to our <Text style={s.footerLink}>Terms & Privacy Policy</Text>.
+          By continuing you agree to our{" "}
+          <Text style={s.footerLink}>Terms & Privacy Policy</Text>.
         </Text>
       </View>
     </View>
@@ -134,7 +170,10 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
 const s = StyleSheet.create({
   backdrop: {
     position: "absolute",
-    top: 0, left: 0, right: 0, bottom: 0,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     backgroundColor: "rgba(107, 114, 128, 0.4)",
     alignItems: "center",
     justifyContent: "center",
@@ -148,7 +187,8 @@ const s = StyleSheet.create({
     borderRadius: 24, // High-curvature corner curvature matching figma spec
     padding: 32,
     alignItems: "center",
-    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" as any,
+    boxShadow:
+      "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" as any,
   },
   closeButton: {
     position: "absolute",
@@ -258,7 +298,9 @@ const s = StyleSheet.create({
     borderColor: "#E5E7EB",
   },
   socialIcon: {
-    fontSize: 20,
+    width: 24, // Sets width to 24 pixels
+    height: 24, // Sets height to 24 pixels
+    resizeMode: "contain", // Makes sure the logo doesn't look stretched
   },
   footerText: {
     fontSize: 12,
