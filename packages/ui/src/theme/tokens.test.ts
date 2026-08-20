@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest';
-import { getThemeStyles } from './tokens';
+// 🔑 Import directly from the main index file to test the actual package gateway contract
+import { getThemeStyles } from '../index';
 
 describe('Global Theme Token Engine', () => {
   test('should return light palette color configurations when light mode is selected', () => {

@@ -1,6 +1,24 @@
 // Strict Contract Union for Theme Modes
 export type ThemeMode = 'light' | 'dark';
 
+// 1. Explicit structural shape interfaces for your theme properties
+export interface IThemeColors {
+  primary: string;
+  secondary: string;
+  success: string;
+  danger: string;
+  background: string;
+  surface: string;
+  text: string;
+  textMuted: string;
+}
+
+export interface IThemeTokens {
+  colors: IThemeColors;
+  spacing: typeof tokens.spacing;
+  typography: typeof tokens.typography;
+}
+
 // Immutable Global Design Tokens
 export const tokens = {
   colors: {
@@ -49,7 +67,7 @@ export const tokens = {
  * Functional Utility Engine to resolve themes dynamically 
  * but predictably based on a mode token input.
  */
-export function getThemeStyles(mode: ThemeMode) {
+export function getThemeStyles(mode: ThemeMode): IThemeTokens {
   const activeColors = mode === 'light' ? tokens.colors.light : tokens.colors.dark;
   
   return {

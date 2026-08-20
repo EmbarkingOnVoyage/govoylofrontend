@@ -2,10 +2,12 @@
 import React from 'react';
 import { TouchableOpacity, TextStyle, ViewStyle, StyleProp } from 'react-native';
 import { Text as RNText } from 'react-native'; 
-import { getThemeStyles, ThemeMode } from '../theme/tokens';
-
-// 💡 Clean, clean index import bypassing deep nested folder structures
-import { loginButtonStyles } from '../styles/base/BaseButtonStyles'; 
+import { 
+  getThemeStyles,
+  type ThemeMode,
+  getButtonDynamicContainerStyle, 
+  getButtonDynamicTextStyle,
+} from "../index";
 
 export interface IButtonProps {
   label: string;
@@ -27,8 +29,8 @@ export function Button({
   const theme = getThemeStyles(mode);
 
   // Calls the dynamic layout calculation classes perfectly via the clean style instance
-  const containerStyle = loginButtonStyles.getDynamicContainerStyle(variant, disabled, theme);
-  const textStyle = loginButtonStyles.getDynamicTextStyle(variant, theme);
+  const containerStyle = getButtonDynamicContainerStyle(variant, disabled, theme);
+  const textStyle = getButtonDynamicTextStyle(variant, theme);
 
   return (
     <TouchableOpacity 

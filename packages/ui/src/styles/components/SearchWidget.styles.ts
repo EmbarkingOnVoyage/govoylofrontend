@@ -6,23 +6,24 @@ export interface IWidgetStyles {
   container: ViewStyle;
 }
 
-export class SearchWidgetStyles implements IWidgetStyles {
-  public container: ViewStyle;
-  protected theme: ReturnType<typeof getThemeStyles>;
+/**
+ * 💡 Pure dynamic style builder combining theme tokens.
+ * Replaces class constructor execution smoothly.
+ */
+export const getSearchWidgetStyles = (mode: ThemeMode = "light"): IWidgetStyles => {
+  const theme = getThemeStyles(mode);
 
-  constructor(mode: ThemeMode = "light") {
-    this.theme = getThemeStyles(mode);
-
+  return {
     // Structural Layout configuration using design token spacing rules
-    this.container = {
-      padding: this.theme.spacing.md,
-      gap: this.theme.spacing.md,
-      backgroundColor: this.theme.colors.surface,
+    container: {
+      padding: theme.spacing.md,
+      gap: theme.spacing.md,
+      backgroundColor: theme.colors.surface,
       borderRadius: 8,
       width: "100%",
-    };
-  }
-}
+    },
+  };
+};
 
-// Export single immutable instance using default theme parameters
-export const styles = new SearchWidgetStyles("light");
+// Export a clear, static instance matching your original default parameters
+export const styles = getSearchWidgetStyles("light");
