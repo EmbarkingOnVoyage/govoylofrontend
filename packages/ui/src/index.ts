@@ -9,8 +9,10 @@ export * from './components/AutoCompleteDropdown';
 
 // Export domain features
 export * from './features/bookings/BookingDashboard';
-export * from './features/authentication/LoginFeature';
-export * from './features/authentication/OtpFeature';
+export { LoginFeature as LoginMobileFeature } from './features/authentication/LoginFeature';
+export { LoginFeature as LoginWebFeature } from './features/authentication/LoginFeature.web';
+export { OtpFeature as OtpMobileFeature } from './features/authentication/OtpFeature';
+export { OtpFeature as OtpWebFeature } from './features/authentication/OtpFeature.web';
 
 // Export mobile-specific styles
 export * from './assets/index';
@@ -67,3 +69,14 @@ export {
   type ILoginWebStyles,
   type ILoginMobileStyles
 } from './styles/components/LoginFeature.styles';
+
+// Add these directly to your packages/ui/src/index.ts file:
+
+export { 
+  web as OtpWebStyles, 
+  mobile as OtpMobileStyles,
+  type IOtpWebStyles,
+  type IOtpMobileStyles
+} from './styles/components/OtpFeature.styles';
+
+

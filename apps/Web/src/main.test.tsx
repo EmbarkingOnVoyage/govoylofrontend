@@ -13,8 +13,11 @@ vi.mock('@workspace/core', () => ({
 
 vi.mock('@workspace/ui', () => ({
   AppProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  LoginFeature: () => <div data-testid="login-feature">Login Form Mock</div>,
-  OtpFeature: () => <div>OTP Form Mock</div>,
+  BaseLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  LoginWebFeature: () => <div data-testid="login-feature">Login Form Mock</div>,
+  OtpWebFeature: () => <div>OTP Form Mock</div>,
+  LoginMobileFeature: () => <div data-testid="login-feature">Login Form Mock</div>,
+  OtpMobileFeature: () => <div>OTP Form Mock</div>,
 }));
 
 vi.mock('mobile-app/src/screens/LandingScreen', () => ({
