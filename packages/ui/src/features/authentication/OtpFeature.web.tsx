@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { useMutation } from "@tanstack/react-query"; 
 import { authContextCache } from "./authContextCache";
 // 🔑 IMPORT CENTRALIZED BEST-PRACTICE STYLES
-import { OtpMobileStyles as s } from "@workspace/ui";
+import { OtpWebStyles as s } from "@workspace/ui";
 
 interface OtpFeatureProps {
   onNavigate: (rule: string) => void;
@@ -35,7 +34,8 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
     }
   });
 
-  const handleChangeText = (text: string, index: number) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const text = e.target.value;
     const cleanText = text.replace(/[^0-9]/g, "");
     if (!cleanText) return;
 
@@ -49,8 +49,8 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
     }
   };
 
-  const handleKeyPress = (e: any, index: number) => {
-    if (e.nativeEvent.key === "Backspace") {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === "Backspace") {
       const newOtp = [...otp];
       
       if (newOtp[index] !== "") {
@@ -64,7 +64,8 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
     }
   };
 
-  const handleVerify = async () => {
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
     const fullCode = otp.join("");
     if (fullCode.length < 6) {
       setErrorMessage("Please enter the complete 6-digit confirmation code.");
@@ -88,62 +89,64 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
   const isWorking = verifyMutation.isPending;
 
   return (
-    <View style={s.backdrop}>
-      <View style={s.container}>
-        <Text style={s.backArrow} onPress={() => onNavigate("ON_BACK_TO_LOGIN")}>&larr;</Text>
-        <Text style={s.closeButton} onPress={() => console.log("Close Clicked")}>&times;</Text>
+    <div className={s.backdrop}>
+      <div className={s.container}>
+        <button className={s.backArrow} onClick={() => onNavigate("ON_BACK_TO_LOGIN")}>&larr;</button>
+        <button className={s.closeButton} onClick={() => console.log("Close Clicked")}>&times;</button>
         
-        <View style={s.logoWrapper}>
-          <Text style={s.logoText}>⚛️</Text>
-        </View>
+        <div className={s.logoWrapper}>
+          <span className={s.logoText}>⚛️</span>
+        </div>
 
-        <Text style={s.title}>Log in or sign up</Text>
+        <h2 className={s.title}>Log in or sign up</h2>
 
-        <View style={s.contentWrapper}>
-          <Text style={s.headingText}>Verify your email address</Text>
+        <div className={s.contentWrapper}>
+          <h3 className={s.headingText}>Verify your email address</h3>
           
-          <Text style={s.subText}>
-            we sent a 6-digit code to <Text style={s.emailHighlight}>{userEmail}</Text>. please enter code to continue.
-          </Text>
+          <p className={s.subText}>
+            we sent a 6-digit code to <span className={s.emailHighlight}>{userEmail}</span>. please enter code to continue.
+          </p>
 
-          <View style={s.otpGrid}>
-            {otp.map((digit, i) => (
-              <TextInput
-                key={i}
-                ref={(el) => (inputRefs.current[i] = el)}
-                style={[s.otpInput, digit !== "" && s.otpInputFilled, !!errorMessage && s.otpInputError]}
-                maxLength={2}
-                value={digit}
-                onChangeText={(text) => handleChangeText(text, i)}
-                onKeyPress={(e) => handleKeyPress(e, i)}
-                keyboardType="number-pad"
-                editable={!isWorking}
-                placeholder="-"
-                placeholderTextColor="#D1D5DB"
-                autoFocus={i === 0}
-              />
-            ))}
-          </View>
+          <form onSubmit={handleVerify} className="w-full flex flex-col items-center">
+            <div className={s.otpGrid}>
+              {otp.map((digit, i) => (
+                <input
+                  key={i}
+                  type="text"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  ref={(el) => (inputRefs.current[i] = el)}
+                  className={s.otpInput(digit !== "", !!errorMessage)} // 🔑 Dynamic function call
+                  maxLength={1}
+                  value={digit}
+                  onChange={(e) => handleChange(e, i)}
+                  onKeyDown={(e) => handleKeyDown(e, i)}
+                  disabled={isWorking}
+                  placeholder="-"
+                  autoFocus={i === 0}
+                />
+              ))}
+            </div>
 
-          {!!errorMessage && <Text style={s.errorText}>{errorMessage}</Text>}
+            {!!errorMessage && <span className={s.errorText}>{errorMessage}</span>}
 
-          <TouchableOpacity 
-            style={[s.submitButton, isWorking && s.disabledButton]} 
-            onPress={handleVerify}
-            disabled={isWorking}
-            activeOpacity={0.8}
-          >
-            <Text style={s.submitButtonText}>
-              {isWorking ? "Verifying..." : "Verify email"}
-            </Text>
-          </TouchableOpacity>
+            <button 
+              type="submit"
+              className={`${s.submitButton} ${isWorking ? s.disabledButton : ""}`} 
+              disabled={isWorking}
+            >
+              <span className={s.submitButtonText}>
+                {isWorking ? "Verifying..." : "Verify email"}
+              </span>
+            </button>
+          </form>
 
-          <Text style={s.spamText}>
+          <p className={s.spamText}>
             Didn't receive an email? please check your spam folder or request another code in{" "}
-            <Text style={s.timerHighlight}>{countdown} seconds</Text>.
-          </Text>
-        </View>
-      </View>
-    </View>
+            <span className={s.timerHighlight}>{countdown} seconds</span>.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 };

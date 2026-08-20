@@ -1,5 +1,5 @@
 import { StyleSheet, Dimensions } from 'react-native';
-import { mobileButtonStyles } from '@workspace/ui'; 
+import { BaseButtonLoginPlaceholderStyles } from '@workspace/ui'; 
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -80,12 +80,12 @@ export const styles = StyleSheet.create({
     width: '100%',
   },
   primaryButton: {
-    ...mobileButtonStyles.buttonContainer,
+    ...BaseButtonLoginPlaceholderStyles.buttonContainer,
     backgroundColor: '#7C3AED', // True vibrant figma violet shade
     borderRadius: 14,          // Exact rounded rectangle bevel matching your Figma bounding box
   },
   primaryButtonText: {
-    ...mobileButtonStyles.buttonText,
+    ...BaseButtonLoginPlaceholderStyles.buttonText,
     color: '#FFFFFF',
   },
   inlineLink: {

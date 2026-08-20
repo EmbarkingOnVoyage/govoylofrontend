@@ -9,7 +9,7 @@ export interface Flight {
   rating: number;
 }
 
-const BASE_URL = "http://172.19.192.1:3001";
+const BASE_URL = "https://172.19.192.1:3001";
 
 export const getFlights = async (): Promise<Flight[]> => {
   const response = await fetch(`${BASE_URL}/flights`);

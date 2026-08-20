@@ -1,42 +1,46 @@
+// packages/styles/components/Autocompletedropdown.styles.ts
 import { ViewStyle, TextStyle } from "react-native";
-import { BaseInputStyles } from "../base/BaseInputStyles";
-import { ThemeMode } from "../../theme/tokens";
+import { getSharedInputProperties } from "../base/BaseInput.styles";
+import { getThemeStyles, ThemeMode } from "../../theme/tokens";
 
-export class AutoCompleteDropdownStyles extends BaseInputStyles {
-  public container: ViewStyle;
-  public input: TextStyle;
-  public list: ViewStyle;
-  public item: ViewStyle;
+export interface IAutoCompleteStyles {
+  container: ViewStyle;
+  input: TextStyle;
+  list: ViewStyle;
+  item: ViewStyle;
+}
 
-  constructor(mode: ThemeMode = "light") {
-    super(mode);
+/**
+ * 💡 Pure dynamic style builder combining base inputs and theme tokens.
+ * Replaces class constructor inheritance seamlessly.
+ */
+export const getAutoCompleteDropdownStyles = (mode: ThemeMode = "light"): IAutoCompleteStyles => {
+  const theme = getThemeStyles(mode);
 
-    this.container = {
+  return {
+    container: {
       width: "100%",
-      marginBottom: this.theme.spacing.md,
+      marginBottom: theme.spacing.md,
       position: "relative", // Specialized child component modifier
-    };
-
-    this.input = {
-      ...this.getSharedInputProperties(), // Pure Class Inheritance of Core UI rules
-    };
-
-    this.list = {
+    },
+    input: {
+      ...getSharedInputProperties(mode), // Clean functional extension of Core UI rules
+    },
+    list: {
       maxHeight: 200,
       borderWidth: 1,
       borderColor: "#EAEAEA",
-      backgroundColor: this.theme.colors.surface,
+      backgroundColor: theme.colors.surface,
       borderRadius: 4,
       marginTop: 4,
-    };
-
-    this.item = {
-      padding: this.theme.spacing.md,
+    },
+    item: {
+      padding: theme.spacing.md,
       borderBottomWidth: 1,
       borderBottomColor: "#F5F5F5",
-    };
-  }
-}
+    },
+  };
+};
 
-// Export single immutable instance using default theme parameters
-export const styles = new AutoCompleteDropdownStyles("light");
+// Export a clear, static instance matching your original default parameters
+export const styles = getAutoCompleteDropdownStyles("light");
