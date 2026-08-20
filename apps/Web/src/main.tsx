@@ -1,7 +1,9 @@
 /// <reference types="vite/client" />
+
+import "tailwindcss";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { AppProvider, BookingDashboard, LoginFeature, OtpFeature } from "@workspace/ui";
+import { AppProvider, LoginMobileFeature, OtpMobileFeature } from "@workspace/ui";
 import { ErrorBoundary, useFlowNavigation } from "@workspace/core"; // Added useFlowNavigation contract
 
 // Mobile Screen Preview View
@@ -31,16 +33,12 @@ const SCREENS: Record<string, React.FC<{ onNavigate: (rule: any) => void }>> = {
   Landing: ({ onNavigate }) => (
     <LandingScreen
       onNavigate={onNavigate}
-      onLoginPress={() => onNavigate('ON_SIGN_IN_PRESS')}
-      onGetStartedPress={() => onNavigate('ON_CONTINUE')}
+      onLoginPress={() => onNavigate("ON_SIGN_IN_PRESS")}
+      onGetStartedPress={() => onNavigate("ON_CONTINUE")}
     />
   ),
-  SignIn: ({ onNavigate }) => (
-    <LoginFeature onNavigate={onNavigate} />
-  ),
-  OTP: ({ onNavigate }) => (
-  <OtpFeature onNavigate={onNavigate} />
-),
+  SignIn: ({ onNavigate }) => <LoginMobileFeature onNavigate={onNavigate} />,
+  OTP: ({ onNavigate }) => <OtpMobileFeature onNavigate={onNavigate} />,
   Search: () => <div>Search Screen Component Placeholder</div>,
 };
 const AppWorkflowRouter: React.FC = () => {
@@ -49,15 +47,14 @@ const AppWorkflowRouter: React.FC = () => {
     isMobilePreviewMode ? "Landing" : "SignIn",
   );
   const ActiveComponent = SCREENS[currentScreen];
-   if (!ActiveComponent) {
+  if (!ActiveComponent) {
     throw new Error(
-      `CRITICAL FACTORY ERROR: Screen state "${currentScreen}" is not registered to render on the Web target architecture.`
+      `CRITICAL FACTORY ERROR: Screen state "${currentScreen}" is not registered to render on the Web target architecture.`,
     );
   }
 
   // Instantiates the resolved view and injects the rule router driver contract down to the page layer
   return <ActiveComponent onNavigate={navigateByRule} />;
-
 };
 const container = document.getElementById("root");
 if (!container) {
@@ -72,8 +69,7 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary contextName="WEB-APP-SHELL">
       <AppProvider>
-        {/* Render our configuration-controlled workflow manager */}
-        <AppWorkflowRouter />
+          <AppWorkflowRouter />
       </AppProvider>
     </ErrorBoundary>
   </React.StrictMode>,

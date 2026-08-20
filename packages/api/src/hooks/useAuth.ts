@@ -7,7 +7,7 @@ import {
 
 // --- Existing Password Login Engine ---
 async function loginUser(payload: LoginRequest): Promise<LoginResponse> {
-  const response = await fetch('http://localhost:5037/api/auth/login', {
+  const response = await fetch('https://localhost:5037/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -27,10 +27,11 @@ export function useLoginMutation() {
 
 
 // --- 💡 NEW: Systematic Request OTP Mutation Engine ---
-
 async function requestOtp(payload: OtpRequest): Promise<OtpResponse> {
   // Replace url string with your actual monorepo base client wrapper or API gateway path
-  const response = await fetch('http://localhost:5037/api/auth/send-otp', {
+  debugger; // This line is for debugging purposes and can be removed in production
+
+  const response = await fetch('https://localhost:5037/api/auth/send-otp', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
