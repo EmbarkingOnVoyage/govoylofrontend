@@ -3,7 +3,7 @@
 import "./global.css";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { AppProvider, LoginWebFeature, OtpWebFeature } from "@workspace/ui";
+import { AppProvider, LoginWebFeature, OtpWebFeature, ProfileStep1 } from "@workspace/ui";
 import { ErrorBoundary, useFlowNavigation } from "@workspace/core"; // Added useFlowNavigation contract
 
 // Mobile Screen Preview View
@@ -40,11 +40,12 @@ const SCREENS: Record<string, React.FC<{ onNavigate: (rule: any) => void }>> = {
   SignIn: ({ onNavigate }) => <LoginWebFeature onNavigate={onNavigate} />,
   OTP: ({ onNavigate }) => <OtpWebFeature onNavigate={onNavigate} />,
   Search: () => <div>Search Screen Component Placeholder</div>,
+  Profile: ({ onNavigate }) => <ProfileStep1 onNavigate={onNavigate} />,
 };
 const AppWorkflowRouter: React.FC = () => {
   // If we are testing mobile flows, boot the state machine at 'Landing'; otherwise go straight to the dashboard features
   const { currentScreen, navigateByRule } = useFlowNavigation(
-    isMobilePreviewMode ? "Landing" : "SignIn",
+    isMobilePreviewMode ? "Landing" : "SignIn", //"Profile" //  
   );
   const ActiveComponent = SCREENS[currentScreen];
   if (!ActiveComponent) {
