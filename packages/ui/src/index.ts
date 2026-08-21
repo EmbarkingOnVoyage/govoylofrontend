@@ -13,6 +13,7 @@ export { LoginFeature as LoginMobileFeature } from './features/authentication/Lo
 export { LoginFeature as LoginWebFeature } from './features/authentication/LoginFeature.web';
 export { OtpFeature as OtpMobileFeature } from './features/authentication/OtpFeature';
 export { OtpFeature as OtpWebFeature } from './features/authentication/OtpFeature.web';
+export { ProfileStep1 } from './features/profile/ProfileStep1';
 
 // Export mobile-specific styles
 export * from './assets/index';
@@ -78,5 +79,7 @@ export {
   type IOtpWebStyles,
   type IOtpMobileStyles
 } from './styles/components/OtpFeature.styles';
+
+export { profileStyles } from './styles/components/ProfileStep1.styles';
 
 
