@@ -4,6 +4,7 @@ export default {
     // Scan the web app entry point
     './index.html',
     './main.tsx',
+    './packages/ui/src/features/profile/ProfileStep1.tsx',
     
     // Scan all component files in the current app
     './src/**/*.{ts,tsx,js, jsx, html}',

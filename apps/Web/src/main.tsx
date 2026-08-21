@@ -1,9 +1,9 @@
 /// <reference types="vite/client" />
 
-import "tailwindcss";
+import "./global.css";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { AppProvider, LoginMobileFeature, OtpMobileFeature } from "@workspace/ui";
+import { AppProvider, LoginWebFeature, OtpWebFeature } from "@workspace/ui";
 import { ErrorBoundary, useFlowNavigation } from "@workspace/core"; // Added useFlowNavigation contract
 
 // Mobile Screen Preview View
@@ -37,8 +37,8 @@ const SCREENS: Record<string, React.FC<{ onNavigate: (rule: any) => void }>> = {
       onGetStartedPress={() => onNavigate("ON_CONTINUE")}
     />
   ),
-  SignIn: ({ onNavigate }) => <LoginMobileFeature onNavigate={onNavigate} />,
-  OTP: ({ onNavigate }) => <OtpMobileFeature onNavigate={onNavigate} />,
+  SignIn: ({ onNavigate }) => <LoginWebFeature onNavigate={onNavigate} />,
+  OTP: ({ onNavigate }) => <OtpWebFeature onNavigate={onNavigate} />,
   Search: () => <div>Search Screen Component Placeholder</div>,
 };
 const AppWorkflowRouter: React.FC = () => {

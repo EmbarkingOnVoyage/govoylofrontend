@@ -1,0 +1,7 @@
+/* This file only created to ensure that tailwindcss scans the entire monorepo for class names.
+   It is not used directly in the codebase. */
+@import "tailwindcss";
+
+/* 🌟 CORRECTED WORKSPACE TRAVERSAL PATHS */
+@source "../../../packages/**/*.tsx";
+@source "../../../packages/**/*.ts";
