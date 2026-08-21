@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
+import { DashboardLayout } from '../../components/layout/Layout'; 
 import { useMutation } from "@tanstack/react-query"; 
 import { authContextCache } from "./authContextCache";
 // 🔑 IMPORT CENTRALIZED BEST-PRACTICE STYLES
@@ -89,7 +90,7 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
   const isWorking = verifyMutation.isPending;
 
   return (
-    <div className={s.backdrop}>
+    <DashboardLayout showSidebar={false} onNavigate={onNavigate}>
       <div className={s.container}>
         <button className={s.backArrow} onClick={() => onNavigate("ON_BACK_TO_LOGIN")}>&larr;</button>
         <button className={s.closeButton} onClick={() => console.log("Close Clicked")}>&times;</button>
@@ -147,6 +148,6 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
           </p>
         </div>
       </div>
-    </div>
+      </DashboardLayout>
   );
 };
