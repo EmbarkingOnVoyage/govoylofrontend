@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { DashboardLayout } from '../../components/layout/Layout'; 
 import { useRequestOtpMutation } from "@workspace/api";
 import { LoginWebStyles as s } from "@workspace/ui"; 
 import { authContextCache } from "./authContextCache";
@@ -56,7 +57,7 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
   ];
 
   return (
-    <div className={s.backdrop}>
+     <DashboardLayout showSidebar={false} onNavigate={onNavigate}>
       <div className={s.container}>
         {/* Close Modal Trigger */}
         <button className={s.closeButton} onClick={() => console.log("Close Clicked")}>
@@ -130,6 +131,6 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
           <span className={s.footerLink}>Terms & Privacy Policy</span>.
         </p>
       </div>
-    </div>
+     </DashboardLayout>
   );
 };
