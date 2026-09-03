@@ -12,8 +12,20 @@ export default defineConfig({
       '@workspace/styles': path.resolve(__dirname, '../../packages/src/styles'),
       '@workspace/loginbuttonstyles': path.resolve(__dirname, '../../packages/src/styles/base/baseButtonstyles.ts')
     },
+    // Force a single React instance across the app and every workspace
+    // package (@workspace/ui, @workspace/core, ...) — without this, Vite's
+    // dependency pre-bundler can end up producing a second, disconnected
+    // copy of React's internals when it optimizes react-native-web pulled
+    // in transitively from a symlinked monorepo package, which breaks every
+    // hook call inside react-native-web components with
+    // "Cannot read properties of null (reading 'useContext'/'useEffect')".
+    dedupe: ['react', 'react-dom', 'react-native-web'],
   },
   optimizeDeps: {
+    // Explicitly pre-bundle react-native-web instead of letting Vite
+    // discover it ad-hoc through the workspace symlinks — same duplicate-
+    // React-instance issue as the dedupe setting above.
+    include: ['react-native-web'],
     esbuildOptions: {
       loader: {
         '.js': 'jsx',

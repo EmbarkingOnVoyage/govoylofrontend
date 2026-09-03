@@ -13,9 +13,9 @@ export const PersonalDetailsContent: React.FC = () => {
       </div>
       <form onSubmit={(e) => e.preventDefault()}>
         {/* General Section */}
+        <div className={s.sectionOuter}>
+        <h2 className={s.formHeading}>General information</h2>
         <div className={s.gridForm}>
-          <h2 className={s.formHeading}>General information</h2>
-
           <div className={s.inputWrapper}>
             <label className={s.label}>First name</label>
             <input type="text" placeholder="Text" className={s.input} />
@@ -24,11 +24,12 @@ export const PersonalDetailsContent: React.FC = () => {
             <label className={s.label}>Last name</label>
             <input type="text" placeholder="Text" className={s.input} />
           </div>
-          <div className="grid grid-cols-2 gap-4 col-span-1 lg:col-span-1 sm:col-span-2">
+          <div className="grid grid-cols-2 gap-4 col-span-1">
             <div className={s.inputWrapper}>
               <label className={s.label}>Gender</label>
               <select className={s.select}>
-                <option>Select</option>
+                <option>Male</option>
+                <option>Female</option>
               </select>
             </div>
             <div className={s.inputWrapper}>
@@ -67,10 +68,12 @@ export const PersonalDetailsContent: React.FC = () => {
             </select>
           </div>
         </div>
+        </div>
 
         {/* Contact details Section */}
+        <div className={s.sectionOuter}>
+        <h2 className={s.formHeading}>Contact Details</h2>
         <div className={s.gridForm}>
-          <h2 className={s.formHeading}>Contact Details</h2>
           <div className={s.inputWrapperDouble}>
             <label className={s.label}>Email address</label>
             <div className={s.successWrapper}>
@@ -82,9 +85,9 @@ export const PersonalDetailsContent: React.FC = () => {
             <label className={s.label}>Phone number</label>
             <div className={s.phoneGroup}>
               <div className={s.phoneLeft}>
-                <span>🇮🇳</span>
-                <span>+91</span>
-                <span className="text-[10px] text-gray-400">▼</span>
+                <span className="text-sm leading-none">🇮🇳</span>
+                <span className="text-sm font-medium leading-none">+91</span>
+                <span className="text-[10px] text-gray-400 leading-none">▼</span>
               </div>
               <div className="relative flex-1 flex items-center">
                 <input type="text" defaultValue="1234" className={s.phoneInput} />
@@ -93,10 +96,12 @@ export const PersonalDetailsContent: React.FC = () => {
             </div>
           </div>
         </div>
+        </div>
 
         {/* Document Details Section */}
+        <div className={s.sectionOuter}>
+        <h2 className={s.formHeading}>Documents Details</h2>
         <div className={s.gridForm}>
-          <h2 className={s.formHeading}>Documents Details</h2>
           <div className={s.inputWrapper}>
             <label className={s.label}>Passport number</label>
             <input type="text" placeholder="Text" className={s.input} />
@@ -116,8 +121,10 @@ export const PersonalDetailsContent: React.FC = () => {
             <input type="text" placeholder="Text" className={s.input} />
           </div>
           <p className={s.noticeText}>
-            NOTE: Your PAN No. will only be used for international bookings as per RBI Guidelines
+            <span aria-hidden="true">⚠️</span>
+            <span>NOTE: Your PAN No. will only be used for international bookings as per RBI Guidelines</span>
           </p>
+        </div>
         </div>
 
         {/* Insurance Footer Control Option */}

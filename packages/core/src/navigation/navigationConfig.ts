@@ -27,6 +27,7 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
     ON_BACK: 'Landing',
     ON_SUBMIT_SUCCESS: "OTP",
     ON_NAVIGATE_TO_PROFILE: 'Profile',
+    ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
   },
   SignUp: {
     ON_BACK: 'Landing',
@@ -40,6 +41,7 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
     ON_OTP_VERIFIED: "Search",
     ON_BACK_TO_LOGIN: "SignIn",
     ON_NAVIGATE_TO_PROFILE: 'Profile',
+    ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
   },
   
   // Fill empty structural definitions for other types to satisfy the strict 'Record<AppScreen, ...>' constraint

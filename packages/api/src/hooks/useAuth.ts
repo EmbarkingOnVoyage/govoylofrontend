@@ -27,24 +27,38 @@ export function useLoginMutation() {
 
 
 // --- 💡 NEW: Systematic Request OTP Mutation Engine ---
+// ORIGINAL REAL-API IMPLEMENTATION — restore this once a real send-otp
+// backend exists at the correct URL; commented out in favor of the dev
+// mock below, which lets the OTP flow be tested without a live backend.
+// async function requestOtp(payload: OtpRequest): Promise<OtpResponse> {
+//   // Replace url string with your actual monorepo base client wrapper or API gateway path
+//   debugger; // This line is for debugging purposes and can be removed in production
+//
+//   const response = await fetch('https://localhost:5037/api/auth/send-otp', {
+//     method: 'POST',
+//     headers: { 'Content-Type': 'application/json' },
+//     body: JSON.stringify(payload),
+//   });
+//
+//   if (!response.ok) {
+//     throw new Error('Failed to send OTP verification email. Please try again.');
+//   }
+//
+//   const rawData = await response.json();
+//
+//   // Enforce schema validation contract at runtime
+//   return OtpResponseSchema.parse(rawData);
+// }
+
+// TEMPORARY DEV MOCK: there is no real backend at localhost:5037 yet, so
+// every OTP request would otherwise fail with a network error. Simulates a
+// successful dispatch instead — swap back to the real implementation above
+// once an actual send-otp endpoint exists.
 async function requestOtp(payload: OtpRequest): Promise<OtpResponse> {
-  // Replace url string with your actual monorepo base client wrapper or API gateway path
-  debugger; // This line is for debugging purposes and can be removed in production
-
-  const response = await fetch('https://localhost:5037/api/auth/send-otp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+  return OtpResponseSchema.parse({
+    success: true,
+    message: `Mock OTP sent to ${payload.email} (dev mode) — enter 123456 to verify.`,
   });
-
-  if (!response.ok) {
-    throw new Error('Failed to send OTP verification email. Please try again.');
-  }
-
-  const rawData = await response.json();
-  
-  // Enforce schema validation contract at runtime
-  return OtpResponseSchema.parse(rawData);
 }
 
 /**

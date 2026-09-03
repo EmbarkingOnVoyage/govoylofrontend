@@ -23,15 +23,30 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
     return () => clearTimeout(timer);
   }, [countdown]);
 
+  // ORIGINAL REAL-API IMPLEMENTATION — restore this once a real verify-otp
+  // backend exists at the correct URL; commented out in favor of the dev
+  // mock below, which lets the OTP flow be tested without a live backend.
+  // const verifyMutation = useMutation({
+  //   mutationFn: async (code: string) => {
+  //     const response = await fetch("https://localhost:5037/api/auth/verify-otp", {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ otp: code }),
+  //     });
+  //     if (!response.ok) throw new Error("Incorrect activation code parsed.");
+  //     return await response.json();
+  //   }
+  // });
+
+  // TEMPORARY DEV MOCK: there is no real backend at localhost:5037 yet.
+  // Accepts a fixed 123456 code so the flow can be tested end-to-end —
+  // swap back to the real implementation above once verify-otp actually exists.
   const verifyMutation = useMutation({
     mutationFn: async (code: string) => {
-      const response = await fetch("https://localhost:5037/api/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otp: code }),
-      });
-      if (!response.ok) throw new Error("Incorrect activation code parsed.");
-      return await response.json();
+      if (code === "123456") {
+        return { success: true };
+      }
+      throw new Error("Invalid OTP code. (Dev mode: use 123456)");
     }
   });
 
