@@ -218,11 +218,11 @@ export const web: ILoginWebStyles = {
   logoText: "text-xl text-white",
   title: "text-2xl font-bold text-gray-900 mb-6 tracking-tight text-center subpixel-antialiased",
   formWrapper: "w-full",
-  inputWrapper: "w-full mb-4", 
+  inputWrapper: "w-full mb-4",
   inputField: (hasError: boolean): string => `
     w-full px-4 py-3.5 rounded-xl border text-base outline-none transition-all duration-200 text-gray-900 placeholder-gray-400
-    ${hasError 
-      ? "border-red-500 bg-red-50/30 focus:ring-1 focus:ring-red-500" 
+    ${hasError
+      ? "border-red-500 bg-red-50/30 focus:ring-1 focus:ring-red-500"
       : "border-gray-200 bg-gray-50/50 focus:border-purple-600 focus:bg-white"
     }
   `.replace(/\s+/g, ' ').trim(),
