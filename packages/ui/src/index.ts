@@ -9,6 +9,10 @@ export * from './components/AutoCompleteDropdown';
 
 // Export domain features
 export * from './features/bookings/BookingDashboard';
+// NOTE: SearchWidget is intentionally not exported/routed yet — it (via its
+// Calendar sub-component) imports @react-native-community/datetimepicker,
+// a native-only package with Flow syntax that Vite cannot bundle for web.
+// Needs a web-compatible date picker before it can be wired into apps/Web.
 export { LoginFeature as LoginMobileFeature } from './features/authentication/LoginFeature';
 export { LoginFeature as LoginWebFeature } from './features/authentication/LoginFeature.web';
 export { OtpFeature as OtpMobileFeature } from './features/authentication/OtpFeature';

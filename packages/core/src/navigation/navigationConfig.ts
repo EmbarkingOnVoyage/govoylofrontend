@@ -53,10 +53,28 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
   }, 
   
-  Settings: {}, Help: {}, Feedback: {}, Notifications: {}, 
-  TermsAndConditions: {}, PrivacyPolicy: {}, AboutUs: {}, ContactUs: {}, FAQ: {}, 
-  Support: {}, Dashboard: {}, Reports: {}, Analytics: {}, UserManagement: {}, 
-  AdminPanel: {}, Billing: {}, Subscription: {}, PaymentMethods: {}, Invoices: {}, 
-  TransactionHistory: {}, ActivityLog: {}, SystemSettings: {}, Integrations: {}, 
+  Settings: {}, Help: {}, Feedback: {}, Notifications: {},
+  TermsAndConditions: {}, PrivacyPolicy: {}, AboutUs: {}, ContactUs: {}, FAQ: {},
+  Support: {}, Dashboard: {}, Reports: {}, Analytics: {}, UserManagement: {},
+  AdminPanel: {}, Billing: {}, Subscription: {}, PaymentMethods: {}, Invoices: {},
+  TransactionHistory: {}, ActivityLog: {}, SystemSettings: {}, Integrations: {},
   APIKeys: {}, Webhooks: {}
 };
+
+// Screens with a real, routable page on the Web app. Only these get a URL —
+// the many placeholder AppScreen entries above have no component yet, so
+// they're intentionally left out of this map rather than given a fake route.
+// SearchWidget is deliberately excluded: it (via Calendar) imports a
+// native-only date-picker package that Vite cannot bundle for web today.
+export const SCREEN_TO_PATH: Partial<Record<AppScreen, string>> = {
+  Landing: '/',
+  SignIn: '/signin',
+  OTP: '/otp',
+  BookingDashboard: '/booking-dashboard',
+  Search: '/search',
+  Profile: '/profile',
+};
+
+export const PATH_TO_SCREEN: Record<string, AppScreen> = Object.fromEntries(
+  Object.entries(SCREEN_TO_PATH).map(([screen, path]) => [path, screen as AppScreen])
+);
