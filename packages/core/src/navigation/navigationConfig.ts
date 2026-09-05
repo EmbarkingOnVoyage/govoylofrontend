@@ -19,6 +19,7 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
     ON_CONTINUE: 'SearchWidget',
     ON_SIGN_IN_PRESS: 'SignIn',
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
+    ON_NAVIGATE_TO_PROFILE: 'Profile',
   },
   SearchWidget: {
     ON_SEARCH_SUBMIT: 'BookingDashboard',
@@ -52,7 +53,8 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
   }, 
   Profile: {
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
-  }, 
+    ON_NAVIGATE_TO_PROFILE: 'Profile',
+  },
   
   Settings: {}, Help: {}, Feedback: {}, Notifications: {},
   TermsAndConditions: {}, PrivacyPolicy: {}, AboutUs: {}, ContactUs: {}, FAQ: {},
