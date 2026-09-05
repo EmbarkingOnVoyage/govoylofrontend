@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { authContextCache } from "../authentication/authContextCache";
 import { useAuth } from "../authentication/AuthContext";
 
 export interface CustomerProfile {
@@ -28,26 +27,20 @@ export interface CustomerProfile {
   autoAddTravelInsurance: boolean;
 }
 
-async function fetchCustomerProfile(): Promise<CustomerProfile> {
-  const response = await fetch("https://localhost:5037/api/v1/customer/profile", {
-    headers: {
-      Authorization: `Bearer ${authContextCache.getAccessToken()}`,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to load profile details.");
-  }
-
-  return response.json();
-}
-
 export function useCustomerProfile() {
-  const { isLoggedIn } = useAuth();
+  const { isLoggedIn, authFetch } = useAuth();
 
   return useQuery({
     queryKey: ["customer-profile"],
-    queryFn: fetchCustomerProfile,
+    queryFn: async (): Promise<CustomerProfile> => {
+      const response = await authFetch("https://localhost:5037/api/v1/customer/profile");
+
+      if (!response.ok) {
+        throw new Error("Failed to load profile details.");
+      }
+
+      return response.json();
+    },
     enabled: isLoggedIn,
   });
 }

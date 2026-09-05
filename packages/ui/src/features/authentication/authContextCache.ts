@@ -47,6 +47,9 @@ export const authContextCache = {
   getAccessToken(): string | null {
     return sessionCache?.accessToken ?? null;
   },
+  getRefreshToken(): string | null {
+    return sessionCache?.refreshToken ?? null;
+  },
   isLoggedIn(): boolean {
     return sessionCache !== null;
   },
