@@ -25,7 +25,7 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
 
   const verifyMutation = useMutation({
     mutationFn: async (code: string) => {
-      const response = await fetch("https://localhost:5037/api/auth/verify-otp", {
+      const response = await fetch("https://localhost:5037/api/auth/login-otp", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -34,9 +34,12 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
           otp: code,
         }),
       });
-      if (!response.ok) throw new Error("Incorrect activation code parsed.");
       const result = await response.json();
-      return { success: result.isVerified, message: result.message };
+      if (!response.ok) {
+        throw new Error(result?.error?.message || "Incorrect activation code parsed.");
+      }
+      authContextCache.setSession(result.accessToken, result.refreshToken);
+      return { success: true, message: result.message };
     }
   });
 
