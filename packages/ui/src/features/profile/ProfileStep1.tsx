@@ -5,6 +5,7 @@ import { CoTravellerContent } from './CoTraveller';
 import { CustomizationPreferencesContent } from './CustomizationPreferences';
 import { PaymentMethodsContent } from './PaymentMethods';
 import { PrivacyDataManagementContent } from './PrivacyDataManagement';
+import { useCustomerProfile } from './useCustomerProfile';
 
 interface ProfileStep1Props {
   // 🟢 Injected directly from your factory layout engine inside main.tsx
@@ -13,6 +14,7 @@ interface ProfileStep1Props {
 
 export const ProfileStep1: React.FC<ProfileStep1Props> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState('Personal details');
+  const { data: profile } = useCustomerProfile();
 
   // Restored: Complete configuration options chunk 
   const tabs = [
@@ -26,7 +28,7 @@ export const ProfileStep1: React.FC<ProfileStep1Props> = ({ onNavigate }) => {
   const renderContent = () => {
     switch (activeTab) {
       case 'Personal details':
-        return <PersonalDetailsContent />;
+        return <PersonalDetailsContent profile={profile} />;
       case 'Co-Traveller':
         return <CoTravellerContent />;
       case 'Customization preferences':
