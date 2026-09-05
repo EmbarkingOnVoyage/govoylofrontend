@@ -39,7 +39,7 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
   // 💡 FIXED: Removed the invalid "transitions" wrapper. 
   // Configured as a flat matrix object matching your strict matrix contract parameters
   OTP: {
-    ON_OTP_VERIFIED: "Search",
+    ON_OTP_VERIFIED: "Landing",
     ON_BACK_TO_LOGIN: "SignIn",
     ON_NAVIGATE_TO_PROFILE: 'Profile',
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',

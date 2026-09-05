@@ -1,30 +1,32 @@
 import React, { useState } from "react";
 import { profileStyles as s } from "../../styles/components/ProfileStep1.styles";
-import { authContextCache } from "../../features/authentication/authContextCache";
+import { useAuth } from "../../features/authentication/AuthContext";
 
 interface MenuBarProps {
   onNavigate?: (rule: string) => void;
 }
 export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const { isLoggedIn, openLogin, logout } = useAuth();
 
-  const isLoggedIn = authContextCache.isLoggedIn();
   const handleAction = (
     target: "LOGIN" | "PROFILE" | "BOOKINGS" | "SAVED" | "SIGNOUT",
   ) => {
     setIsOpen(false); // Close dropdown immediately on select
+
+    if (target === "LOGIN") {
+      openLogin();
+      return;
+    }
+
     if (!onNavigate) return;
     switch (target) {
       case "PROFILE":
         onNavigate("ON_NAVIGATE_TO_PROFILE");
         break;
 
-      case "LOGIN":
-        onNavigate("ON_NAVIGATE_TO_SIGN_IN");
-        break;
-
       case "SIGNOUT":
-        authContextCache.clearSession();
+        logout();
         onNavigate("ON_NAVIGATE_TO_SIGN_IN");
         break;
 

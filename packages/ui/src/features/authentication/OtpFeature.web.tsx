@@ -2,14 +2,18 @@ import React, { useState, useRef, useEffect } from "react";
 import { DashboardLayout } from '../../components/layout/Layout'; 
 import { useMutation } from "@tanstack/react-query"; 
 import { authContextCache } from "./authContextCache";
+import { useAuth } from "./AuthContext";
 // 🔑 IMPORT CENTRALIZED BEST-PRACTICE STYLES
 import { OtpWebStyles as s } from "@workspace/ui";
 
 interface OtpFeatureProps {
   onNavigate: (rule: string) => void;
+  variant?: "page" | "modal";
+  onCloseModal?: () => void;
 }
 
-export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
+export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate, variant = "page", onCloseModal }) => {
+  const { login } = useAuth();
   const [otp, setOtp] = useState<string[]>(new Array(6).fill(""));
   const [errorMessage, setErrorMessage] = useState("");
   const [countdown, setCountdown] = useState(54);
@@ -38,7 +42,7 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
       if (!response.ok) {
         throw new Error(result?.error?.message || "Incorrect activation code parsed.");
       }
-      authContextCache.setSession(result.accessToken, result.refreshToken);
+      login(result.accessToken, result.refreshToken);
       return { success: true, message: result.message };
     }
   });
@@ -97,12 +101,14 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
 
   const isWorking = verifyMutation.isPending;
 
-  return (
-    <DashboardLayout showSidebar={false} onNavigate={onNavigate}>
+  const content = (
       <div className={s.container}>
         <button className={s.backArrow} onClick={() => onNavigate("ON_BACK_TO_LOGIN")}>&larr;</button>
-        <button className={s.closeButton} onClick={() => console.log("Close Clicked")}>&times;</button>
-        
+        <button
+          className={s.closeButton}
+          onClick={() => (onCloseModal ? onCloseModal() : console.log("Close Clicked"))}
+        >&times;</button>
+
         <div className={s.logoWrapper}>
           <span className={s.logoText}>⚛️</span>
         </div>
@@ -156,6 +162,13 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
           </p>
         </div>
       </div>
-      </DashboardLayout>
+  );
+
+  return variant === "modal" ? (
+    content
+  ) : (
+    <DashboardLayout showSidebar={false} onNavigate={onNavigate}>
+      {content}
+    </DashboardLayout>
   );
 };

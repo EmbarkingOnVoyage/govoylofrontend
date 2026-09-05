@@ -15,6 +15,8 @@ vi.mock('@workspace/core', async (importOriginal) => {
 
 vi.mock('@workspace/ui', () => ({
   AppProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  AuthModal: () => null,
   BaseLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   DashboardLayout: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="dashboard-layout">{children}</div>

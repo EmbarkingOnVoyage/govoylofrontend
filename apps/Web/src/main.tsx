@@ -4,7 +4,7 @@ import "./global.css";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AppProvider, LoginWebFeature, OtpWebFeature, ProfileStep1, BookingDashboard, DashboardLayout } from "@workspace/ui";
+import { AppProvider, AuthProvider, AuthModal, LoginWebFeature, OtpWebFeature, ProfileStep1, BookingDashboard, DashboardLayout } from "@workspace/ui";
 import { ErrorBoundary, NavigationRule } from "@workspace/core";
 import { useWebFlowNavigation } from "./navigation/useWebFlowNavigation";
 
@@ -36,22 +36,32 @@ const AppWorkflowRouter: React.FC = () => {
   const onNavigateLoose = (rule: string) => navigateByRule(rule as NavigationRule);
 
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={
-          <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
-            <div />
-          </DashboardLayout>
-        }
-      />
-      <Route path="/signin" element={<LoginWebFeature onNavigate={onNavigateLoose} />} />
-      <Route path="/otp" element={<OtpWebFeature onNavigate={onNavigateLoose} />} />
-      <Route path="/booking-dashboard" element={<BookingDashboard />} />
-      <Route path="/search" element={<div>Search Screen Component Placeholder</div>} />
-      <Route path="/profile" element={<ProfileStep1 onNavigate={onNavigateLoose} />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
+              <div />
+            </DashboardLayout>
+          }
+        />
+        <Route path="/signin" element={<LoginWebFeature onNavigate={onNavigateLoose} />} />
+        <Route path="/otp" element={<OtpWebFeature onNavigate={onNavigateLoose} />} />
+        <Route path="/booking-dashboard" element={<BookingDashboard />} />
+        <Route
+          path="/search"
+          element={
+            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
+              <div>Search Screen Component Placeholder</div>
+            </DashboardLayout>
+          }
+        />
+        <Route path="/profile" element={<ProfileStep1 onNavigate={onNavigateLoose} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <AuthModal />
+    </>
   );
 };
 
@@ -68,9 +78,11 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary contextName="WEB-APP-SHELL">
       <AppProvider>
-        <BrowserRouter>
-          <AppWorkflowRouter />
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <AppWorkflowRouter />
+          </BrowserRouter>
+        </AuthProvider>
       </AppProvider>
     </ErrorBoundary>
   </React.StrictMode>,

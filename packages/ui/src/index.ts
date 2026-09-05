@@ -19,6 +19,8 @@ export { OtpFeature as OtpMobileFeature } from './features/authentication/OtpFea
 export { OtpFeature as OtpWebFeature } from './features/authentication/OtpFeature.web';
 export { ProfileStep1 } from './features/profile/ProfileStep1';
 export { DashboardLayout } from './components/layout/Layout';
+export { AuthProvider, useAuth } from './features/authentication/AuthContext';
+export { AuthModal } from './features/authentication/AuthModal.web';
 
 // Export mobile-specific styles
 export * from './assets/index';
