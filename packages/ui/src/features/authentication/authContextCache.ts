@@ -3,6 +3,7 @@
  * without breaking strict navigation engine contracts.
  */
 let savedEmailCache = "user@email.com";
+let savedVerificationTokenCache = "";
 
 export const authContextCache = {
   setEmail(email: string) {
@@ -10,5 +11,11 @@ export const authContextCache = {
   },
   getEmail(): string {
     return savedEmailCache;
+  },
+  setVerificationToken(token: string) {
+    savedVerificationTokenCache = token;
+  },
+  getVerificationToken(): string {
+    return savedVerificationTokenCache;
   }
 };

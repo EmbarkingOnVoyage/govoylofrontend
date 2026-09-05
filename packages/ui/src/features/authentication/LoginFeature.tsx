@@ -38,7 +38,8 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
     mutation
       .mutateAsync({ email: email.trim().toLowerCase() })
       .then((data) => {
-        if (data && data.success) {
+        if (data && data.verificationToken) {
+          authContextCache.setVerificationToken(data.verificationToken);
           console.log("Background Mobile OTP dispatched:", data.message);
         }
       })
