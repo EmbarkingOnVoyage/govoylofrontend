@@ -4,12 +4,9 @@ import "./global.css";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AppProvider, LoginWebFeature, OtpWebFeature, ProfileStep1, BookingDashboard } from "@workspace/ui";
+import { AppProvider, LoginWebFeature, OtpWebFeature, ProfileStep1, BookingDashboard, DashboardLayout } from "@workspace/ui";
 import { ErrorBoundary, NavigationRule } from "@workspace/core";
 import { useWebFlowNavigation } from "./navigation/useWebFlowNavigation";
-
-// Mobile Screen Preview View
-import { LandingScreen } from "mobile-app/src/screens/LandingScreen";
 
 // 1. Contract Enforcement: Suppress platform-specific mobile warnings in the browser console
 if (process.env.NODE_ENV === "development") {
@@ -43,11 +40,9 @@ const AppWorkflowRouter: React.FC = () => {
       <Route
         path="/"
         element={
-          <LandingScreen
-            onNavigate={navigateByRule}
-            onLoginPress={() => navigateByRule("ON_SIGN_IN_PRESS")}
-            onGetStartedPress={() => navigateByRule("ON_CONTINUE")}
-          />
+          <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
+            <div />
+          </DashboardLayout>
         }
       />
       <Route path="/signin" element={<LoginWebFeature onNavigate={onNavigateLoose} />} />

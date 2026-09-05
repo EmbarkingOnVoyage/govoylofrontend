@@ -18,6 +18,7 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
   Landing: {
     ON_CONTINUE: 'SearchWidget',
     ON_SIGN_IN_PRESS: 'SignIn',
+    ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
   },
   SearchWidget: {
     ON_SEARCH_SUBMIT: 'BookingDashboard',

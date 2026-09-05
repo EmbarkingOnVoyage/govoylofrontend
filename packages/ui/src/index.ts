@@ -18,6 +18,7 @@ export { LoginFeature as LoginWebFeature } from './features/authentication/Login
 export { OtpFeature as OtpMobileFeature } from './features/authentication/OtpFeature';
 export { OtpFeature as OtpWebFeature } from './features/authentication/OtpFeature.web';
 export { ProfileStep1 } from './features/profile/ProfileStep1';
+export { DashboardLayout } from './components/layout/Layout';
 
 // Export mobile-specific styles
 export * from './assets/index';

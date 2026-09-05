@@ -16,16 +16,15 @@ vi.mock('@workspace/core', async (importOriginal) => {
 vi.mock('@workspace/ui', () => ({
   AppProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   BaseLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DashboardLayout: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dashboard-layout">{children}</div>
+  ),
   LoginWebFeature: () => <div data-testid="login-feature">Login Form Mock</div>,
   OtpWebFeature: () => <div>OTP Form Mock</div>,
   LoginMobileFeature: () => <div data-testid="login-feature">Login Form Mock</div>,
   OtpMobileFeature: () => <div>OTP Form Mock</div>,
   ProfileStep1: () => <div>Profile Mock</div>,
   BookingDashboard: () => <div>Booking Dashboard Mock</div>,
-}));
-
-vi.mock('mobile-app/src/screens/LandingScreen', () => ({
-  LandingScreen: () => <div>Landing Mobile Screen Mock</div>,
 }));
 
 // 🔑 Tiny utility to pause execution briefly, letting React complete its initial rendering cycle
@@ -68,9 +67,9 @@ describe('Web App Shell Boot Strategy', () => {
     // 🔑 Pause for a split second to let React mount and paint the default route inside #root
     await flushReactRenderQueue();
 
-    // The default route ("/") renders the Landing screen — guests should never be
-    // forced into sign-in just by loading the app.
-    expect(rootElement?.innerHTML).toContain('Landing Mobile Screen Mock');
+    // The default route ("/") renders a plain header/background shell — guests
+    // should never be forced into sign-in just by loading the app.
+    expect(rootElement?.innerHTML).toContain('data-testid="dashboard-layout"');
   });
 
   test('should catch contract violations if the DOM root node element is missing', async () => {
