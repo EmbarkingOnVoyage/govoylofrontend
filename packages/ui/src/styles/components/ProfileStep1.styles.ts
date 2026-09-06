@@ -2,12 +2,12 @@
 
 export const profileStyles = {
   container: "min-h-screen bg-[#F4F4F6] font-sans antialiased text-[#1A1A1A]",
-  navbar: "flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shadow-sm",
-  navLeft: "flex items-center space-x-8",
-  logo: "h-8 text-[#5113A3] font-bold text-2xl tracking-wide",
-  navLinks: "flex space-x-6 text-sm font-medium text-gray-600",
+  navbar: "flex items-center justify-between h-16 px-8 bg-white border-b border-gray-100 shadow-sm",
+  navLeft: "flex items-center space-x-6",
+  logo: "h-10 w-auto",
+  navLinks: "flex space-x-4 text-[15px] font-medium text-[#182339]",
   navLink: "hover:text-[#5113A3] transition-colors cursor-pointer",
-  navRight: "flex items-center space-x-6 text-xs text-gray-700 font-medium",
+  navRight: "flex items-center space-x-3 text-[15px] text-[#182339] font-medium",
   
   heroBanner: "relative bg-gradient-to-r from-[#6A16CB] to-[#350B65] h-[220px] w-full overflow-hidden flex items-end px-12 pb-6",
   heroBackground: "absolute inset-0 bg-cover bg-center",

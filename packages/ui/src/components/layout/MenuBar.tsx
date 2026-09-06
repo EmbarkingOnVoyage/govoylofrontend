@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { profileStyles as s } from "../../styles/components/ProfileStep1.styles";
 import { useAuth } from "../../features/authentication/AuthContext";
+import govoyloLogo from "../../assets/images/govoylo-logo.svg";
 
 interface MenuBarProps {
   onNavigate?: (rule: string) => void;
@@ -38,7 +39,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate }) => {
   return (
     <nav className={s.navbar}>
       <div className={s.navLeft}>
-        <div className={s.logo}>govoylo</div>
+        <img src={govoyloLogo} alt="goVoylo" className={s.logo} />
         <div className={s.navLinks}>
           <span className={s.navLink}>Flight</span>
           <span className={s.navLink}>Hotel</span>
