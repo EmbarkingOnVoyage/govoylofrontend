@@ -42,27 +42,29 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
               className={s.heroBackground}
               style={{ backgroundImage: `url(${profileBannerBg})`, opacity: 0.1 }}
             />
-            <div className={s.profileCard}>
-              <div className={s.avatarWrapper}>
-                {profile?.profileImageUrl ? (
-                  <img
-                    src={`${BASE_URL}${profile.profileImageUrl}`}
-                    alt="Avatar Profile"
-                    className={s.avatarImg}
-                  />
-                ) : (
-                  <div className={s.avatarPlaceholder}>{getInitials(profile)}</div>
-                )}
-                <div className={s.progressBadge}>{profile?.profileCompletionPercentage ?? 0}%</div>
-              </div>
-              <div className={s.profileMeta}>
-                <div className={s.profileEmail}>
-                  <span>{profile?.email || '—'}</span>
-                  {profile?.isEmailVerified && <span className="text-green-400">✔</span>}
+            <div className={s.heroInner}>
+              <div className={s.profileCard}>
+                <div className={s.avatarWrapper}>
+                  {profile?.profileImageUrl ? (
+                    <img
+                      src={`${BASE_URL}${profile.profileImageUrl}`}
+                      alt="Avatar Profile"
+                      className={s.avatarImg}
+                    />
+                  ) : (
+                    <div className={s.avatarPlaceholder}>{getInitials(profile)}</div>
+                  )}
+                  <div className={s.progressBadge}>{profile?.profileCompletionPercentage ?? 0}%</div>
                 </div>
-                <div className={s.profilePhone}>
-                  <span>{profile?.phone || '—'}</span>
-                  {profile?.isPhoneVerified && <span className="text-green-400">✔</span>}
+                <div className={s.profileMeta}>
+                  <div className={s.profileEmail}>
+                    <span>{profile?.email || '—'}</span>
+                    {profile?.isEmailVerified && <span className="text-green-400">✔</span>}
+                  </div>
+                  <div className={s.profilePhone}>
+                    <span>{profile?.phone || '—'}</span>
+                    {profile?.isPhoneVerified && <span className="text-green-400">✔</span>}
+                  </div>
                 </div>
               </div>
             </div>

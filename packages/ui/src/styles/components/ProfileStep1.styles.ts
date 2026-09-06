@@ -2,16 +2,21 @@
 
 export const profileStyles = {
   container: "min-h-screen bg-[#F4F4F6] font-sans antialiased text-[#1A1A1A]",
-  navbar: "flex items-center justify-between h-16 px-8 bg-white border-b border-gray-100 shadow-sm",
+  navbar: "h-16 bg-white border-b border-gray-100 shadow-sm flex items-center",
+  // Shared with heroInner/mainLayout so the navbar, banner, and page content
+  // below all line up on the same left/right edges at any viewport width —
+  // a plain px-N on each section only coincidentally aligns them.
+  navInner: "flex items-center justify-between w-full max-w-7xl mx-auto px-6",
   navLeft: "flex items-center space-x-6",
   logo: "h-10 w-auto",
   navLinks: "flex space-x-4 text-[15px] font-medium text-[#182339]",
   navLink: "hover:text-[#5113A3] transition-colors cursor-pointer",
   navRight: "flex items-center space-x-3 text-[15px] text-[#182339] font-medium",
   
-  heroBanner: "relative bg-gradient-to-r from-[#6A16CB] to-[#350B65] h-[220px] w-full overflow-hidden flex items-end px-12 pb-6",
+  heroBanner: "relative bg-gradient-to-r from-[#6A16CB] to-[#350B65] h-[220px] w-full overflow-hidden",
   heroBackground: "absolute inset-0 bg-cover bg-center",
-  profileCard: "flex flex-col items-start bg-transparent z-10",
+  heroInner: "relative z-10 max-w-7xl mx-auto px-6 h-full flex items-end pb-6",
+  profileCard: "flex flex-col items-start bg-transparent",
   avatarWrapper: "relative w-[120px] h-[120px] rounded-full border-4 border-white bg-white shadow-md overflow-hidden",
   avatarImg: "w-full h-full object-cover",
   avatarPlaceholder: "w-full h-full flex items-center justify-center bg-[#7B2CBF] text-white text-2xl font-bold uppercase",

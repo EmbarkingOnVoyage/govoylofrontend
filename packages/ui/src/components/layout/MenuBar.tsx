@@ -39,6 +39,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate }) => {
 
   return (
     <nav className={s.navbar}>
+      <div className={s.navInner}>
       <div className={s.navLeft}>
         <img src={govoyloLogo} alt="goVoylo" className={s.logo} />
         <div className={s.navLinks}>
@@ -95,6 +96,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate }) => {
             )}
           </>
         )}
+      </div>
       </div>
     </nav>
   );
