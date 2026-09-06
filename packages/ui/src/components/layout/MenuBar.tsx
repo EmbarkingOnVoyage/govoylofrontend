@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Menu, UserRound, Briefcase, Heart, LogOut } from "lucide-react";
 import { profileStyles as s } from "../../styles/components/ProfileStep1.styles";
 import { useAuth } from "../../features/authentication/AuthContext";
 import govoyloLogo from "../../assets/images/govoylo-logo.svg";
@@ -60,35 +61,34 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate }) => {
         {isLoggedIn && (
           <>
             <span
-              className="cursor-pointer text-lg px-2 select-none hover:bg-gray-50 rounded-md transition-colors"
+              className="cursor-pointer p-2.5 select-none hover:bg-gray-50 rounded-md transition-colors text-[#182339] flex items-center"
               onClick={() => setIsOpen(!isOpen)}>
-              ☰
+              <Menu size={20} strokeWidth={2} />
             </span>
             {isOpen && (
-              <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-100 shadow-xl rounded-xl p-2 z-50 flex flex-col text-sm text-gray-700">
+              <div className="absolute right-0 top-full mt-2 w-[194px] bg-white shadow-xl rounded-2xl p-2 z-50 flex flex-col text-[15px] font-medium text-[#182339]">
                 <button
                   onClick={() => handleAction("PROFILE")}
-                  className="flex items-center space-x-3 w-full text-left px-4 py-2.5 hover:bg-gray-50 rounded-lg transition-colors font-medium">
-                  <span className="text-gray-500">👤</span>
+                  className="flex items-center space-x-3 w-full text-left px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors">
+                  <UserRound size={20} strokeWidth={2} />
                   <span>My account</span>
                 </button>
                 <button
                   onClick={() => handleAction("BOOKINGS")}
-                  className="flex items-center space-x-3 w-full text-left px-4 py-2.5 hover:bg-gray-50 rounded-lg transition-colors font-medium">
-                  <span className="text-gray-500">🧳</span>
+                  className="flex items-center space-x-3 w-full text-left px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors">
+                  <Briefcase size={20} strokeWidth={2} />
                   <span>Bookings</span>
                 </button>
                 <button
                   onClick={() => handleAction("SAVED")}
-                  className="flex items-center space-x-3 w-full text-left px-4 py-2.5 hover:bg-gray-50 rounded-lg transition-colors font-medium">
-                  <span className="text-gray-500">🤍</span>
+                  className="flex items-center space-x-3 w-full text-left px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors">
+                  <Heart size={20} strokeWidth={2} />
                   <span>Saved</span>
                 </button>
-                <hr className="my-1 border-gray-100" />
                 <button
                   onClick={() => handleAction("SIGNOUT")}
-                  className="flex items-center space-x-3 w-full text-left px-4 py-2.5 hover:bg-red-50 text-red-600 rounded-lg transition-colors font-medium">
-                  <span>🚪</span>
+                  className="flex items-center space-x-3 w-full text-left px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors">
+                  <LogOut size={20} strokeWidth={2} />
                   <span>Sign out</span>
                 </button>
               </div>
