@@ -47,7 +47,7 @@ export const ProfileStep1: React.FC<ProfileStep1Props> = ({ onNavigate }) => {
   };
 
   return (
-    <DashboardLayout tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} showSidebar={true} onNavigate={onNavigate}>
+    <DashboardLayout tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} showSidebar={true} onNavigate={onNavigate} profile={profile}>
       {renderContent()}
     </DashboardLayout>
   );

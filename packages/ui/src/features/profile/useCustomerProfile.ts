@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "../authentication/AuthContext";
 
-const BASE_URL = "https://localhost:5037";
+export const BASE_URL = "https://localhost:5037";
 
 export interface CustomerProfile {
   id: string;

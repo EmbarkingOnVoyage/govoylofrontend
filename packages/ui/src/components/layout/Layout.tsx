@@ -2,6 +2,7 @@ import React from 'react';
 import { MenuBar } from './MenuBar';
 import { Sidebar, TabItem } from './Sidebar';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
+import { BASE_URL, type CustomerProfile } from '../../features/profile/useCustomerProfile';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -10,6 +11,12 @@ interface DashboardLayoutProps {
   setActiveTab?: (tab: string) => void;
   showSidebar?: boolean; // New control flag
   onNavigate?: (routePath: string) => void;
+  profile?: CustomerProfile;
+}
+
+function getInitials(profile?: CustomerProfile): string {
+  const initials = `${profile?.firstName?.[0] ?? ''}${profile?.lastName?.[0] ?? ''}`;
+  return initials || '?';
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -18,7 +25,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   activeTab = '',
   setActiveTab = () => {},
   showSidebar = true,
-  onNavigate
+  onNavigate,
+  profile
 }) => {
   return (
     <div className={s.container}>
@@ -32,21 +40,25 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <div className={s.heroBackground} />
             <div className={s.profileCard}>
               <div className={s.avatarWrapper}>
-                <img
-                  src="https://unsplash.com"
-                  alt="Avatar Profile"
-                  className={s.avatarImg}
-                />
-                <div className={s.progressBadge}>50%</div>
+                {profile?.profileImageUrl ? (
+                  <img
+                    src={`${BASE_URL}${profile.profileImageUrl}`}
+                    alt="Avatar Profile"
+                    className={s.avatarImg}
+                  />
+                ) : (
+                  <div className={s.avatarPlaceholder}>{getInitials(profile)}</div>
+                )}
+                <div className={s.progressBadge}>{profile?.profileCompletionPercentage ?? 0}%</div>
               </div>
               <div className={s.profileMeta}>
                 <div className={s.profileEmail}>
-                  <span>Kishorpawar@gmail.com</span>
-                  <span className="text-green-400">✔</span>
+                  <span>{profile?.email || '—'}</span>
+                  {profile?.isEmailVerified && <span className="text-green-400">✔</span>}
                 </div>
                 <div className={s.profilePhone}>
-                  <span>+91 9123405678</span>
-                  <span className="text-green-400">✔</span>
+                  <span>{profile?.phone || '—'}</span>
+                  {profile?.isPhoneVerified && <span className="text-green-400">✔</span>}
                 </div>
               </div>
             </div>

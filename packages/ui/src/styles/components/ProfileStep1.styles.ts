@@ -14,6 +14,7 @@ export const profileStyles = {
   profileCard: "flex items-center space-x-4 bg-transparent z-10 translate-y-3",
   avatarWrapper: "relative w-24 h-24 rounded-full border-4 border-white bg-white shadow-md overflow-hidden",
   avatarImg: "w-full h-full object-cover",
+  avatarPlaceholder: "w-full h-full flex items-center justify-center bg-[#7B2CBF] text-white text-2xl font-bold uppercase",
   progressBadge: "absolute bottom-0 left-1/2 -translate-x-1/2 bg-white/90 backdrop-blur-sm text-[10px] font-bold text-gray-700 px-2 py-0.5 rounded-full border border-gray-200 shadow-sm",
   profileMeta: "text-white mt-4",
   profileEmail: "flex items-center space-x-1 text-sm opacity-90",
