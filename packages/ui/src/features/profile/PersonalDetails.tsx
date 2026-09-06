@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
-import type { CustomerProfile } from './useCustomerProfile';
+import { useUpdateCustomerProfile, type CustomerProfile } from './useCustomerProfile';
 
 interface PersonalDetailsContentProps {
   profile?: CustomerProfile;
@@ -15,6 +15,20 @@ function formatDate(isoDate: string | null | undefined): string {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   return `${day}/${month}/${date.getFullYear()}`;
+}
+
+// Inverse of formatDate: parses the form's DD/MM/YYYY display back into an ISO
+// date string for the API. Returns null for empty/unparseable input.
+function parseDisplayDate(display: string): string | null {
+  const match = display.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  const [, day, month, year] = match;
+  // Build the date at UTC midnight rather than local midnight — using local
+  // time here and then calling toISOString() shifts the calendar day
+  // backward by one in any timezone ahead of UTC (e.g. IST).
+  const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+  if (isNaN(date.getTime())) return null;
+  return date.toISOString();
 }
 
 export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ profile }) => {
@@ -34,6 +48,16 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
   const [passportIssuingCountry, setPassportIssuingCountry] = useState('');
   const [panCardNumber, setPanCardNumber] = useState('');
   const [autoAddTravelInsurance, setAutoAddTravelInsurance] = useState(false);
+
+  // The passport/PAN inputs display the API's masked value (e.g. "••••4567"), never
+  // the real number, so sending that back would either corrupt the stored value or
+  // (now that the backend preserves unedited fields) just be silently ignored — track
+  // whether the user has actually retyped these so we know when there's a real edit.
+  const [passportNumberEdited, setPassportNumberEdited] = useState(false);
+  const [panCardNumberEdited, setPanCardNumberEdited] = useState(false);
+  const [saveError, setSaveError] = useState('');
+
+  const updateProfile = useUpdateCustomerProfile();
 
   // Only overwrite a field when the API actually has a value for it — fields
   // with no value keep whatever the form already had (its default/placeholder).
@@ -55,7 +79,36 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
     if (profile.passportIssuingCountry) setPassportIssuingCountry(profile.passportIssuingCountry);
     if (profile.maskedPanCardNumber) setPanCardNumber(profile.maskedPanCardNumber);
     setAutoAddTravelInsurance(profile.autoAddTravelInsurance);
+    // A fresh load (including a post-save refetch) always shows the masked value
+    // again, so any prior "user edited this" tracking no longer applies.
+    setPassportNumberEdited(false);
+    setPanCardNumberEdited(false);
   }, [profile]);
+
+  const handleSave = async () => {
+    setSaveError('');
+    try {
+      await updateProfile.mutateAsync({
+        firstName,
+        lastName,
+        phone,
+        gender,
+        dateOfBirth: parseDisplayDate(dateOfBirth),
+        nationality,
+        maritalStatus,
+        anniversary: parseDisplayDate(anniversary),
+        cityOfResidence,
+        state,
+        autoAddTravelInsurance,
+        passportNumber: passportNumberEdited ? passportNumber : undefined,
+        passportExpiryDate: passportNumberEdited ? parseDisplayDate(passportExpiryDate) : undefined,
+        passportIssuingCountry: passportNumberEdited ? passportIssuingCountry : undefined,
+        panCardNumber: panCardNumberEdited ? panCardNumber : undefined,
+      });
+    } catch (err: any) {
+      setSaveError(err?.message || 'Failed to save profile details.');
+    }
+  };
 
   // The Nationality/Marital status/Anniversary/City/State/Issuing country selects
   // don't have a real picklist built yet (just a "Select" placeholder) — inject the
@@ -70,7 +123,15 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
           <h1 className={s.sectionTitle}>Personal details</h1>
           <p className={s.sectionSub}>Update your info and find out how it's used.</p>
         </div>
-        <button className={s.saveBtn}>Save</button>
+        <div className="flex flex-col items-end gap-1">
+          <button type="button" className={s.saveBtn} onClick={handleSave} disabled={updateProfile.isPending}>
+            {updateProfile.isPending ? 'Saving...' : 'Save'}
+          </button>
+          {updateProfile.isSuccess && !updateProfile.isPending && (
+            <span className="text-xs text-green-600">Saved</span>
+          )}
+          {saveError && <span className="text-xs text-red-600">{saveError}</span>}
+        </div>
       </div>
       <form onSubmit={(e) => e.preventDefault()}>
         {/* General Section */}
@@ -207,7 +268,10 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
               placeholder="Text"
               className={s.input}
               value={passportNumber}
-              onChange={(e) => setPassportNumber(e.target.value)}
+              onChange={(e) => {
+                setPassportNumber(e.target.value);
+                setPassportNumberEdited(true);
+              }}
             />
           </div>
           <div className={s.inputWrapper}>
@@ -238,7 +302,10 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
               placeholder="Text"
               className={s.input}
               value={panCardNumber}
-              onChange={(e) => setPanCardNumber(e.target.value)}
+              onChange={(e) => {
+                setPanCardNumber(e.target.value);
+                setPanCardNumberEdited(true);
+              }}
             />
           </div>
           <p className={s.noticeText}>
