@@ -23,11 +23,11 @@ export const profileStyles = {
 
   mainLayout: "max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-4 gap-8",
   sidebar: "space-y-1 bg-white p-3 rounded-xl border border-gray-100 shadow-sm h-fit",
-  sidebarItem: (isActive: boolean) => 
-    `flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors cursor-pointer ${
-      isActive 
-        ? "bg-[#F3EBFD] text-[#5113A3]" 
-        : "text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+  sidebarItem: (isActive: boolean) =>
+    `flex items-center space-x-3 px-4 py-3 rounded-lg text-[15px] font-medium text-[#182339] transition-colors cursor-pointer ${
+      isActive
+        ? "bg-[#ECEEF3]"
+        : "hover:bg-gray-50"
     }`,
 
   contentArea: "md:col-span-3 bg-white rounded-xl border border-gray-100 shadow-sm p-8 relative min-h-[70vh]",
@@ -35,11 +35,11 @@ export const profileStyles = {
   sectionDivider: "border-t-2 border-gray-200",
   // Same typography as formHeading, without its own top border/divider —
   // for sub-headings that sit under a divider that's already been drawn.
-  subHeading: "text-lg font-bold text-gray-900",
-  sectionTitle: "text-2xl font-bold text-gray-900",
+  subHeading: "text-lg font-bold text-black",
+  sectionTitle: "text-2xl font-bold text-black",
   sectionSub: "text-md text-gray-500 mt-1",
-  saveBtn: "bg-[#7B2CBF] hover:bg-[#6923A3] text-white font-medium text-sm px-6 py-2.5 rounded-lg shadow-sm transition-all",
-  cancelBtn: "text-[#7B2CBF] hover:text-[#6923A3] font-medium text-sm px-2 transition-all",
+  saveBtn: "bg-[#7C1AEE] hover:bg-[#6B17CC] text-white font-medium text-[15px] px-6 py-2.5 rounded-lg shadow-sm transition-all",
+  cancelBtn: "text-[#7C1AEE] hover:text-[#6B17CC] font-medium text-sm px-2 transition-all",
   headerActions: "flex items-center gap-4",
 
   // Outer wrapper: 3 equal columns on large screens. The form content
@@ -48,15 +48,15 @@ export const profileStyles = {
   // panel. Collapses to a single full-width column below the lg breakpoint.
   sectionOuter: "grid grid-cols-1 lg:grid-cols-3 gap-x-5 mb-8",
   gridForm: "lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4",
-  formHeading: "text-lg font-bold text-gray-900 border-t-2 border-gray-200 pt-4 mb-4 col-span-full",
-  
+  formHeading: "text-lg font-bold text-black border-t-2 border-gray-200 pt-4 mb-4 col-span-full",
+
   inputWrapper: "flex flex-col space-y-1.5",
   inputWrapperDouble: "flex flex-col space-y-1.5 lg:col-span-1 sm:col-span-2",
-  label: "text-md font-semibold text-gray-600",
-  input: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7B2CBF] focus:ring-1 focus:ring-[#7B2CBF] transition-all bg-white",
-  select: "w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:border-[#7B2CBF] focus:ring-1 focus:ring-[#7B2CBF] transition-all cursor-pointer",
-  
-  phoneGroup: "flex border border-gray-300 rounded-lg overflow-hidden focus-within:border-[#7B2CBF] focus-within:ring-1 focus-within:ring-[#7B2CBF] bg-white transition-all",
+  label: "text-[15px] font-medium text-[#182339]",
+  input: "w-full border border-[#ADB8CD] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C1AEE] focus:ring-1 focus:ring-[#7C1AEE] transition-all bg-white",
+  select: "w-full border border-[#ADB8CD] rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:border-[#7C1AEE] focus:ring-1 focus:ring-[#7C1AEE] transition-all cursor-pointer",
+
+  phoneGroup: "flex border border-[#ADB8CD] rounded-lg overflow-hidden focus-within:border-[#7C1AEE] focus-within:ring-1 focus-within:ring-[#7C1AEE] bg-white transition-all",
   phoneLeft: "flex items-center gap-1.5 bg-gray-50 border-r border-gray-200 px-3 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors",
   phoneInput: "w-full px-3 py-2 text-sm text-gray-900 focus:outline-none",
   
@@ -66,6 +66,6 @@ export const profileStyles = {
 
   noticeText: "text-[15px] text-gray-600 font-medium mt-2 col-span-full",
   checkboxRow: "flex items-center space-x-3 py-6 border-t-2 border-b-2 border-gray-200 mt-6",
-  checkbox: "w-4 h-4 text-[#7B2CBF] border-gray-300 rounded focus:ring-[#7B2CBF] cursor-pointer",
-  checkboxLabel: "text-md font-medium text-gray-600 cursor-pointer"
+  checkbox: "w-4 h-4 text-[#7C1AEE] border-[#ADB8CD] rounded focus:ring-[#7C1AEE] cursor-pointer",
+  checkboxLabel: "text-[15px] font-medium text-[#182339] cursor-pointer"
 };

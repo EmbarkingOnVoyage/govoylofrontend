@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { UserRound, Users, UserCog, CreditCard, UserLock } from 'lucide-react';
 import { DashboardLayout } from '../../components/layout/Layout';
 import { PersonalDetailsContent } from './PersonalDetails';
 import { CoTravellerContent } from './CoTraveller';
@@ -18,11 +19,11 @@ export const ProfileStep1: React.FC<ProfileStep1Props> = ({ onNavigate }) => {
 
   // Restored: Complete configuration options chunk 
   const tabs = [
-    { name: 'Personal details', icon: '👤' },
-    { name: 'Co-Traveller', icon: '👥' },
-    { name: 'Customization preferences', icon: '⚙️' },
-    { name: 'Payment methods', icon: '💳' },
-    { name: 'Privacy & data management', icon: '🔒' },
+    { name: 'Personal details', icon: UserRound },
+    { name: 'Co-Traveller', icon: Users },
+    { name: 'Customization preferences', icon: UserCog },
+    { name: 'Payment methods', icon: CreditCard },
+    { name: 'Privacy & data management', icon: UserLock },
   ];
 
   const renderContent = () => {

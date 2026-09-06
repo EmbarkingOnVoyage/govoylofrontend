@@ -22,10 +22,11 @@ export default defineConfig({
     dedupe: ['react', 'react-dom', 'react-native-web'],
   },
   optimizeDeps: {
-    // Explicitly pre-bundle react-native-web instead of letting Vite
-    // discover it ad-hoc through the workspace symlinks — same duplicate-
-    // React-instance issue as the dedupe setting above.
-    include: ['react-native-web'],
+    // Explicitly pre-bundle react-native-web (and any other package pulled
+    // in transitively through the workspace symlinks, e.g. lucide-react via
+    // @workspace/ui) instead of letting Vite discover it ad-hoc — same
+    // duplicate-React-instance issue as the dedupe setting above.
+    include: ['react-native-web', 'lucide-react'],
     esbuildOptions: {
       loader: {
         '.js': 'jsx',
