@@ -29,21 +29,8 @@ export const LandingScreen: React.FC<ILandingScreenProps> = ({ onNavigate }) => 
       setIsProcessing(false);
     }
   }
-  async function onSignInPress() {
-    setIsProcessing(true);
-    try {
-      // Developers can write any complex parallel data-gathering code here cleanly
-      await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate async network call
-      
-      // RUNTIME NAVIGATION EXECUTION:
-      // System automatically evaluates if ON_CONTINUE is allowed from here!
-      onNavigate('ON_CONTINUE'); 
-      
-    } catch (error) {
-      console.error("Process failed", error);
-    } finally {
-      setIsProcessing(false);
-    }
+  function onSignInPress() {
+    onNavigate('ON_SIGN_IN_PRESS');
   }
   return (
     <ImageBackground 

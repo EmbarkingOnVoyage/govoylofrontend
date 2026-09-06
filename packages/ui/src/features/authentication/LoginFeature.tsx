@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import {View, Text, TextInput, TouchableOpacity, Image} from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image } from "react-native";
 import { useRequestOtpMutation } from "@workspace/api";
-import { LoginMobileStyles as s } from "@workspace/ui"; 
+import { LoginMobileStyles as s } from "@workspace/ui";
 import { authContextCache } from "./authContextCache";
 import { LOGO_ASSETS } from "../../assets";
 
@@ -12,7 +12,6 @@ interface LoginFeatureProps {
 export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
   const [email, setEmail] = useState("");
   const [validationError, setValidationError] = useState("");
-  const [isApiLoading, setIsApiLoading] = useState(false);
 
   const mutation = useRequestOtpMutation();
 
@@ -40,31 +39,30 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
       .then((data) => {
         if (data && data.verificationToken) {
           authContextCache.setVerificationToken(data.verificationToken);
-          console.log("Background Mobile OTP dispatched:", data.message);
         }
       })
       .catch((err) => {
-        console.error("Background Mobile API Exception Intercepted:", err?.message);
+        console.error("Mobile send-otp request failed:", err?.message);
       });
   };
 
-  const isWorking = isApiLoading || mutation.isPending;
+  const isWorking = mutation.isPending;
   const SOCIAL_LOGIN_PROVIDERS = [
-    { id: "apple", onPress: () => alert("Apple Popup") },
-    { id: "google", onPress: () => alert("Google Popup") },
-    { id: "facebook", onPress: () => alert("Facebook Popup") },
+    { id: "apple", onPress: () => {} },
+    { id: "google", onPress: () => {} },
+    { id: "facebook", onPress: () => {} },
   ];
 
   return (
-    <View style={s.backdrop}>
+    <View style={s.screen}>
       <View style={s.container}>
-        <Text style={s.closeButton} onPress={() => console.log("Close")}>&times;</Text>
-
-        <View style={s.logoWrapper}>
-          <Text style={s.logoText}>⚛️</Text>
+        <View style={s.titleBlock}>
+          <Text style={s.title}>Welcome to your travel co-pilot</Text>
+          <Text style={s.subtitle}>
+            Log in or sign up to start the planning without the hassle
+          </Text>
         </View>
 
-        <Text style={s.title}>Log in or sign up</Text>
         <View style={s.formWrapper}>
           <TextInput
             placeholder="Email address"
@@ -81,7 +79,6 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
           />
           {!!validationError && <Text style={s.errorText}>{validationError}</Text>}
 
-          {/* 🔑 Perfectly maps to your new clean shared button class keys */}
           <TouchableOpacity
             style={[s.primaryButton, isWorking && s.disabledButton]}
             onPress={handleContinue}
@@ -89,7 +86,7 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
             activeOpacity={0.8}
           >
             <Text style={s.primaryButtonText}>
-              {isWorking ? "Processing..." : "Continue"}
+              {isWorking ? "Sending..." : "Continue"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -112,6 +109,13 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
             </TouchableOpacity>
           ))}
         </View>
+
+        <TouchableOpacity
+          style={s.guestLink}
+          onPress={() => onNavigate("ON_CONTINUE_AS_GUEST")}
+        >
+          <Text style={s.guestLinkText}>Continue as guest →</Text>
+        </TouchableOpacity>
 
         <Text style={s.footerText}>
           By continuing you agree to our <Text style={s.footerLink}>Terms & Privacy Policy</Text>.

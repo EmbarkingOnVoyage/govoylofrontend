@@ -1,13 +1,14 @@
 // packages/api/src/hooks/useAuth.ts
 import { useMutation } from '@tanstack/react-query';
-import { 
+import {
   LoginRequest, LoginResponse, LoginResponseSchema,
   OtpRequest, OtpResponse, OtpResponseSchema // 💡 Import new models
 } from '../models/auth.schema';
+import { AUTH_BASE_URL } from '../authConfig';
 
 // --- Existing Password Login Engine ---
 async function loginUser(payload: LoginRequest): Promise<LoginResponse> {
-  const response = await fetch('https://localhost:5037/api/auth/login', {
+  const response = await fetch(`${AUTH_BASE_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -31,10 +32,7 @@ export function useLoginMutation() {
 // backend exists at the correct URL; commented out in favor of the dev
 // mock below, which lets the OTP flow be tested without a live backend.
 async function requestOtp(payload: OtpRequest): Promise<OtpResponse> {
-  // Replace url string with your actual monorepo base client wrapper or API gateway path
-  debugger; // This line is for debugging purposes and can be removed in production
-
-  const response = await fetch('https://localhost:5037/api/auth/send-otp', {
+  const response = await fetch(`${AUTH_BASE_URL}/api/auth/send-otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),

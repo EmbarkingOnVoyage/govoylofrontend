@@ -6,26 +6,27 @@ import { ViewStyle, TextStyle, ImageStyle } from "react-native";
 // ==========================================
 
 export interface ILoginMobileStyles {
-  backdrop: ViewStyle;
+  screen: ViewStyle;
   container: ViewStyle;
-  closeButton: TextStyle;
-  logoWrapper: ViewStyle;
-  logoText: TextStyle;
+  titleBlock: ViewStyle;
   title: TextStyle;
+  subtitle: TextStyle;
   formWrapper: ViewStyle;
   inputWrapper: ViewStyle;
   inputField: TextStyle;
   inputFieldError: ViewStyle;
   errorText: TextStyle;
-  primaryButton: ViewStyle;       // Added 
-  disabledButton: ViewStyle;      // Added 
-  primaryButtonText: TextStyle;   // Added 
+  primaryButton: ViewStyle;       // Added
+  disabledButton: ViewStyle;      // Added
+  primaryButtonText: TextStyle;   // Added
   dividerRow: ViewStyle;
   dividerLine: ViewStyle;
   dividerText: TextStyle;
   socialRow: ViewStyle;
-  socialButton: ViewStyle;         // Added 
-  socialIcon: ImageStyle;          // Added 
+  socialButton: ViewStyle;         // Added
+  socialIcon: ImageStyle;          // Added
+  guestLink: ViewStyle;
+  guestLinkText: TextStyle;
   footerText: TextStyle;
   footerLink: TextStyle;
 }
@@ -60,67 +61,50 @@ export interface ILoginWebStyles {
 // ==========================================
 
 export const mobile: ILoginMobileStyles = {
-  backdrop: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(107, 114, 128, 0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 16,
-    zIndex: 999,
+  // Full-screen white page per the Figma "Welcome" mobile design — no
+  // backdrop/modal card. Content sits pinned toward the bottom half of the
+  // screen, matching the large empty top area in the design.
+  screen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
   },
   container: {
-    position: 'relative',
-    width: '100%',
-    maxWidth: 430,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' as any, 
+    flex: 1,
+    paddingHorizontal: 16,
+    justifyContent: 'flex-end',
+    paddingBottom: 24,
   },
-  closeButton: {
-    position: 'absolute',
-    top: 20,
-    right: 24,
-    fontSize: 26,
-    color: '#9CA3AF',
-    fontWeight: '400',
-  },
-  logoWrapper: {
-    width: 44,
-    height: 44,
-    backgroundColor: '#7F1DFF',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  logoText: {
-    fontSize: 20,
-    color: '#FFFFFF',
+  titleBlock: {
+    marginBottom: 24,
+    gap: 8,
   },
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111827',
-    marginBottom: 24,
-    letterSpacing: -0.5,
+    color: '#182339',
+    lineHeight: 32,
+  },
+  subtitle: {
+    fontSize: 15,
+    fontWeight: '400',
+    color: '#4C5973',
+    lineHeight: 20,
   },
   formWrapper: {
     width: '100%',
+    gap: 12,
   },
   inputWrapper: {},
   inputField: {
     width: '100%',
+    height: 44,
     paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#FAFAFA',
-    fontSize: 16,
-    color: '#111827',
+    borderColor: '#ADB8CD',
+    backgroundColor: '#FFFFFF',
+    fontSize: 15,
+    color: '#182339',
   },
   inputFieldError: {
     borderColor: '#EF4444',
@@ -135,21 +119,19 @@ export const mobile: ILoginMobileStyles = {
   },
   primaryButton: {
     width: "100%",
-    height: 54,
-    backgroundColor: "#7F1DFF",
-    borderRadius: 12,
+    height: 44,
+    backgroundColor: "#7C1AEE",
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 16,
   },
   disabledButton: {
-    backgroundColor: "#CCCCCC",
-    opacity: 0.6,
+    backgroundColor: "#CEAAFF",
   },
   primaryButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "700",
+    fontSize: 15,
+    fontWeight: "600",
   },
   dividerRow: {
     flexDirection: 'row',
@@ -161,47 +143,54 @@ export const mobile: ILoginMobileStyles = {
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#ECEEF3',
   },
   dividerText: {
     paddingHorizontal: 16,
-    fontSize: 12,
-    color: '#9CA3AF',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    fontSize: 13,
+    color: '#4C5973',
   },
   socialRow: {
     flexDirection: 'row',
     width: '100%',
     justifyContent: 'space-between',
-    marginBottom: 32,
+    gap: 12,
+    marginBottom: 24,
   },
   socialButton: {
     flex: 1,
-    height: 50,
-    backgroundColor: "#F0F2F5",
-    borderRadius: 12,
+    height: 44,
+    backgroundColor: "#CCD3E0",
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
   },
   socialIcon: {
-    width: 24,
-    height: 24,
+    width: 22,
+    height: 22,
     resizeMode: "contain",
   },
+  guestLink: {
+    alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 16,
+  },
+  guestLinkText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#7C1AEE',
+  },
   footerText: {
-    fontSize: 12,
-    color: '#9CA3AF',
+    fontSize: 13,
+    color: '#4C5973',
     textAlign: 'center',
     lineHeight: 18,
-    maxWidth: 290,
   },
   footerLink: {
     textDecorationLine: 'underline',
-    color: '#7F1DFF',
+    color: '#4C5973',
     fontWeight: '500',
   },
 };

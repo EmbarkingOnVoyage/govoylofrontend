@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
-import { useMutation } from "@tanstack/react-query"; 
+import { useMutation } from "@tanstack/react-query";
+import { AUTH_BASE_URL } from "@workspace/api";
 import { authContextCache } from "./authContextCache";
-// 🔑 IMPORT CENTRALIZED BEST-PRACTICE STYLES
 import { OtpMobileStyles as s } from "@workspace/ui";
 
 interface OtpFeatureProps {
@@ -25,7 +25,7 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
 
   const verifyMutation = useMutation({
     mutationFn: async (code: string) => {
-      const response = await fetch("https://localhost:5037/api/auth/login-otp", {
+      const response = await fetch(`${AUTH_BASE_URL}/api/auth/login-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -60,7 +60,7 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
   const handleKeyPress = (e: any, index: number) => {
     if (e.nativeEvent.key === "Backspace") {
       const newOtp = [...otp];
-      
+
       if (newOtp[index] !== "") {
         newOtp[index] = "";
         setOtp(newOtp);
@@ -93,23 +93,16 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
     }
   };
 
+  const isCodeComplete = otp.every((digit) => digit !== "");
   const isWorking = verifyMutation.isPending;
+  const isDisabled = isWorking || !isCodeComplete;
 
   return (
-    <View style={s.backdrop}>
+    <View style={s.screen}>
       <View style={s.container}>
-        <Text style={s.backArrow} onPress={() => onNavigate("ON_BACK_TO_LOGIN")}>&larr;</Text>
-        <Text style={s.closeButton} onPress={() => console.log("Close Clicked")}>&times;</Text>
-        
-        <View style={s.logoWrapper}>
-          <Text style={s.logoText}>⚛️</Text>
-        </View>
-
-        <Text style={s.title}>Log in or sign up</Text>
-
         <View style={s.contentWrapper}>
           <Text style={s.headingText}>Verify your email address</Text>
-          
+
           <Text style={s.subText}>
             we sent a 6-digit code to <Text style={s.emailHighlight}>{userEmail}</Text>. please enter code to continue.
           </Text>
@@ -135,10 +128,10 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
 
           {!!errorMessage && <Text style={s.errorText}>{errorMessage}</Text>}
 
-          <TouchableOpacity 
-            style={[s.submitButton, isWorking && s.disabledButton]} 
+          <TouchableOpacity
+            style={[s.submitButton, isDisabled && s.disabledButton]}
             onPress={handleVerify}
-            disabled={isWorking}
+            disabled={isDisabled}
             activeOpacity={0.8}
           >
             <Text style={s.submitButtonText}>

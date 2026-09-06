@@ -10,8 +10,9 @@ export type NavigationRule =
   | 'ON_SUBMIT_SUCCESS' 
   | 'ON_OTP_VERIFIED' 
   | 'ON_BACK_TO_LOGIN'
-  | 'ON_NAVIGATE_TO_PROFILE'  
-  | 'ON_NAVIGATE_TO_SIGN_IN'; 
+  | 'ON_NAVIGATE_TO_PROFILE'
+  | 'ON_NAVIGATE_TO_SIGN_IN'
+  | 'ON_CONTINUE_AS_GUEST';
 
 // 3. The Centralized Flow Map Matrix Contract
 export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<NavigationRule, AppScreen>>> = {
@@ -30,6 +31,7 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
     ON_SUBMIT_SUCCESS: "OTP",
     ON_NAVIGATE_TO_PROFILE: 'Profile',
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
+    ON_CONTINUE_AS_GUEST: 'Landing',
   },
   SignUp: {
     ON_BACK: 'Landing',
