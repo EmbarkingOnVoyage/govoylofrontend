@@ -3,6 +3,7 @@ import { MenuBar } from './MenuBar';
 import { Sidebar, TabItem } from './Sidebar';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
 import { BASE_URL, type CustomerProfile } from '../../features/profile/useCustomerProfile';
+import profileBannerBg from '../../assets/images/profile-banner-bg.png';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -37,7 +38,10 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         <>
           {/* Full Dashboard/Profile Mode Layout Grid */}
           <div className={s.heroBanner}>
-            <div className={s.heroBackground} />
+            <div
+              className={s.heroBackground}
+              style={{ backgroundImage: `url(${profileBannerBg})`, opacity: 0.1 }}
+            />
             <div className={s.profileCard}>
               <div className={s.avatarWrapper}>
                 {profile?.profileImageUrl ? (
