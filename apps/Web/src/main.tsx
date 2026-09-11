@@ -3,8 +3,8 @@
 import "./global.css";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AppProvider, AuthProvider, AuthModal, LoginWebFeature, OtpWebFeature, ProfileStep1, BookingDashboard, DashboardLayout } from "@workspace/ui";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { AppProvider, AuthProvider, AuthModal, LoginWebFeature, OtpWebFeature, ProfileStep1, BookingDashboard, DashboardLayout, FlightSearchFormWeb, type FlightOffer } from "@workspace/ui";
 import { ErrorBoundary, NavigationRule } from "@workspace/core";
 import { useWebFlowNavigation } from "./navigation/useWebFlowNavigation";
 
@@ -28,6 +28,8 @@ if (process.env.NODE_ENV === "development") {
 
 const AppWorkflowRouter: React.FC = () => {
   const { navigateByRule } = useWebFlowNavigation();
+  const navigate = useNavigate();
+  const [flightOffers, setFlightOffers] = React.useState<FlightOffer[] | null>(null);
 
   // Several screen components still type their onNavigate prop as a plain
   // (rule: string) => void rather than the NavigationRule union. navigateByRule
@@ -41,9 +43,13 @@ const AppWorkflowRouter: React.FC = () => {
         <Route
           path="/"
           element={
-            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
-              <div />
-            </DashboardLayout>
+            <FlightSearchFormWeb
+              onNavigate={onNavigateLoose}
+              onResults={(offers) => {
+                setFlightOffers(offers);
+                navigate('/search');
+              }}
+            />
           }
         />
         <Route path="/signin" element={<LoginWebFeature onNavigate={onNavigateLoose} />} />
@@ -53,7 +59,9 @@ const AppWorkflowRouter: React.FC = () => {
           path="/search"
           element={
             <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
-              <div>Search Screen Component Placeholder</div>
+              <div>
+                {flightOffers ? `${flightOffers.length} flight(s) found. Results screen not built yet.` : 'No search yet.'}
+              </div>
             </DashboardLayout>
           }
         />

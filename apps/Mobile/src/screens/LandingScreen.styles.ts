@@ -1,7 +1,4 @@
-import { StyleSheet, Dimensions } from 'react-native';
-import { BaseButtonLoginPlaceholderStyles } from '@workspace/ui'; 
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   screenBackground: {
@@ -19,9 +16,9 @@ export const styles = StyleSheet.create({
   },
   container: {
     flex: 1,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     // Switch to flex-end so all text and UI clusters sit comfortably down in the dark zone
-    justifyContent: 'flex-end', 
+    justifyContent: 'flex-end',
     paddingBottom: 40,
   },
   headerVisualBlock: {
@@ -64,10 +61,13 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  checkmarkIcon: {
-    color: '#22C55E', // Bright solid green checkmark token matching Figma layout
-    fontSize: 16,
-    fontWeight: '700',
+  checkmarkBadge: {
+    width: 20,
+    height: 20,
+    borderRadius: 6,
+    backgroundColor: '#22C55E',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   perkText: {
     color: '#FFFFFF', // High-contrast crisp white text
@@ -80,24 +80,28 @@ export const styles = StyleSheet.create({
     width: '100%',
   },
   primaryButton: {
-    ...BaseButtonLoginPlaceholderStyles.buttonContainer,
-    backgroundColor: '#7C3AED', // True vibrant figma violet shade
-    borderRadius: 14,          // Exact rounded rectangle bevel matching your Figma bounding box
+    height: 44,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#7C1AEE', // Product Normal — the app's established primary purple token
+    borderRadius: 12,
   },
   primaryButtonText: {
-    ...BaseButtonLoginPlaceholderStyles.buttonText,
+    fontSize: 16,
+    fontWeight: '700',
     color: '#FFFFFF',
   },
-  inlineLink: {
-    alignSelf: 'center',
+  guestLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
     paddingVertical: 4,
   },
-  footerLinkText: {
-    color: '#94A3B8',
+  guestLinkText: {
+    color: '#A78BFA',
     fontSize: 14,
-  },
-  highlightText: {
-    color: '#A78BFA', 
     fontWeight: '700',
   },
 });

@@ -18,9 +18,47 @@ export { LoginFeature as LoginWebFeature } from './features/authentication/Login
 export { OtpFeature as OtpMobileFeature } from './features/authentication/OtpFeature';
 export { OtpFeature as OtpWebFeature } from './features/authentication/OtpFeature.web';
 export { ProfileStep1 } from './features/profile/ProfileStep1';
+export {
+  useCustomerProfileMobile,
+  useUpdateCustomerProfileMobile,
+  type CustomerProfile,
+  type UpdateProfilePayload,
+} from './features/profile/useCustomerProfileMobile';
+export {
+  useTravellersMobile,
+  useTravellerDetailMobile,
+  useSaveTravellerMobile,
+  useDeleteTravellerMobile,
+  type Traveler,
+  type TravelerDetail,
+  type TravelerPassport,
+  type TravelerPayload,
+} from './features/profile/useTravellersMobile';
+export {
+  useSearchFlightsMobile,
+  type TripType,
+  type CabinClass,
+  type FlightSearchSegment,
+  type FlightSearchRequest,
+  type FlightOfferSegment,
+  type FlightOffer,
+  type FlightSearchResponse,
+} from './features/flights/useSearchFlightsMobile';
+export {
+  useFareCalendarMobile,
+  type FareCalendarDay,
+  type FareCalendarResponse,
+  type FareCalendarParams,
+} from './features/flights/useFareCalendarMobile';
+export { useFareCalendarWeb } from './features/flights/useFareCalendarWeb';
+export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './features/flights/useHolidaysMobile';
+export { useHolidaysWeb } from './features/flights/useHolidaysWeb';
+export { FlightSearchFormWeb } from './features/flights/FlightSearchFormWeb.web';
 export { DashboardLayout } from './components/layout/Layout';
 export { AuthProvider, useAuth } from './features/authentication/AuthContext';
 export { AuthModal } from './features/authentication/AuthModal.web';
+export { authContextCache } from './features/authentication/authContextCache';
+export { AUTH_BASE_URL } from '@workspace/api';
 
 // Export mobile-specific styles
 export * from './assets/index';

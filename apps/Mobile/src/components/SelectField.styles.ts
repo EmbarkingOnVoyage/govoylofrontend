@@ -1,0 +1,80 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  field: {
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#ADB8CD',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+  },
+  fieldText: {
+    fontSize: 14,
+    color: '#182339',
+  },
+  fieldPlaceholder: {
+    fontSize: 14,
+    color: '#9CA3AF',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(24, 35, 57, 0.4)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    maxHeight: '75%',
+    paddingBottom: 8,
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECEEF3',
+  },
+  sheetTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#182339',
+  },
+  searchInput: {
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#ADB8CD',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: '#182339',
+    marginHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECEEF3',
+  },
+  optionText: {
+    fontSize: 15,
+    color: '#182339',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#7C8CAD',
+    fontSize: 14,
+    paddingVertical: 24,
+  },
+});

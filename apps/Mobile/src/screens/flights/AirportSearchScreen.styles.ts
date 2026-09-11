@@ -1,0 +1,130 @@
+import { StyleSheet } from 'react-native';
+
+export const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 12,
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#182339',
+  },
+  searchInput: {
+    marginHorizontal: 16,
+    height: 44,
+    borderWidth: 1,
+    borderColor: '#ADB8CD',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    color: '#182339',
+    marginBottom: 16,
+  },
+  sectionHeading: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#4C5973',
+    paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  nearbyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  nearbyText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#182339',
+  },
+  recentChipsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  recentChip: {
+    borderWidth: 1,
+    borderColor: '#ADB8CD',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginRight: 8,
+  },
+  recentChipText: {
+    fontSize: 13,
+    color: '#182339',
+    fontWeight: '500',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#ECEEF3',
+    marginBottom: 16,
+  },
+  cityGroup: {
+    marginBottom: 16,
+  },
+  cityHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    marginBottom: 6,
+  },
+  cityHeaderText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#182339',
+  },
+  cityStateText: {
+    fontSize: 12,
+    color: '#7C8CAD',
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    marginLeft: 24,
+  },
+  airportRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginLeft: 24,
+  },
+  airportRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  airportName: {
+    fontSize: 13,
+    color: '#4C5973',
+    flex: 1,
+  },
+  airportCode: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#7C8CAD',
+  },
+  emptyText: {
+    textAlign: 'center',
+    color: '#7C8CAD',
+    fontSize: 14,
+    paddingVertical: 24,
+  },
+});
