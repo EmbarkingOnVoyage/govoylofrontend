@@ -3,59 +3,103 @@ import { StyleSheet } from 'react-native';
 export const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#ECEEF3',
+  },
+  overlayContainer: {
+    backgroundColor: '#ECEEF3',
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    overflow: 'hidden',
+  },
+  // Wraps header + trip-type tabs + the white fields card — the gradient
+  // extends exactly this far (matches Figma's "Rectangle 1" fill), then the
+  // plain #ECEEF3 screen background shows below it.
+  gradientWrap: {
+    paddingBottom: 16,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'center',
     paddingHorizontal: 16,
     paddingTop: 8,
     paddingBottom: 12,
+    position: 'relative',
   },
   backButton: {
+    position: 'absolute',
+    left: 16,
     padding: 4,
+    zIndex: 1,
   },
-  headerPills: {
+  // Matches Figma's "FLIGHT VOYLO AI" component: one gradient-bordered
+  // capsule (136 Hug x 32 Hug, radius 20, border 2px) wrapping both pills,
+  // centered in the header regardless of the back button's own width.
+  pillGroupBorder: {
+    borderRadius: 20,
+    padding: 2,
+  },
+  pillGroupInner: {
     flexDirection: 'row',
-    gap: 8,
-    flex: 1,
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 2,
+    gap: 2,
   },
   pillActive: {
-    backgroundColor: '#7C1AEE',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 14,
   },
   pillActiveText: {
     color: '#FFFFFF',
     fontSize: 13,
+    lineHeight: 16,
     fontWeight: '700',
   },
   pillInactive: {
-    backgroundColor: '#ECEEF3',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 14,
   },
   pillInactiveText: {
-    color: '#182339',
+    color: '#000000',
     fontSize: 13,
-    fontWeight: '700',
+    lineHeight: 16,
+    fontWeight: '400',
   },
-  card: {
+  // Plain layout wrapper (no bg/border of its own) — each field group below
+  // is its own independently bordered white box sitting on the gradient,
+  // matching Figma's "Frame 284" (fields) + "ListChoice" (travellers) split
+  // rather than one big card holding everything.
+  contentWrap: {
     marginHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#ECEEF3',
-    borderRadius: 12,
-    overflow: 'hidden',
+    marginTop: 6,
+    gap: 10,
   },
-  tabRow: {
+  // Matches Figma's "Frame 263": the From/To + Departure/Return group.
+  fieldsGroup: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#ADB8CD',
+    borderRadius: 6,
+    padding: 8,
+  },
+  // Its own separate white pill, distinct from the fields card below —
+  // matches Figma's "one way" tab-bar component (radius 20, 2px gaps).
+  tabBarWrap: {
     flexDirection: 'row',
+    marginHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    gap: 2,
   },
   tabButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 6,
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
   },
@@ -64,14 +108,13 @@ export const styles = StyleSheet.create({
   },
   tabButtonText: {
     fontSize: 13,
-    fontWeight: '600',
+    lineHeight: 16,
+    fontWeight: '400',
     color: '#182339',
   },
   tabButtonTextActive: {
     color: '#FFFFFF',
-  },
-  cardBody: {
-    padding: 16,
+    fontWeight: '700',
   },
   odRow: {
     flexDirection: 'row',
@@ -80,14 +123,22 @@ export const styles = StyleSheet.create({
   odField: {
     flex: 1,
   },
+  // Applied to the second field in a row (To / Return) — right-aligned to
+  // mirror the first (From / Departure), matching Figma's layout.
+  odFieldEnd: {
+    alignItems: 'flex-end',
+  },
   odLabel: {
     fontSize: 12,
-    color: '#7C8CAD',
+    lineHeight: 16,
+    fontWeight: '500',
+    color: '#697691',
     marginBottom: 4,
   },
   odValue: {
     fontSize: 15,
-    fontWeight: '700',
+    lineHeight: 20,
+    fontWeight: '500',
     color: '#182339',
   },
   odPlaceholder: {
@@ -107,7 +158,7 @@ export const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#ECEEF3',
+    backgroundColor: '#99A6C0',
     marginVertical: 14,
   },
   dateRow: {
@@ -118,65 +169,79 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   segmentCard: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#ECEEF3',
-    borderRadius: 10,
+    borderColor: '#ADB8CD',
+    borderRadius: 6,
     padding: 12,
     marginBottom: 12,
   },
-  segmentHeaderRow: {
+  multiCityDateRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
   },
-  segmentTag: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#7C1AEE',
+  multiCityDateInput: {
+    flex: 1,
+  },
+  flightTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     backgroundColor: '#F3E8FF',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    marginLeft: 10,
+  },
+  flightTagText: {
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: '#6014B7',
   },
   addFlightButton: {
-    alignSelf: 'center',
-    paddingVertical: 8,
+    backgroundColor: '#FFFFFF',
+    height: 32,
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 4,
   },
   addFlightText: {
     color: '#7C1AEE',
-    fontWeight: '700',
-    fontSize: 14,
+    fontWeight: '500',
+    fontSize: 13,
+    lineHeight: 16,
   },
   input: {
     height: 44,
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#ADB8CD',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    backgroundColor: '#FFFFFF',
   },
+  // Matches Figma's "ListChoice" component — its own bordered white box,
+  // separate from the fields group above it.
   passengerRow: {
-    marginTop: 16,
+    backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
     height: 44,
     borderWidth: 1,
     borderColor: '#ADB8CD',
-    borderRadius: 8,
+    borderRadius: 6,
     paddingHorizontal: 12,
   },
   passengerRowText: {
-    fontSize: 14,
+    fontSize: 15,
+    lineHeight: 20,
     color: '#182339',
     fontWeight: '500',
   },
   sectionHeading: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '500',
     color: '#182339',
     marginTop: 20,
     marginBottom: 10,
@@ -186,8 +251,9 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
   fareButton: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#ADB8CD',
+    borderColor: '#697691',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 8,
@@ -197,8 +263,9 @@ export const styles = StyleSheet.create({
     backgroundColor: '#F3E8FF',
   },
   fareButtonText: {
-    fontSize: 13,
-    color: '#182339',
+    fontSize: 15,
+    lineHeight: 20,
+    color: '#697691',
     fontWeight: '500',
   },
   fareButtonTextSelected: {
@@ -208,11 +275,12 @@ export const styles = StyleSheet.create({
   nonStopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
     marginTop: 18,
   },
   nonStopLabel: {
-    fontSize: 14,
+    fontSize: 15,
+    lineHeight: 20,
     color: '#182339',
     fontWeight: '500',
   },
@@ -229,8 +297,9 @@ export const styles = StyleSheet.create({
   },
   searchButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '500',
   },
   errorText: {
     color: '#EF4444',

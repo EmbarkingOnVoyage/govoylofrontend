@@ -90,13 +90,6 @@ export const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#182339',
   },
-  cityStateText: {
-    fontSize: 12,
-    color: '#7C8CAD',
-    paddingHorizontal: 16,
-    marginBottom: 8,
-    marginLeft: 24,
-  },
   airportRow: {
     flexDirection: 'row',
     alignItems: 'center',

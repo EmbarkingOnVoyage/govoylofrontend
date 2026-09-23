@@ -10,14 +10,15 @@ import { LoginRequiredScreen } from '../screens/LoginRequiredScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { FlightSearchFormScreen } from '../screens/flights/FlightSearchFormScreen';
 import { FlightResultsScreen } from '../screens/flights/FlightResultsScreen';
-import type { FlightOffer } from '@workspace/ui';
+import { TravelerDetailsScreen } from '../screens/flights/TravelerDetailsScreen';
+import type { FlightOffer, FlightSearchSummary } from '@workspace/ui';
 
 type TabKey = 'Home' | 'Deals' | 'MyTrips' | 'Profile';
 
 // The Home tab has its own internal stack (buttons -> flight search -> flight
-// results), separate from the bottom-tab selection, mirroring the Profile
-// tab's sub-stack pattern below.
-type HomeStackScreen = 'Buttons' | 'FlightSearch' | 'FlightResults';
+// results -> traveller details -> add/edit a traveller), separate from the
+// bottom-tab selection, mirroring the Profile tab's sub-stack pattern below.
+type HomeStackScreen = 'Buttons' | 'FlightSearch' | 'FlightResults' | 'TravelerDetails' | 'AddTraveler';
 
 // The Profile tab has its own internal stack (hub -> Personal details -> ...)
 // separate from the bottom-tab selection, since navigating into a profile
@@ -72,6 +73,13 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
   const [editingTravellerId, setEditingTravellerId] = useState<string | null>(null);
   const [homeScreen, setHomeScreen] = useState<HomeStackScreen>('Buttons');
   const [flightOffers, setFlightOffers] = useState<FlightOffer[]>([]);
+  const [flightSearchSummary, setFlightSearchSummary] = useState<FlightSearchSummary | null>(null);
+  // The leg(s) already reviewed and chosen when Continue was tapped on the
+  // fare-review modal's last step — Traveller details reads these, not the
+  // full flightOffers list.
+  const [travelerLegs, setTravelerLegs] = useState<FlightOffer[]>([]);
+  const [travelerLegLabels, setTravelerLegLabels] = useState<string[] | undefined>(undefined);
+  const [travelerPassengerCount, setTravelerPassengerCount] = useState(1);
 
   const renderHomeStack = () => {
     switch (homeScreen) {
@@ -79,14 +87,51 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
         return (
           <FlightSearchFormScreen
             onBack={() => setHomeScreen('Buttons')}
-            onResults={(offers) => {
+            onResults={(offers, summary) => {
               setFlightOffers(offers);
+              setFlightSearchSummary(summary);
               setHomeScreen('FlightResults');
             }}
           />
         );
       case 'FlightResults':
-        return <FlightResultsScreen offers={flightOffers} onBack={() => setHomeScreen('FlightSearch')} />;
+        return (
+          <FlightResultsScreen
+            offers={flightOffers}
+            summary={flightSearchSummary}
+            onBack={() => setHomeScreen('FlightSearch')}
+            onContinueToTravelerDetails={(legs, legLabels, passengerCount) => {
+              setTravelerLegs(legs);
+              setTravelerLegLabels(legLabels);
+              setTravelerPassengerCount(passengerCount);
+              setHomeScreen('TravelerDetails');
+            }}
+          />
+        );
+      case 'TravelerDetails':
+        return (
+          <TravelerDetailsScreen
+            legs={travelerLegs}
+            legLabels={travelerLegLabels}
+            passengerCount={travelerPassengerCount}
+            onBack={() => setHomeScreen('FlightResults')}
+            onAddTraveler={() => {
+              setEditingTravellerId(null);
+              setHomeScreen('AddTraveler');
+            }}
+            onEditTraveler={(id) => {
+              setEditingTravellerId(id);
+              setHomeScreen('AddTraveler');
+            }}
+          />
+        );
+      case 'AddTraveler':
+        return (
+          <CoTravellerFormScreen
+            travellerId={editingTravellerId}
+            onDone={() => setHomeScreen('TravelerDetails')}
+          />
+        );
       case 'Buttons':
       default:
         return (

@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "govoylofrontend",
+    "name": "goVoylo",
     "slug": "govoylofrontend",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -12,7 +12,7 @@
     "android": {
       "package": "com.govoylo.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#7C1AEE",
         "foregroundImage": "../../assets/android-icon-foreground.png",
         "backgroundImage": "../../assets/android-icon-background.png",
         "monochromeImage": "../../assets/android-icon-monochrome.png"
@@ -22,7 +22,14 @@
       "favicon": "../../assets/favicon.png"
     },
     "plugins": [
-      "expo-asset"
-    ]
+      "expo-asset",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f10731db-ff30-44df-bc58-1f5cfc484d0a"
+      }
+    },
+    "owner": "govoylo"
   }
 }

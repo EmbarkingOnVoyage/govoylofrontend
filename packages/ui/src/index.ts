@@ -41,8 +41,10 @@ export {
   type FlightSearchSegment,
   type FlightSearchRequest,
   type FlightOfferSegment,
+  type FareOption,
   type FlightOffer,
   type FlightSearchResponse,
+  type FlightSearchSummary,
 } from './features/flights/useSearchFlightsMobile';
 export {
   useFareCalendarMobile,
@@ -51,7 +53,17 @@ export {
   type FareCalendarParams,
 } from './features/flights/useFareCalendarMobile';
 export { useFareCalendarWeb } from './features/flights/useFareCalendarWeb';
+export {
+  useCreateRazorpayOrderMobile,
+  useVerifyRazorpayPaymentMobile,
+  type CreateRazorpayOrderRequest,
+  type RazorpayOrderResponse,
+  type VerifyRazorpayPaymentRequest,
+  type PaymentResponse,
+} from './features/payments/useRazorpayPaymentMobile';
 export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './features/flights/useHolidaysMobile';
+export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';
+export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';
 export { useHolidaysWeb } from './features/flights/useHolidaysWeb';
 export { FlightSearchFormWeb } from './features/flights/FlightSearchFormWeb.web';
 export { DashboardLayout } from './components/layout/Layout';

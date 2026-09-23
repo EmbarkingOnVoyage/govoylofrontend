@@ -5,3 +5,54 @@
 /* 🌟 CORRECTED WORKSPACE TRAVERSAL PATHS */
 @source "../../../packages/**/*.tsx";
 @source "../../../packages/**/*.ts";
+
+/* Animated gradient ring around the selected Flights/Hotels/Flights+Hotels
+   tab on the flight search hero (packages/ui/src/features/flights/
+   FlightSearchFormWeb.web.tsx).
+
+   The wrapper (.tab-active-ring, sized to the pill itself) clips its
+   content to the pill shape via overflow:hidden. Its ::before is a fixed
+   200x200 SQUARE — deliberately not sized to the pill's own (non-square,
+   146x67) box — centered on the pill and spun with rotate(); a square
+   that size fully covers the pill's ~161px diagonal at every rotation
+   angle, so nothing pokes outside the clip once it's cut down to the pill
+   shape. (Rotating the pill-shaped box itself, sized exactly to its own
+   bounds, was the earlier bug: its elongated ends swept outside their own
+   footprint as they spun, since a CSS transform never re-clips to the
+   pre-transform box.) The tab's own white pill is a separate element,
+   inset a few px from the same wrapper and painted after ::before in
+   normal DOM order, so it sits on top and only a thin ring of gradient
+   shows through at the edges. */
+@keyframes tab-ring-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+.tab-active-ring {
+  position: relative;
+  overflow: hidden;
+  border-radius: 9999px;
+  /* The ring itself is a geometrically uniform 3px gap on every side
+     (verified directly against getBoundingClientRect) — this shadow isn't
+     fixing a width bug, it's compensating for a *contrast* one: the
+     spinning gradient's magenta/pink stops read visually lighter than its
+     blue/purple stops against this light backdrop, so without it the ring
+     looks like it's varying in thickness as it rotates, even though the
+     pixels never move. */
+  box-shadow: 0 0 0 1px rgba(24, 35, 57, 0.12);
+}
+
+.tab-active-ring::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 200px;
+  height: 200px;
+  background: conic-gradient(from 0deg, #9335ff, #5731ff, #cf31ff, #9335ff);
+  animation: tab-ring-spin 3s linear infinite;
+}

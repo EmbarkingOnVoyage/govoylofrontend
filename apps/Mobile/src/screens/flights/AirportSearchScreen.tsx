@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
 import { ArrowLeft, MapPin, Plane } from 'lucide-react-native';
-import { AIRPORTS, groupAirportsByCity, getRecentAirports, addRecentAirport, type Airport } from '../../data/airports';
+import { useAirportsMobile } from '@workspace/ui';
+import { groupAirportsByCity, getRecentAirports, addRecentAirport, primeAirportCache, toAirport, type Airport } from '../../data/airports';
 import { styles } from './AirportSearchScreen.styles';
 
 interface AirportSearchScreenProps {
@@ -10,23 +11,31 @@ interface AirportSearchScreenProps {
   onBack: () => void;
 }
 
+// Search box typing shouldn't fire a request per keystroke — wait for a
+// short pause before hitting the backend.
+const SEARCH_DEBOUNCE_MS = 300;
+
 export const AirportSearchScreen: React.FC<AirportSearchScreenProps> = ({ title, onSelect, onBack }) => {
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const recentAirports = getRecentAirports();
 
-  const filtered =
-    query.trim().length === 0
-      ? AIRPORTS
-      : AIRPORTS.filter((airport) => {
-          const q = query.trim().toLowerCase();
-          return (
-            airport.city.toLowerCase().includes(q) ||
-            airport.code.toLowerCase().includes(q) ||
-            airport.name.toLowerCase().includes(q)
-          );
-        });
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedQuery(query), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
+  }, [query]);
 
-  const cityGroups = groupAirportsByCity(filtered);
+  const { data: results, isLoading } = useAirportsMobile(debouncedQuery);
+
+  useEffect(() => {
+    if (results) {
+      primeAirportCache(results);
+    }
+  }, [results]);
+
+  const airports = (results ?? []).map(toAirport);
+  const cityGroups = groupAirportsByCity(airports);
+  const trimmedLength = debouncedQuery.trim().length;
 
   const handleSelect = (airport: Airport) => {
     addRecentAirport(airport);
@@ -82,17 +91,26 @@ export const AirportSearchScreen: React.FC<AirportSearchScreenProps> = ({ title,
           </>
         )}
 
-        {cityGroups.length === 0 && <Text style={styles.emptyText}>No matches found.</Text>}
+        {query.trim().length > 0 && trimmedLength < 2 && (
+          <Text style={styles.emptyText}>Keep typing to search airports.</Text>
+        )}
+
+        {trimmedLength >= 2 && isLoading && (
+          <ActivityIndicator style={{ marginTop: 24 }} color="#7C1AEE" />
+        )}
+
+        {trimmedLength >= 2 && !isLoading && cityGroups.length === 0 && (
+          <Text style={styles.emptyText}>No matches found.</Text>
+        )}
 
         {cityGroups.map((group) => (
           <View key={group.city} style={styles.cityGroup}>
             <View style={styles.cityHeaderRow}>
               <MapPin size={16} color="#4C5973" strokeWidth={2} />
               <Text style={styles.cityHeaderText}>
-                {group.city}, India
+                {group.city}, {group.country}
               </Text>
             </View>
-            <Text style={styles.cityStateText}>{group.state}, India</Text>
             {group.airports.map((airport) => (
               <TouchableOpacity
                 key={airport.code}

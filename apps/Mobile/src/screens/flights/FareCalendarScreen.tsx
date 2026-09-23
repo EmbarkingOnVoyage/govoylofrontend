@@ -212,7 +212,7 @@ const MonthBlock: React.FC<MonthBlockProps> = ({
       {monthHolidays.length > 0 && (
         <View style={styles.holidayNotesBlock}>
           {monthHolidays.map((h) => (
-            <Text key={h.date} style={styles.holidayNoteText}>
+            <Text key={`${h.date}-${h.name}`} style={styles.holidayNoteText}>
               {formatHolidayNote(h)}
             </Text>
           ))}

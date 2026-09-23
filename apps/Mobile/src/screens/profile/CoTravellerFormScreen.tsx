@@ -77,6 +77,16 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
 
   const handleSave = async () => {
     setSaveError('');
+
+    if (!firstName.trim() || !lastName.trim()) {
+      setSaveError('Please enter first name and last name.');
+      return;
+    }
+    if (!parseDisplayDate(dateOfBirth)) {
+      setSaveError('Please enter a valid date of birth.');
+      return;
+    }
+
     try {
       await saveTraveller.mutateAsync({
         id: travellerId ?? undefined,

@@ -24,10 +24,20 @@ export interface FlightOfferSegment {
   origin: string;
   destination: string;
   airlineCode: string;
+  airlineName: string;
   flightNumber: string;
   departureDateTime: string;
   arrivalDateTime: string;
   duration: string;
+}
+
+export interface FareOption {
+  fareId: string;
+  refundable: boolean;
+  totalAmount: number;
+  currencyCode: string;
+  checkInBaggage: string | null;
+  handBaggage: string | null;
 }
 
 export interface FlightOffer {
@@ -40,10 +50,31 @@ export interface FlightOffer {
   totalAmount: number;
   currencyCode: string;
   seatsAvailable: number;
+  fares: FareOption[];
+  // Index into the search request's segments this offer satisfies: 0 for a
+  // one-way/onward leg, 1 for a round-trip return leg. Lets the UI split a
+  // round-trip response into its two legs instead of one flat list.
+  tripLegIndex: number;
 }
 
 export interface FlightSearchResponse {
   offers: FlightOffer[];
+}
+
+// Search context the results screen needs to render its header (route, dates,
+// passenger/cabin summary) and to re-run the search when the user picks a
+// different date from the fare strip — captured at search time since the
+// results screen itself only receives the offers, not the request that
+// produced them. `request` is the exact payload that produced the current
+// offers, so re-searching only needs to patch its first segment's date.
+export interface FlightSearchSummary {
+  request: FlightSearchRequest;
+  originCode: string;
+  destinationCode: string;
+  departureDate: string;
+  returnDate?: string;
+  passengerCount: number;
+  cabinClass: CabinClass;
 }
 
 export function useSearchFlightsMobile() {

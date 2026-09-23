@@ -27,6 +27,7 @@ vi.mock('@workspace/ui', () => ({
   OtpMobileFeature: () => <div>OTP Form Mock</div>,
   ProfileStep1: () => <div>Profile Mock</div>,
   BookingDashboard: () => <div>Booking Dashboard Mock</div>,
+  FlightSearchFormWeb: () => <div data-testid="flight-search-form">Flight Search Form Mock</div>,
 }));
 
 // 🔑 Tiny utility to pause execution briefly, letting React complete its initial rendering cycle
@@ -69,9 +70,10 @@ describe('Web App Shell Boot Strategy', () => {
     // 🔑 Pause for a split second to let React mount and paint the default route inside #root
     await flushReactRenderQueue();
 
-    // The default route ("/") renders a plain header/background shell — guests
+    // The default route ("/") renders the flight search form directly — guests
     // should never be forced into sign-in just by loading the app.
-    expect(rootElement?.innerHTML).toContain('data-testid="dashboard-layout"');
+    expect(rootElement?.innerHTML).toContain('data-testid="flight-search-form"');
+    expect(rootElement?.innerHTML).not.toContain('data-testid="login-feature"');
   });
 
   test('should catch contract violations if the DOM root node element is missing', async () => {
