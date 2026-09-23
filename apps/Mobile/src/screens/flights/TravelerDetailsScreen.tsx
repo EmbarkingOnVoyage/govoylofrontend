@@ -109,12 +109,20 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
   // Add-ons apply to whichever travellers are actually on this booking, not
   // every saved traveller — so the Whats Included modals only list the ones
-  // currently checked in the Add travellers block above.
+  // currently checked in the Add travellers block above. Gender/travelerType
+  // are needed (not just id/name) because the seat-map add-on hits a real
+  // Flyshop endpoint that requires PAX details.
   const addOnTravelers = useMemo(
     () =>
       (travelers ?? [])
         .filter((t) => selectedIds.has(t.id))
-        .map((t) => ({ id: t.id, name: `${t.firstName} ${t.lastName}` })),
+        .map((t) => ({
+          id: t.id,
+          firstName: t.firstName,
+          lastName: t.lastName,
+          gender: t.gender ?? 'Male',
+          travelerType: t.travelerType,
+        })),
     [travelers, selectedIds]
   );
 
@@ -128,6 +136,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         // the real one for the price already shown above — not a guess.
         const primaryFare = leg.fares[0];
         return {
+          offerId: leg.offerId,
           label: legLabels?.[index] ?? `Flight ${index + 1}`,
           origin: first?.origin ?? '',
           destination: last?.destination ?? '',

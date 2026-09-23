@@ -1,46 +1,24 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, SafeAreaView } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Modal, SafeAreaView, ActivityIndicator } from 'react-native';
 import { ArrowLeft, ChevronRight } from 'lucide-react-native';
+import {
+  useFlightAncillariesMobile,
+  useSeatMapMobile,
+  SSR_TYPE_BAGGAGE,
+  SSR_TYPE_MEALS,
+  SSR_TYPE_COMPLIMENTARY_MEALS,
+  SSR_STATUS_AVAILABLE,
+  type AncillaryOption,
+} from '@workspace/ui';
 import { styles } from './WhatsIncludedSection.styles';
-
-export interface AddOnOption {
-  id: string;
-  label: string;
-  sublabel?: string;
-  price: number; // 0 = free/none
-}
 
 interface AddOnTraveler {
   id: string;
-  name: string;
-  includedLabel?: string;
+  firstName: string;
+  lastName: string;
+  gender: string;
+  travelerType: string;
 }
-
-// Every category always offers "None added" alongside its paid choices, so a
-// traveler can back out of a selection instead of being stuck with one.
-const NONE_OPTION: AddOnOption = { id: 'none', label: 'None Added', price: 0 };
-
-// PLACEHOLDER PRICING. Flyshop does expose real priced ancillaries —
-// Air_GetSSR (BAGGAGE/MEALS/SEAT, each with a real CurrencyCode+TotalAmount)
-// and Air_GetSeatMap for per-seat pricing — but neither is wired into our
-// backend yet (both need a Flight_Key from Air_Reprice threaded through the
-// booking flow). These arrays mirror the values shown in the Figma "Checked
-// baggage" modal purely so the selection/total/Save flow is interactive
-// ahead of that integration; replace them wholesale once it lands.
-const BAGGAGE_PAID_OPTIONS: AddOnOption[] = [
-  { id: 'extra-5kg', label: 'Extra weight', sublabel: '5 kg', price: 4250 },
-  { id: 'excess-15kg', label: 'x1', sublabel: '15 kg', price: 8250 },
-];
-
-const SEAT_PAID_OPTIONS: AddOnOption[] = [
-  { id: 'standard', label: 'Standard Seat', price: 300 },
-  { id: 'legroom', label: 'Extra Legroom', price: 800 },
-];
-
-const MEAL_PAID_OPTIONS: AddOnOption[] = [
-  { id: 'veg', label: 'Veg Meal', price: 450 },
-  { id: 'non-veg', label: 'Non-Veg Meal', price: 550 },
-];
 
 function formatCurrency(amount: number, currencyCode: string): string {
   return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN')}`;
@@ -48,31 +26,77 @@ function formatCurrency(amount: number, currencyCode: string): string {
 
 type AddOnCategory = 'baggage' | 'seat' | 'meal';
 
-// selections: `${legIndex}:${category}:${travelerId}` -> optionId
-type SelectionMap = Record<string, string>;
+// A traveller's choice per leg/category, or absent entirely for "no add-on
+// selected" — storing the price alongside the ssrKey means the running total
+// never needs to look up options for a leg the user has since tabbed away
+// from (whose fetched data may no longer be in local state).
+interface Selection {
+  ssrKey: string;
+  label: string;
+  amount: number;
+}
+
+// selections: `${legIndex}:${category}:${travelerId}` -> Selection
+type SelectionMap = Record<string, Selection>;
 
 function selectionKey(legIndex: number, category: AddOnCategory, travelerId: string): string {
   return `${legIndex}:${category}:${travelerId}`;
+}
+
+// Flyshop prices individual seats, not seat "classes" — there's no semantic
+// tier name in the data. We dedupe available seats by price into at most a
+// couple of selectable tiers (cheapest = Standard, anything pricier =
+// Preferred) so the UI matches the Baggage/Meal pattern instead of listing
+// dozens of individual seat numbers. A real seat-picker (choosing an exact
+// seat on a visual map) is a separate, larger UI task.
+function buildSeatTierOptions(seats: AncillaryOption[]): AncillaryOption[] {
+  const available = seats.filter((s) => s.ssrStatus === SSR_STATUS_AVAILABLE);
+  const cheapestPerPrice = new Map<number, AncillaryOption>();
+  for (const seat of available) {
+    if (!cheapestPerPrice.has(seat.totalAmount)) {
+      cheapestPerPrice.set(seat.totalAmount, seat);
+    }
+  }
+  const tiers = [...cheapestPerPrice.values()].sort((a, b) => a.totalAmount - b.totalAmount);
+  return tiers.map((tier, index) => ({
+    ...tier,
+    ssrTypeDesc: tiers.length > 1 ? (index === 0 ? 'Standard Seat' : 'Preferred Seat') : 'Select Seat',
+  }));
 }
 
 const AddOnModal: React.FC<{
   visible: boolean;
   title: string;
   travelers: AddOnTraveler[];
-  options: AddOnOption[];
+  options: AncillaryOption[];
+  isLoading: boolean;
+  loadError: boolean;
   selections: SelectionMap;
   legIndex: number;
   category: AddOnCategory;
   currencyCode: string;
-  onSelect: (travelerId: string, optionId: string) => void;
+  onSelect: (travelerId: string, option: AncillaryOption | null) => void;
   onClose: () => void;
   onSave: () => void;
-}> = ({ visible, title, travelers, options, selections, legIndex, category, currencyCode, onSelect, onClose, onSave }) => {
-  const total = travelers.reduce((sum, traveler) => {
-    const optionId = selections[selectionKey(legIndex, category, traveler.id)] ?? 'none';
-    const option = options.find((o) => o.id === optionId);
-    return sum + (option?.price ?? 0);
-  }, 0);
+}> = ({
+  visible,
+  title,
+  travelers,
+  options,
+  isLoading,
+  loadError,
+  selections,
+  legIndex,
+  category,
+  currencyCode,
+  onSelect,
+  onClose,
+  onSave,
+}) => {
+  const total = travelers.reduce(
+    (sum, traveler) => sum + (selections[selectionKey(legIndex, category, traveler.id)]?.amount ?? 0),
+    0
+  );
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -85,38 +109,55 @@ const AddOnModal: React.FC<{
           <View style={styles.modalHeaderSpacer} />
         </View>
 
-        <ScrollView contentContainerStyle={styles.modalScrollContent}>
-          {travelers.map((traveler) => {
-            const selectedOptionId = selections[selectionKey(legIndex, category, traveler.id)] ?? 'none';
-            return (
-              <View key={traveler.id} style={styles.travelerBlock}>
-                <Text style={styles.travelerName}>{traveler.name}</Text>
-                {!!traveler.includedLabel && (
-                  <Text style={styles.includedLabel}>Included: {traveler.includedLabel}</Text>
-                )}
-                <View style={styles.optionRow}>
-                  {[NONE_OPTION, ...options].map((option) => {
-                    const isSelected = option.id === selectedOptionId;
-                    return (
-                      <TouchableOpacity
-                        key={option.id}
-                        style={[styles.optionCard, isSelected && styles.optionCardSelected]}
-                        onPress={() => onSelect(traveler.id, option.id)}
-                        activeOpacity={0.7}
-                      >
-                        <Text style={styles.optionLabel}>{option.label}</Text>
-                        {!!option.sublabel && <Text style={styles.optionSublabel}>{option.sublabel}</Text>}
-                        <Text style={styles.optionPrice}>
-                          {option.price > 0 ? formatCurrency(option.price, currencyCode) : 'Free'}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
+        {isLoading ? (
+          <ActivityIndicator size="small" color="#7C1AEE" style={{ marginTop: 24 }} />
+        ) : loadError ? (
+          <Text style={[styles.categorySubtitle, { margin: 16 }]}>
+            Couldn't load add-on options right now. Please try again.
+          </Text>
+        ) : (
+          <ScrollView contentContainerStyle={styles.modalScrollContent}>
+            {travelers.map((traveler) => {
+              const selected = selections[selectionKey(legIndex, category, traveler.id)];
+              return (
+                <View key={traveler.id} style={styles.travelerBlock}>
+                  <Text style={styles.travelerName}>
+                    {traveler.firstName} {traveler.lastName}
+                  </Text>
+                  <View style={styles.optionRow}>
+                    <TouchableOpacity
+                      style={[styles.optionCard, !selected && styles.optionCardSelected]}
+                      onPress={() => onSelect(traveler.id, null)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.optionLabel}>None Added</Text>
+                      <Text style={styles.optionPrice}>Free</Text>
+                    </TouchableOpacity>
+                    {options.map((option) => {
+                      const isSelected = selected?.ssrKey === option.ssrKey;
+                      return (
+                        <TouchableOpacity
+                          key={option.ssrKey}
+                          style={[styles.optionCard, isSelected && styles.optionCardSelected]}
+                          onPress={() => onSelect(traveler.id, option)}
+                          activeOpacity={0.7}
+                        >
+                          <Text style={styles.optionLabel}>{option.ssrTypeDesc}</Text>
+                          <Text style={styles.optionPrice}>
+                            {option.totalAmount > 0 ? formatCurrency(option.totalAmount, currencyCode) : 'Free'}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                    {options.length === 0 && (
+                      <Text style={styles.optionSublabel}>No paid options available for this flight.</Text>
+                    )}
+                  </View>
                 </View>
-              </View>
-            );
-          })}
-        </ScrollView>
+              );
+            })}
+          </ScrollView>
+        )}
 
         <View style={styles.modalFooter}>
           <View>
@@ -133,12 +174,10 @@ const AddOnModal: React.FC<{
 };
 
 interface LegRoute {
+  offerId: string;
   label: string;
   origin: string;
   destination: string;
-  // Real allowance strings from the fare backing this leg's price (e.g.
-  // "7 KG", "1 pcs (23kg)") — null when Flyshop didn't return one for this
-  // fare, in which case we say so rather than guessing a number.
   handBaggage: string | null;
   checkInBaggage: string | null;
 }
@@ -159,19 +198,62 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
   const [activeLegIndex, setActiveLegIndex] = useState(0);
   const [selections, setSelections] = useState<SelectionMap>({});
   const [openModal, setOpenModal] = useState<AddOnCategory | null>(null);
+  const activeLegRoute = legRoutes[activeLegIndex];
+
+  const ancillaries = useFlightAncillariesMobile(activeLegRoute?.offerId);
+  const seatMap = useSeatMapMobile(activeLegRoute?.offerId);
+
+  // Seat pricing needs real PAX details, so it's a POST — fetch it whenever the
+  // active leg or the traveller list changes, same trigger a useQuery would use.
+  useEffect(() => {
+    if (!activeLegRoute?.offerId || travelers.length === 0) {
+      return;
+    }
+    seatMap.mutate(
+      travelers.map((t) => ({
+        title: t.gender === 'Female' ? 'Ms' : 'Mr',
+        firstName: t.firstName,
+        lastName: t.lastName,
+        gender: t.gender === 'Female' ? 'Female' : 'Male',
+        paxType: t.travelerType === 'Child' || t.travelerType === 'Infant' ? t.travelerType : 'Adult',
+      }))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeLegRoute?.offerId, travelers.map((t) => t.id).join(',')]);
+
+  const baggageOptions = useMemo(
+    () => (ancillaries.data?.options ?? []).filter((o) => o.ssrType === SSR_TYPE_BAGGAGE),
+    [ancillaries.data]
+  );
+  const mealOptions = useMemo(
+    () =>
+      (ancillaries.data?.options ?? []).filter(
+        (o) => o.ssrType === SSR_TYPE_MEALS || o.ssrType === SSR_TYPE_COMPLIMENTARY_MEALS
+      ),
+    [ancillaries.data]
+  );
+  const seatOptions = useMemo(() => {
+    const segment = seatMap.data?.segments.find((s) => s.legIndex === activeLegIndex);
+    const seats = segment?.rows.flatMap((r) => r.seats) ?? [];
+    return buildSeatTierOptions(seats);
+  }, [seatMap.data, activeLegIndex]);
 
   const applyTotal = (next: SelectionMap) => {
-    const grandTotal = Object.entries(next).reduce((sum, [key, optionId]) => {
-      const category = key.split(':')[1] as AddOnCategory;
-      const options = category === 'baggage' ? BAGGAGE_PAID_OPTIONS : category === 'seat' ? SEAT_PAID_OPTIONS : MEAL_PAID_OPTIONS;
-      const option = options.find((o) => o.id === optionId);
-      return sum + (option?.price ?? 0);
-    }, 0);
+    const grandTotal = Object.values(next).reduce((sum, selection) => sum + selection.amount, 0);
     onTotalChange(grandTotal);
   };
 
-  const handleSelect = (category: AddOnCategory, travelerId: string, optionId: string) => {
-    setSelections((prev) => ({ ...prev, [selectionKey(activeLegIndex, category, travelerId)]: optionId }));
+  const handleSelect = (category: AddOnCategory, travelerId: string, option: AncillaryOption | null) => {
+    setSelections((prev) => {
+      const next = { ...prev };
+      const key = selectionKey(activeLegIndex, category, travelerId);
+      if (option) {
+        next[key] = { ssrKey: option.ssrKey, label: option.ssrTypeDesc, amount: option.totalAmount };
+      } else {
+        delete next[key];
+      }
+      return next;
+    });
   };
 
   const handleSave = () => {
@@ -182,14 +264,15 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
   const categoryLabel = (category: AddOnCategory) =>
     category === 'baggage' ? 'Checked baggage' : category === 'seat' ? 'Seat selection' : 'Meal selection';
   const categoryOptions = (category: AddOnCategory) =>
-    category === 'baggage' ? BAGGAGE_PAID_OPTIONS : category === 'seat' ? SEAT_PAID_OPTIONS : MEAL_PAID_OPTIONS;
+    category === 'baggage' ? baggageOptions : category === 'seat' ? seatOptions : mealOptions;
+  const categoryLoading = (category: AddOnCategory) =>
+    category === 'seat' ? seatMap.isPending : ancillaries.isLoading;
+  const categoryError = (category: AddOnCategory) =>
+    category === 'seat' ? seatMap.isError : ancillaries.isError;
 
-  const hasSelection = (category: AddOnCategory, travelerId: string) => {
-    const optionId = selections[selectionKey(activeLegIndex, category, travelerId)];
-    return !!optionId && optionId !== 'none';
-  };
+  const hasSelection = (category: AddOnCategory, travelerId: string) =>
+    !!selections[selectionKey(activeLegIndex, category, travelerId)];
   const anySelected = (category: AddOnCategory) => travelers.some((t) => hasSelection(category, t.id));
-  const activeLegRoute = legRoutes[activeLegIndex];
 
   return (
     <View style={styles.container}>
@@ -258,7 +341,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           activeOpacity={0.8}
           disabled={travelers.length === 0}
         >
-          <Text style={styles.ctaCardText}>{anySelected('seat') ? 'Seat selected' : 'Pick exact seat on map'}</Text>
+          <Text style={styles.ctaCardText}>{anySelected('seat') ? 'Seat selected' : 'Pick a seat'}</Text>
           <ChevronRight size={16} color="#FFFFFF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
@@ -288,11 +371,13 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           title={categoryLabel(openModal)}
           travelers={travelers}
           options={categoryOptions(openModal)}
+          isLoading={categoryLoading(openModal)}
+          loadError={categoryError(openModal)}
           selections={selections}
           legIndex={activeLegIndex}
           category={openModal}
           currencyCode={currencyCode}
-          onSelect={(travelerId, optionId) => handleSelect(openModal, travelerId, optionId)}
+          onSelect={(travelerId, option) => handleSelect(openModal, travelerId, option)}
           onClose={() => setOpenModal(null)}
           onSave={handleSave}
         />

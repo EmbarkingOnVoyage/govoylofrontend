@@ -61,6 +61,21 @@ export {
   type VerifyRazorpayPaymentRequest,
   type PaymentResponse,
 } from './features/payments/useRazorpayPaymentMobile';
+export {
+  useFlightAncillariesMobile,
+  useSeatMapMobile,
+  SSR_TYPE_BAGGAGE,
+  SSR_TYPE_MEALS,
+  SSR_TYPE_COMPLIMENTARY_MEALS,
+  SSR_TYPE_SEAT,
+  SSR_STATUS_AVAILABLE,
+  type AncillaryOption,
+  type FlightAncillariesResponse,
+  type SeatMapTraveler,
+  type SeatMapRow,
+  type SeatMapSegment,
+  type SeatMapResponse,
+} from './features/flights/useFlightAncillariesMobile';
 export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './features/flights/useHolidaysMobile';
 export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';
 export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';
