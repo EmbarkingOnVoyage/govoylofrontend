@@ -33,6 +33,11 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
   const [infantCount, setInfantCount] = useState(initialInfants);
   const [cabinClass, setCabinClass] = useState(initialCabinClass);
 
+  // Adults + children share a single 9-passenger cap (infants don't occupy a
+  // seat, so they're not counted here) rather than each maxing out at 9
+  // independently.
+  const atPassengerLimit = adultCount + childCount >= 9;
+
   return (
     <View style={styles.screen}>
       <SafeAreaView>
@@ -61,8 +66,12 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
               <Minus size={16} color={adultCount <= 1 ? '#ADB8CD' : '#7C1AEE'} strokeWidth={2} />
             </TouchableOpacity>
             <Text style={styles.stepperValue}>{adultCount}</Text>
-            <TouchableOpacity style={styles.stepperButton} onPress={() => setAdultCount((c) => Math.min(9, c + 1))}>
-              <Plus size={16} color="#7C1AEE" strokeWidth={2} />
+            <TouchableOpacity
+              style={[styles.stepperButton, atPassengerLimit && styles.stepperButtonDisabled]}
+              onPress={() => setAdultCount((c) => (atPassengerLimit ? c : c + 1))}
+              disabled={atPassengerLimit}
+            >
+              <Plus size={16} color={atPassengerLimit ? '#ADB8CD' : '#7C1AEE'} strokeWidth={2} />
             </TouchableOpacity>
           </View>
         </View>
@@ -81,8 +90,12 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
               <Minus size={16} color={childCount <= 0 ? '#ADB8CD' : '#7C1AEE'} strokeWidth={2} />
             </TouchableOpacity>
             <Text style={styles.stepperValue}>{childCount}</Text>
-            <TouchableOpacity style={styles.stepperButton} onPress={() => setChildCount((c) => Math.min(9, c + 1))}>
-              <Plus size={16} color="#7C1AEE" strokeWidth={2} />
+            <TouchableOpacity
+              style={[styles.stepperButton, atPassengerLimit && styles.stepperButtonDisabled]}
+              onPress={() => setChildCount((c) => (atPassengerLimit ? c : c + 1))}
+              disabled={atPassengerLimit}
+            >
+              <Plus size={16} color={atPassengerLimit ? '#ADB8CD' : '#7C1AEE'} strokeWidth={2} />
             </TouchableOpacity>
           </View>
         </View>

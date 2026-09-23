@@ -165,8 +165,24 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
             title="Select nationality"
           />
         </View>
-        <View style={styles.row}>
-          <View style={styles.fieldWrapperHalf}>
+        {maritalStatus === 'Married' ? (
+          <View style={styles.row}>
+            <View style={styles.fieldWrapperHalf}>
+              <Text style={styles.label}>Marital status</Text>
+              <SelectField
+                value={maritalStatus}
+                options={MARITAL_STATUS_OPTIONS}
+                onSelect={setMaritalStatus}
+                title="Select marital status"
+              />
+            </View>
+            <View style={styles.fieldWrapperHalf}>
+              <Text style={styles.label}>Anniversary</Text>
+              <TextInput style={styles.input} value={anniversary} onChangeText={setAnniversary} placeholder="DD/MM/YYYY" />
+            </View>
+          </View>
+        ) : (
+          <View style={styles.fieldWrapperFull}>
             <Text style={styles.label}>Marital status</Text>
             <SelectField
               value={maritalStatus}
@@ -175,11 +191,7 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
               title="Select marital status"
             />
           </View>
-          <View style={styles.fieldWrapperHalf}>
-            <Text style={styles.label}>Anniversary</Text>
-            <TextInput style={styles.input} value={anniversary} onChangeText={setAnniversary} placeholder="DD/MM/YYYY" />
-          </View>
-        </View>
+        )}
         <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>City of residents</Text>
           <SelectField
