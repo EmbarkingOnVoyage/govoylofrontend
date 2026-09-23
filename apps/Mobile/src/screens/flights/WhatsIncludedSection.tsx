@@ -20,6 +20,13 @@ interface AddOnTraveler {
 // traveler can back out of a selection instead of being stuck with one.
 const NONE_OPTION: AddOnOption = { id: 'none', label: 'None Added', price: 0 };
 
+// PLACEHOLDER PRICING. Flyshop does expose real priced ancillaries —
+// Air_GetSSR (BAGGAGE/MEALS/SEAT, each with a real CurrencyCode+TotalAmount)
+// and Air_GetSeatMap for per-seat pricing — but neither is wired into our
+// backend yet (both need a Flight_Key from Air_Reprice threaded through the
+// booking flow). These arrays mirror the values shown in the Figma "Checked
+// baggage" modal purely so the selection/total/Save flow is interactive
+// ahead of that integration; replace them wholesale once it lands.
 const BAGGAGE_PAID_OPTIONS: AddOnOption[] = [
   { id: 'extra-5kg', label: 'Extra weight', sublabel: '5 kg', price: 4250 },
   { id: 'excess-15kg', label: 'x1', sublabel: '15 kg', price: 8250 },
@@ -35,10 +42,6 @@ const MEAL_PAID_OPTIONS: AddOnOption[] = [
   { id: 'non-veg', label: 'Non-Veg Meal', price: 550 },
 ];
 
-// Real per-leg ancillary pricing isn't wired up on the backend yet — these
-// mirror the values shown in the Figma "Checked baggage" modal so the flow
-// (select an option per traveller, see a running total, Save) is fully
-// interactive ahead of that integration.
 function formatCurrency(amount: number, currencyCode: string): string {
   return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN')}`;
 }
@@ -133,6 +136,11 @@ interface LegRoute {
   label: string;
   origin: string;
   destination: string;
+  // Real allowance strings from the fare backing this leg's price (e.g.
+  // "7 KG", "1 pcs (23kg)") — null when Flyshop didn't return one for this
+  // fare, in which case we say so rather than guessing a number.
+  handBaggage: string | null;
+  checkInBaggage: string | null;
 }
 
 interface WhatsIncludedSectionProps {
@@ -181,12 +189,14 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
     return !!optionId && optionId !== 'none';
   };
   const anySelected = (category: AddOnCategory) => travelers.some((t) => hasSelection(category, t.id));
+  const activeLegRoute = legRoutes[activeLegIndex];
 
   return (
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Whats included</Text>
       <Text style={styles.sectionSubtitle}>
-        Check your included benefits and add the extras you need for a more comfortable trip.
+        Check your included benefits and add the extras you need for a more comfortable trip. Add-on
+        prices shown are estimates and may change at checkout.
       </Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll}>
@@ -213,12 +223,12 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
       <View style={styles.cardRow}>
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Carry on bag</Text>
-          <Text style={styles.infoCardSublabel}>5 kg</Text>
+          <Text style={styles.infoCardSublabel}>{activeLegRoute?.handBaggage ?? 'Airline dependent'}</Text>
           <Text style={styles.infoCardPrice}>Free</Text>
         </View>
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Checked bag</Text>
-          <Text style={styles.infoCardSublabel}>7 kg</Text>
+          <Text style={styles.infoCardSublabel}>{activeLegRoute?.checkInBaggage ?? 'Airline dependent'}</Text>
           <Text style={styles.infoCardPrice}>Free</Text>
         </View>
         <TouchableOpacity

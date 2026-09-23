@@ -123,10 +123,16 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       legs.map((leg, index) => {
         const first = leg.segments[0];
         const last = leg.segments[leg.segments.length - 1];
+        // fares[0] is always the fare backing this leg's totalAmount (the
+        // backend derives totalAmount from it), so its baggage allowance is
+        // the real one for the price already shown above — not a guess.
+        const primaryFare = leg.fares[0];
         return {
           label: legLabels?.[index] ?? `Flight ${index + 1}`,
           origin: first?.origin ?? '',
           destination: last?.destination ?? '',
+          handBaggage: primaryFare?.handBaggage ?? null,
+          checkInBaggage: primaryFare?.checkInBaggage ?? null,
         };
       }),
     [legs, legLabels]
