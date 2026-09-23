@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Modal } from 'react-native';
 import { ArrowLeft, ArrowLeftRight, Info, Plus, Check, CheckCircle2 } from 'lucide-react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import RazorpayCheckout from 'react-native-razorpay';
@@ -8,10 +8,17 @@ import {
   useCreateRazorpayOrderMobile,
   useVerifyRazorpayPaymentMobile,
   type FlightOffer,
+  type Traveler,
 } from '@workspace/ui';
 import { findAirportByCode } from '../../data/airports';
 import { AirlineLogo } from './FlightResultsScreen';
+import { WhatsIncludedSection } from './WhatsIncludedSection';
 import { styles } from './TravelerDetailsScreen.styles';
+
+// The Add Travellers list only shows the first 4 saved travellers inline; a
+// 5th+ traveller pushes the rest behind a "More" button that opens the full
+// list in a modal instead of growing this screen indefinitely.
+const INLINE_TRAVELER_LIMIT = 4;
 
 function formatCurrency(amount: number, currencyCode: string): string {
   return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN', {
@@ -81,6 +88,8 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 }) => {
   const { data: travelers, isLoading } = useTravellersMobile();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showAllTravelers, setShowAllTravelers] = useState(false);
+  const [addOnTotal, setAddOnTotal] = useState(0);
 
   const createOrder = useCreateRazorpayOrderMobile();
   const verifyPayment = useVerifyRazorpayPaymentMobile();
@@ -89,9 +98,39 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
   // Each leg's totalAmount is already the full priced total for the searched
   // passenger count (same figure the results/fare-review screens show), so
-  // the booking total is just the sum across legs — no extra multiplication.
-  const totalAmount = useMemo(() => legs.reduce((sum, leg) => sum + leg.totalAmount, 0), [legs]);
+  // the booking total is the sum across legs plus whatever paid extras
+  // (baggage/seat/meal) the traveller added in the Whats Included section.
+  const baseTotalAmount = useMemo(() => legs.reduce((sum, leg) => sum + leg.totalAmount, 0), [legs]);
+  const totalAmount = baseTotalAmount + addOnTotal;
   const currencyCode = legs[0]?.currencyCode ?? 'INR';
+
+  const visibleTravelers = (travelers ?? []).slice(0, INLINE_TRAVELER_LIMIT);
+  const hasMoreTravelers = (travelers ?? []).length > INLINE_TRAVELER_LIMIT;
+
+  // Add-ons apply to whichever travellers are actually on this booking, not
+  // every saved traveller — so the Whats Included modals only list the ones
+  // currently checked in the Add travellers block above.
+  const addOnTravelers = useMemo(
+    () =>
+      (travelers ?? [])
+        .filter((t) => selectedIds.has(t.id))
+        .map((t) => ({ id: t.id, name: `${t.firstName} ${t.lastName}` })),
+    [travelers, selectedIds]
+  );
+
+  const legRoutes = useMemo(
+    () =>
+      legs.map((leg, index) => {
+        const first = leg.segments[0];
+        const last = leg.segments[leg.segments.length - 1];
+        return {
+          label: legLabels?.[index] ?? `Flight ${index + 1}`,
+          origin: first?.origin ?? '',
+          destination: last?.destination ?? '',
+        };
+      }),
+    [legs, legLabels]
+  );
   // Stable for the lifetime of this screen so a retried payment reuses the
   // same BookingPayment row on the backend instead of creating a new one.
   const bookingReference = useMemo(() => `GV-${Date.now()}`, []);
@@ -152,6 +191,30 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       }
       return next;
     });
+  };
+
+  const renderTravelerRow = (traveler: Traveler) => {
+    const isSelected = selectedIds.has(traveler.id);
+    return (
+      <View key={traveler.id} style={styles.travelerRow}>
+        <TouchableOpacity style={styles.travelerRowLeft} onPress={() => toggleSelected(traveler.id)} activeOpacity={0.7}>
+          <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
+            {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
+          </View>
+          <View>
+            <Text style={styles.travelerName}>
+              {traveler.firstName} {traveler.lastName}
+            </Text>
+            <Text style={styles.travelerMeta}>
+              {[traveler.gender, formatTravelerDob(traveler.dateOfBirth)].filter(Boolean).join(', ')}
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => onEditTraveler(traveler.id)}>
+          <Text style={styles.editLink}>Edit</Text>
+        </TouchableOpacity>
+      </View>
+    );
   };
 
   return (
@@ -286,39 +349,26 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         ) : (travelers ?? []).length === 0 ? (
           <Text style={styles.emptyStateText}>No saved travellers yet.</Text>
         ) : (
-          (travelers ?? []).map((traveler) => {
-            const isSelected = selectedIds.has(traveler.id);
-            return (
-              <View key={traveler.id} style={styles.travelerRow}>
-                <TouchableOpacity
-                  style={styles.travelerRowLeft}
-                  onPress={() => toggleSelected(traveler.id)}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
-                    {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
-                  </View>
-                  <View>
-                    <Text style={styles.travelerName}>
-                      {traveler.firstName} {traveler.lastName}
-                    </Text>
-                    <Text style={styles.travelerMeta}>
-                      {[traveler.gender, formatTravelerDob(traveler.dateOfBirth)].filter(Boolean).join(', ')}
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => onEditTraveler(traveler.id)}>
-                  <Text style={styles.editLink}>Edit</Text>
-                </TouchableOpacity>
-              </View>
-            );
-          })
+          visibleTravelers.map(renderTravelerRow)
+        )}
+
+        {hasMoreTravelers && (
+          <TouchableOpacity style={styles.moreButton} onPress={() => setShowAllTravelers(true)} activeOpacity={0.7}>
+            <Text style={styles.moreButtonText}>More</Text>
+          </TouchableOpacity>
         )}
 
         <TouchableOpacity style={styles.addTravelerRow} onPress={onAddTraveler} activeOpacity={0.7}>
           <Text style={styles.addTravelerText}>Add new travellers</Text>
           <Plus size={16} color="#7C1AEE" strokeWidth={2} />
         </TouchableOpacity>
+
+        <WhatsIncludedSection
+          legRoutes={legRoutes}
+          travelers={addOnTravelers}
+          currencyCode={currencyCode}
+          onTotalChange={setAddOnTotal}
+        />
 
         {paymentState === 'success' ? (
           <View style={styles.paymentSuccessBanner}>
@@ -349,6 +399,39 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           </View>
         )}
       </ScrollView>
+
+      <Modal visible={showAllTravelers} animationType="slide" transparent onRequestClose={() => setShowAllTravelers(false)}>
+        <View style={styles.allTravelersBackdrop}>
+          <View style={styles.allTravelersSheet}>
+            <View style={styles.allTravelersHeader}>
+              <Text style={styles.allTravelersTitle}>Add Traveller</Text>
+            </View>
+            <View style={styles.travelerCountRow}>
+              <Text style={styles.travelerCountLabel}>Adult</Text>
+              <Text style={styles.travelerCountValue}>
+                {selectedIds.size}/{passengerCount} Selected
+              </Text>
+            </View>
+            <ScrollView style={styles.allTravelersList}>{(travelers ?? []).map(renderTravelerRow)}</ScrollView>
+            <View style={styles.allTravelersFooter}>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowAllTravelers(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.addButton}
+                onPress={() => setShowAllTravelers(false)}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.addButtonText}>Add</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
