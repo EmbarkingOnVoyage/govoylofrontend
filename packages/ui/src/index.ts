@@ -76,6 +76,12 @@ export {
   type SeatMapSegment,
   type SeatMapResponse,
 } from './features/flights/useFlightAncillariesMobile';
+export {
+  useFareRulesMobile,
+  type FareRule,
+  type LegFareRules,
+  type FareRulesResponse,
+} from './features/flights/useFareRulesMobile';
 export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './features/flights/useHolidaysMobile';
 export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';
 export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';

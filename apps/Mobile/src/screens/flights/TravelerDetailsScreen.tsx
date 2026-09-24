@@ -13,6 +13,7 @@ import {
 import { findAirportByCode } from '../../data/airports';
 import { AirlineLogo } from './FlightResultsScreen';
 import { WhatsIncludedSection } from './WhatsIncludedSection';
+import { FareRulesModal, type FareRulesLeg } from './FareRulesModal';
 import { styles } from './TravelerDetailsScreen.styles';
 
 // The Add Travellers list only shows the first 4 saved travellers inline; a
@@ -90,6 +91,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showAllTravelers, setShowAllTravelers] = useState(false);
   const [addOnTotal, setAddOnTotal] = useState(0);
+  const [showFareRules, setShowFareRules] = useState(false);
 
   const createOrder = useCreateRazorpayOrderMobile();
   const verifyPayment = useVerifyRazorpayPaymentMobile();
@@ -146,6 +148,25 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       }),
     [legs, legLabels]
   );
+
+  const fareRuleLegs = useMemo<FareRulesLeg[]>(
+    () =>
+      legs.map((leg, index) => {
+        const first = leg.segments[0];
+        const last = leg.segments[leg.segments.length - 1];
+        return {
+          offerId: leg.offerId,
+          label: legLabels?.[index] ?? `Flight ${index + 1}`,
+          origin: first?.origin ?? '',
+          destination: last?.destination ?? '',
+          airlineName: leg.airlineName,
+          flightNumbers: leg.segments.map((s) => `${s.airlineCode} ${s.flightNumber}`),
+          departureDateTime: first?.departureDateTime ?? '',
+        };
+      }),
+    [legs, legLabels]
+  );
+
   // Stable for the lifetime of this screen so a retried payment reuses the
   // same BookingPayment row on the backend instead of creating a new one.
   const bookingReference = useMemo(() => `GV-${Date.now()}`, []);
@@ -343,6 +364,10 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           <Text style={styles.viewFlightDetailsLink}>View Flight Details</Text>
         </TouchableOpacity>
 
+        <TouchableOpacity onPress={() => setShowFareRules(true)}>
+          <Text style={styles.viewFlightDetailsLink}>Fare Rules</Text>
+        </TouchableOpacity>
+
         <Text style={styles.sectionTitle}>Add travellers</Text>
 
         <View style={styles.noticeBanner}>
@@ -447,6 +472,8 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           </View>
         </View>
       </Modal>
+
+      <FareRulesModal visible={showFareRules} legs={fareRuleLegs} onClose={() => setShowFareRules(false)} />
     </View>
   );
 };
