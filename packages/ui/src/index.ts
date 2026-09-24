@@ -9,11 +9,109 @@ export * from './components/AutoCompleteDropdown';
 
 // Export domain features
 export * from './features/bookings/BookingDashboard';
+// NOTE: SearchWidget is intentionally not exported/routed yet — it (via its
+// Calendar sub-component) imports @react-native-community/datetimepicker,
+// a native-only package with Flow syntax that Vite cannot bundle for web.
+// Needs a web-compatible date picker before it can be wired into apps/Web.
 export { LoginFeature as LoginMobileFeature } from './features/authentication/LoginFeature';
 export { LoginFeature as LoginWebFeature } from './features/authentication/LoginFeature.web';
 export { OtpFeature as OtpMobileFeature } from './features/authentication/OtpFeature';
 export { OtpFeature as OtpWebFeature } from './features/authentication/OtpFeature.web';
 export { ProfileStep1 } from './features/profile/ProfileStep1';
+export {
+  useCustomerProfileMobile,
+  useUpdateCustomerProfileMobile,
+  type CustomerProfile,
+  type UpdateProfilePayload,
+} from './features/profile/useCustomerProfileMobile';
+export {
+  useTravellersMobile,
+  useTravellerDetailMobile,
+  useSaveTravellerMobile,
+  useDeleteTravellerMobile,
+  type Traveler,
+  type TravelerDetail,
+  type TravelerPassport,
+  type TravelerPayload,
+} from './features/profile/useTravellersMobile';
+export {
+  useSearchFlightsMobile,
+  type TripType,
+  type CabinClass,
+  type FlightSearchSegment,
+  type FlightSearchRequest,
+  type FlightOfferSegment,
+  type FareOption,
+  type FlightOffer,
+  type FlightSearchResponse,
+  type FlightSearchSummary,
+} from './features/flights/useSearchFlightsMobile';
+export {
+  useFareCalendarMobile,
+  type FareCalendarDay,
+  type FareCalendarResponse,
+  type FareCalendarParams,
+} from './features/flights/useFareCalendarMobile';
+export { useFareCalendarWeb } from './features/flights/useFareCalendarWeb';
+export {
+  useCreateRazorpayOrderMobile,
+  useVerifyRazorpayPaymentMobile,
+  type CreateRazorpayOrderRequest,
+  type RazorpayOrderResponse,
+  type VerifyRazorpayPaymentRequest,
+  type PaymentResponse,
+} from './features/payments/useRazorpayPaymentMobile';
+export {
+  useFlightAncillariesMobile,
+  useSeatMapMobile,
+  SSR_TYPE_BAGGAGE,
+  SSR_TYPE_MEALS,
+  SSR_TYPE_COMPLIMENTARY_MEALS,
+  SSR_TYPE_SEAT,
+  SSR_STATUS_AVAILABLE,
+  type AncillaryOption,
+  type FlightAncillariesResponse,
+  type SeatMapTraveler,
+  type SeatMapRow,
+  type SeatMapSegment,
+  type SeatMapResponse,
+} from './features/flights/useFlightAncillariesMobile';
+export {
+  useFareRulesMobile,
+  type FareRule,
+  type LegFareRules,
+  type FareRulesResponse,
+} from './features/flights/useFareRulesMobile';
+export {
+  useCreateBookingMobile,
+  BOOKING_STATUS_FAILED,
+  type BookingSsrSelectionRequest,
+  type BookingLegRequest,
+  type BookingTravelerRequest,
+  type CreateBookingRequest,
+  type CreateBookingResponse,
+} from './features/flights/useCreateBookingMobile';
+export {
+  useReleaseHoldMobile,
+  type ReleaseHoldRequest,
+  type ReleaseHoldResponse,
+} from './features/flights/useReleaseHoldMobile';
+export {
+  useMyTripsMobile,
+  useCancelTripBookingMobile,
+  type TripBooking,
+  type TripBookingLeg,
+} from './features/flights/useMyTripsMobile';
+export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './features/flights/useHolidaysMobile';
+export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';
+export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';
+export { useHolidaysWeb } from './features/flights/useHolidaysWeb';
+export { FlightSearchFormWeb } from './features/flights/FlightSearchFormWeb.web';
+export { DashboardLayout } from './components/layout/Layout';
+export { AuthProvider, useAuth } from './features/authentication/AuthContext';
+export { AuthModal } from './features/authentication/AuthModal.web';
+export { authContextCache } from './features/authentication/authContextCache';
+export { AUTH_BASE_URL } from '@workspace/api';
 
 // Export mobile-specific styles
 export * from './assets/index';

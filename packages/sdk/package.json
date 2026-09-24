@@ -1,0 +1,40 @@
+{
+  "name": "@govoylo/mobile-sdk",
+  "version": "0.1.0",
+  "description": "Publishable SDK exposing goVoylo's shared design system, navigation state machine, and API client for embedding in external React Native / Expo apps.",
+  "license": "MIT",
+  "private": true,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "echo \"No SDK tests yet\""
+  },
+  "peerDependencies": {
+    "react": "18.3.1",
+    "react-native": "*",
+    "@tanstack/react-query": "^5.101.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@workspace/ui": "*",
+    "@workspace/core": "*",
+    "@workspace/api": "*",
+    "tsup": "^8.3.5"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -2,26 +2,32 @@
 import React from 'react';
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// 1. Mock out external state managers to cleanly control their return configurations
-vi.mock('@workspace/core', () => ({
-  ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  useFlowNavigation: vi.fn(() => ({
-    currentScreen: 'SignIn',
-    navigateByRule: vi.fn(),
-  })),
-}));
+// 1. Mock out external state managers to cleanly control their return configurations.
+// NAVIGATION_FLOW_ENGINE/SCREEN_TO_PATH/PATH_TO_SCREEN are plain static data, so they're
+// passed through for real via importOriginal rather than re-declared here.
+vi.mock('@workspace/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@workspace/core')>();
+  return {
+    ...actual,
+    ErrorBoundary: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  };
+});
 
 vi.mock('@workspace/ui', () => ({
   AppProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  AuthModal: () => null,
   BaseLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DashboardLayout: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dashboard-layout">{children}</div>
+  ),
   LoginWebFeature: () => <div data-testid="login-feature">Login Form Mock</div>,
   OtpWebFeature: () => <div>OTP Form Mock</div>,
   LoginMobileFeature: () => <div data-testid="login-feature">Login Form Mock</div>,
   OtpMobileFeature: () => <div>OTP Form Mock</div>,
-}));
-
-vi.mock('mobile-app/src/screens/LandingScreen', () => ({
-  LandingScreen: () => <div>Landing Mobile Screen Mock</div>,
+  ProfileStep1: () => <div>Profile Mock</div>,
+  BookingDashboard: () => <div>Booking Dashboard Mock</div>,
+  FlightSearchFormWeb: () => <div data-testid="flight-search-form">Flight Search Form Mock</div>,
 }));
 
 // 🔑 Tiny utility to pause execution briefly, letting React complete its initial rendering cycle
@@ -60,12 +66,14 @@ describe('Web App Shell Boot Strategy', () => {
   test('should assert critical system workflows boot cleanly in default view layouts', async () => {
     // Execute a fresh import of the file module layout
     await import('./main');
-    
-    // 🔑 Pause for a split second to let React mount and paint your LoginFeature component inside #root
+
+    // 🔑 Pause for a split second to let React mount and paint the default route inside #root
     await flushReactRenderQueue();
-    
-    // Check our newly added anchor wrapper element node
-    expect(rootElement?.innerHTML).toContain('data-testid="login-feature"');
+
+    // The default route ("/") renders the flight search form directly — guests
+    // should never be forced into sign-in just by loading the app.
+    expect(rootElement?.innerHTML).toContain('data-testid="flight-search-form"');
+    expect(rootElement?.innerHTML).not.toContain('data-testid="login-feature"');
   });
 
   test('should catch contract violations if the DOM root node element is missing', async () => {

@@ -3,14 +3,10 @@
 import "./global.css";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { AppProvider, LoginWebFeature, OtpWebFeature, ProfileStep1 } from "@workspace/ui";
-import { ErrorBoundary, useFlowNavigation } from "@workspace/core"; // Added useFlowNavigation contract
-
-// Mobile Screen Preview View
-import { LandingScreen } from "mobile-app/src/screens/LandingScreen";
-
-// 1. Contract Enforcement: Read Vite's custom environment variable mode flag
-const isMobilePreviewMode = import.meta.env.VITE_PREVIEW_TARGET === "mobile";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { AppProvider, AuthProvider, AuthModal, LoginWebFeature, OtpWebFeature, ProfileStep1, BookingDashboard, DashboardLayout, FlightSearchFormWeb, type FlightOffer } from "@workspace/ui";
+import { ErrorBoundary, NavigationRule } from "@workspace/core";
+import { useWebFlowNavigation } from "./navigation/useWebFlowNavigation";
 
 // 1. Contract Enforcement: Suppress platform-specific mobile warnings in the browser console
 if (process.env.NODE_ENV === "development") {
@@ -29,34 +25,54 @@ if (process.env.NODE_ENV === "development") {
     originalWarn(...args);
   };
 }
-const SCREENS: Record<string, React.FC<{ onNavigate: (rule: any) => void }>> = {
-  Landing: ({ onNavigate }) => (
-    <LandingScreen
-      onNavigate={onNavigate}
-      onLoginPress={() => onNavigate("ON_SIGN_IN_PRESS")}
-      onGetStartedPress={() => onNavigate("ON_CONTINUE")}
-    />
-  ),
-  SignIn: ({ onNavigate }) => <LoginWebFeature onNavigate={onNavigate} />,
-  OTP: ({ onNavigate }) => <OtpWebFeature onNavigate={onNavigate} />,
-  Search: () => <div>Search Screen Component Placeholder</div>,
-  Profile: ({ onNavigate }) => <ProfileStep1 onNavigate={onNavigate} />,
-};
-const AppWorkflowRouter: React.FC = () => {
-  // If we are testing mobile flows, boot the state machine at 'Landing'; otherwise go straight to the dashboard features
-  const { currentScreen, navigateByRule } = useFlowNavigation(
-    isMobilePreviewMode ? "Landing" : "SignIn", //"Profile" //  
-  );
-  const ActiveComponent = SCREENS[currentScreen];
-  if (!ActiveComponent) {
-    throw new Error(
-      `CRITICAL FACTORY ERROR: Screen state "${currentScreen}" is not registered to render on the Web target architecture.`,
-    );
-  }
 
-  // Instantiates the resolved view and injects the rule router driver contract down to the page layer
-  return <ActiveComponent onNavigate={navigateByRule} />;
+const AppWorkflowRouter: React.FC = () => {
+  const { navigateByRule } = useWebFlowNavigation();
+  const navigate = useNavigate();
+  const [flightOffers, setFlightOffers] = React.useState<FlightOffer[] | null>(null);
+
+  // Several screen components still type their onNavigate prop as a plain
+  // (rule: string) => void rather than the NavigationRule union. navigateByRule
+  // already guards against unmapped rules at runtime (see useWebFlowNavigation),
+  // so this cast just restores the type-erased shape those components expect.
+  const onNavigateLoose = (rule: string) => navigateByRule(rule as NavigationRule);
+
+  return (
+    <>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <FlightSearchFormWeb
+              onNavigate={onNavigateLoose}
+              onResults={(offers) => {
+                setFlightOffers(offers);
+                navigate('/search');
+              }}
+            />
+          }
+        />
+        <Route path="/signin" element={<LoginWebFeature onNavigate={onNavigateLoose} />} />
+        <Route path="/otp" element={<OtpWebFeature onNavigate={onNavigateLoose} />} />
+        <Route path="/booking-dashboard" element={<BookingDashboard />} />
+        <Route
+          path="/search"
+          element={
+            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
+              <div>
+                {flightOffers ? `${flightOffers.length} flight(s) found. Results screen not built yet.` : 'No search yet.'}
+              </div>
+            </DashboardLayout>
+          }
+        />
+        <Route path="/profile" element={<ProfileStep1 onNavigate={onNavigateLoose} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      <AuthModal />
+    </>
+  );
 };
+
 const container = document.getElementById("root");
 if (!container) {
   throw new Error(
@@ -70,7 +86,11 @@ root.render(
   <React.StrictMode>
     <ErrorBoundary contextName="WEB-APP-SHELL">
       <AppProvider>
-          <AppWorkflowRouter />
+        <AuthProvider>
+          <BrowserRouter>
+            <AppWorkflowRouter />
+          </BrowserRouter>
+        </AuthProvider>
       </AppProvider>
     </ErrorBoundary>
   </React.StrictMode>,

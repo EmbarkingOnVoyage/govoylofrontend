@@ -1,13 +1,14 @@
 // packages/api/src/hooks/useAuth.ts
 import { useMutation } from '@tanstack/react-query';
-import { 
+import {
   LoginRequest, LoginResponse, LoginResponseSchema,
   OtpRequest, OtpResponse, OtpResponseSchema // 💡 Import new models
 } from '../models/auth.schema';
+import { AUTH_BASE_URL } from '../authConfig';
 
 // --- Existing Password Login Engine ---
 async function loginUser(payload: LoginRequest): Promise<LoginResponse> {
-  const response = await fetch('https://localhost:5037/api/auth/login', {
+  const response = await fetch(`${AUTH_BASE_URL}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -27,11 +28,11 @@ export function useLoginMutation() {
 
 
 // --- 💡 NEW: Systematic Request OTP Mutation Engine ---
+// ORIGINAL REAL-API IMPLEMENTATION — restore this once a real send-otp
+// backend exists at the correct URL; commented out in favor of the dev
+// mock below, which lets the OTP flow be tested without a live backend.
 async function requestOtp(payload: OtpRequest): Promise<OtpResponse> {
-  // Replace url string with your actual monorepo base client wrapper or API gateway path
-  debugger; // This line is for debugging purposes and can be removed in production
-
-  const response = await fetch('https://localhost:5037/api/auth/send-otp', {
+  const response = await fetch(`${AUTH_BASE_URL}/api/auth/send-otp`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -42,10 +43,21 @@ async function requestOtp(payload: OtpRequest): Promise<OtpResponse> {
   }
 
   const rawData = await response.json();
-  
+
   // Enforce schema validation contract at runtime
   return OtpResponseSchema.parse(rawData);
 }
+
+// TEMPORARY DEV MOCK: there is no real backend at localhost:5037 yet, so
+// every OTP request would otherwise fail with a network error. Simulates a
+// successful dispatch instead — swap back to the real implementation above
+// once an actual send-otp endpoint exists.
+// async function requestOtp(payload: OtpRequest): Promise<OtpResponse> {
+//   return OtpResponseSchema.parse({
+//     success: true,
+//     message: `Mock OTP sent to ${payload.email} (dev mode) — enter 123456 to verify.`,
+//   });
+// }
 
 /**
  * Custom Hook to trigger the OTP sequence during login/sign up

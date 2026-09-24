@@ -7,9 +7,11 @@ import { LOGO_ASSETS } from "../../assets";
 
 interface LoginFeatureProps {
   onNavigate: (rule: string) => void;
+  variant?: "page" | "modal";
+  onCloseModal?: () => void;
 }
 
-export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
+export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate, variant = "page", onCloseModal }) => {
   const [email, setEmail] = useState("");
   const [validationError, setValidationError] = useState("");
   const [isApiLoading, setIsApiLoading] = useState(false);
@@ -40,7 +42,8 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
     mutation
       .mutateAsync({ email: email.trim().toLowerCase() })
       .then((data) => {
-        if (data && data.success) {
+        if (data && data.verificationToken) {
+          authContextCache.setVerificationToken(data.verificationToken);
           console.log("Background Web OTP dispatched:", data.message);
         }
       })
@@ -56,11 +59,13 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
     { id: "facebook", onPress: () => alert("Facebook Popup") },
   ];
 
-  return (
-     <DashboardLayout showSidebar={false} onNavigate={onNavigate}>
+  const content = (
       <div className={s.container}>
         {/* Close Modal Trigger */}
-        <button className={s.closeButton} onClick={() => console.log("Close Clicked")}>
+        <button
+          className={s.closeButton}
+          onClick={() => (onCloseModal ? onCloseModal() : console.log("Close Clicked"))}
+        >
           &times;
         </button>
         <div className={s.logoWrapper}>
@@ -131,6 +136,13 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
           <span className={s.footerLink}>Terms & Privacy Policy</span>.
         </p>
       </div>
-     </DashboardLayout>
+  );
+
+  return variant === "modal" ? (
+    content
+  ) : (
+    <DashboardLayout showSidebar={false} onNavigate={onNavigate}>
+      {content}
+    </DashboardLayout>
   );
 };

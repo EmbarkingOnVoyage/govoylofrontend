@@ -5,13 +5,8 @@ import { ViewStyle, TextStyle } from "react-native";
 // ==========================================
 
 export interface IOtpMobileStyles {
-  backdrop: ViewStyle;
+  screen: ViewStyle;
   container: ViewStyle;
-  backArrow: TextStyle;
-  closeButton: TextStyle;
-  logoWrapper: ViewStyle;
-  logoText: TextStyle;
-  title: TextStyle;
   contentWrapper: ViewStyle;
   headingText: TextStyle;
   subText: TextStyle;
@@ -55,81 +50,38 @@ export interface IOtpWebStyles {
 // ==========================================
 
 export const mobile: IOtpMobileStyles = {
-  backdrop: {
-    position: "absolute",
-    top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: "rgba(107, 114, 128, 0.4)",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 16,
+  // Full-screen white page per the Figma "Phone OTP" mobile design — no
+  // backdrop/modal card, no header/logo/back controls (none exist in the
+  // design; the OS back gesture/button is the only way back).
+  screen: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
   },
   container: {
-    position: "relative",
-    width: "100%",
-    maxWidth: 430,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 24,
-    padding: 32,
-    alignItems: "center",
-    boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" as any,
-  },
-  backArrow: {
-    position: "absolute",
-    top: 20,
-    left: 24,
-    fontSize: 22,
-    color: "#111827",
-  },
-  closeButton: {
-    position: "absolute",
-    top: 20,
-    right: 24,
-    fontSize: 26,
-    color: "#111827",
-    fontWeight: "400",
-  },
-  logoWrapper: {
-    width: 44,
-    height: 44,
-    backgroundColor: "#7F1DFF",
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-  },
-  logoText: {
-    fontSize: 20,
-    color: "#FFFFFF",
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#111827",
-    marginBottom: 24,
-    letterSpacing: -0.5,
+    flex: 1,
+    paddingHorizontal: 16,
+    justifyContent: "flex-end",
+    paddingBottom: 24,
   },
   contentWrapper: {
     width: "100%",
-    alignItems: "center",
   },
   headingText: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "700",
-    color: "#111827",
-    textAlign: "center",
+    color: "#182339",
+    lineHeight: 32,
     marginBottom: 8,
   },
   subText: {
-    fontSize: 13,
-    color: "#4B5563",
-    textAlign: "center",
-    lineHeight: 18,
+    fontSize: 15,
+    color: "#4C5973",
+    lineHeight: 20,
     marginBottom: 24,
-    paddingHorizontal: 8,
   },
   emailHighlight: {
     fontWeight: "600",
-    color: "#111827",
+    color: "#182339",
   },
   otpGrid: {
     flexDirection: "row",
@@ -138,20 +90,19 @@ export const mobile: IOtpMobileStyles = {
     marginBottom: 16,
   },
   otpInput: {
-    width: 48,
-    height: 48,
-    borderWidth: 1,
-    borderColor: "#A9B6CE",
-    borderRadius: 12,
+    width: 47,
+    height: 47,
+    borderWidth: 1.5,
+    borderColor: "#7C8CAD",
+    borderRadius: 8,
     backgroundColor: "#FFFFFF",
     textAlign: "center",
     fontSize: 18,
-    fontWeight: "600",
-    color: "#111827",
+    fontWeight: "700",
+    color: "#182339",
   },
   otpInputFilled: {
-    borderColor: "#7F1DFF",
-    backgroundColor: "#F9F5FF",
+    borderColor: "#182339",
   },
   otpInputError: {
     borderColor: "#EF4444",
@@ -166,31 +117,31 @@ export const mobile: IOtpMobileStyles = {
   },
   submitButton: {
     width: "100%",
-    height: 54,
-    backgroundColor: "#CEAAFF",
-    borderRadius: 12,
+    height: 44,
+    backgroundColor: "#7C1AEE",
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 24,
   },
+  // Applied on top of submitButton while the 6-digit code isn't complete yet
+  // — matches the design's lighter "not ready to submit" state.
   disabledButton: {
-    backgroundColor: "#E5E7EB",
+    backgroundColor: "#CEAAFF",
   },
   submitButtonText: {
     color: "#FFFFFF",
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "600",
   },
   spamText: {
-    fontSize: 12,
-    color: "#4B5563",
-    textAlign: "center",
+    fontSize: 13,
+    color: "#4C5973",
     lineHeight: 18,
-    paddingHorizontal: 12,
   },
   timerHighlight: {
     fontWeight: "500",
-    color: "#111827",
+    color: "#182339",
   },
 };
 
