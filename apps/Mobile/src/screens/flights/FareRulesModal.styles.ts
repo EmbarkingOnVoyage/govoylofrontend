@@ -166,25 +166,9 @@ export const styles = StyleSheet.create({
     color: '#3E4B64',
   },
   footer: {
-    flexDirection: 'row',
-    gap: 12,
     padding: 16,
     borderTopWidth: 1,
     borderTopColor: '#ECEEF3',
-  },
-  closeButton: {
-    flex: 1,
-    height: 48,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#7C1AEE',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButtonText: {
-    color: '#7C1AEE',
-    fontSize: 15,
-    fontWeight: '600',
   },
   gotItButton: {
     flex: 1,

@@ -170,9 +170,6 @@ export const FareRulesModal: React.FC<FareRulesModalProps> = ({ visible, legs, o
         </ScrollView>
 
         <View style={styles.footer}>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose} activeOpacity={0.7}>
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
           <TouchableOpacity style={styles.gotItButton} onPress={onClose} activeOpacity={0.8}>
             <Text style={styles.gotItButtonText}>Got it</Text>
           </TouchableOpacity>
