@@ -96,6 +96,12 @@ export {
   type ReleaseHoldRequest,
   type ReleaseHoldResponse,
 } from './features/flights/useReleaseHoldMobile';
+export {
+  useMyTripsMobile,
+  useCancelTripBookingMobile,
+  type TripBooking,
+  type TripBookingLeg,
+} from './features/flights/useMyTripsMobile';
 export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './features/flights/useHolidaysMobile';
 export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';
 export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';

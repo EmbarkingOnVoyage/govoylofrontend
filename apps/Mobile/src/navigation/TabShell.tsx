@@ -11,6 +11,7 @@ import { HomeScreen } from '../screens/HomeScreen';
 import { FlightSearchFormScreen } from '../screens/flights/FlightSearchFormScreen';
 import { FlightResultsScreen } from '../screens/flights/FlightResultsScreen';
 import { TravelerDetailsScreen } from '../screens/flights/TravelerDetailsScreen';
+import { MyTripsScreen } from '../screens/flights/MyTripsScreen';
 import type { FlightOffer, FlightSearchSummary } from '@workspace/ui';
 
 type TabKey = 'Home' | 'Deals' | 'MyTrips' | 'Profile';
@@ -196,7 +197,7 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
       case 'Deals':
         return <PlaceholderScreen title="Deals" onBack={() => {}} />;
       case 'MyTrips':
-        return <PlaceholderScreen title="My trips" onBack={() => {}} />;
+        return <MyTripsScreen />;
     }
   };
 
