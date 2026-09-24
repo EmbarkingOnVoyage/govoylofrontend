@@ -91,6 +91,11 @@ export {
   type CreateBookingRequest,
   type CreateBookingResponse,
 } from './features/flights/useCreateBookingMobile';
+export {
+  useReleaseHoldMobile,
+  type ReleaseHoldRequest,
+  type ReleaseHoldResponse,
+} from './features/flights/useReleaseHoldMobile';
 export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './features/flights/useHolidaysMobile';
 export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';
 export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';

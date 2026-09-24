@@ -9,6 +9,7 @@ import {
   useVerifyRazorpayPaymentMobile,
   useCustomerProfileMobile,
   useCreateBookingMobile,
+  useReleaseHoldMobile,
   BOOKING_STATUS_FAILED,
   type FlightOffer,
   type Traveler,
@@ -104,6 +105,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const createOrder = useCreateRazorpayOrderMobile();
   const verifyPayment = useVerifyRazorpayPaymentMobile();
   const createBooking = useCreateBookingMobile();
+  const releaseHold = useReleaseHoldMobile();
   const [paymentState, setPaymentState] = useState<'idle' | 'processing' | 'success'>('idle');
   const [paymentError, setPaymentError] = useState('');
   const [bookingResult, setBookingResult] = useState<CreateBookingResponse | null>(null);
@@ -194,6 +196,22 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   // same BookingPayment row on the backend instead of creating a new one.
   const bookingReference = useMemo(() => `GV-${Date.now()}`, []);
 
+  // Best-effort: if a hold was placed but the flow doesn't end in a completed
+  // booking (checkout cancelled, payment failed/unverified, a later step
+  // throws), release it via Air_ReleasePNR so the seat isn't held against the
+  // customer for nothing. A failed release is swallowed — it must never mask
+  // the actual payment error shown to the user.
+  const releaseHeldBookingSilently = async (held: CreateBookingResponse | null) => {
+    if (!held?.bookingRefNo || !held.airlinePnr) {
+      return;
+    }
+    try {
+      await releaseHold.mutateAsync({ bookingRefNo: held.bookingRefNo, airlinePnr: held.airlinePnr });
+    } catch {
+      // Swallowed deliberately — see comment above.
+    }
+  };
+
   const handlePayNow = async () => {
     if (selectedIds.size === 0) {
       setPaymentError('Please select at least one traveller.');
@@ -207,6 +225,8 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
     setPaymentError('');
     setPaymentState('processing');
+
+    let heldBooking: CreateBookingResponse | null = null;
 
     try {
       // The flight is held with the supplier first — before any money moves —
@@ -240,6 +260,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         throw new Error(booking.failureRemark || 'Could not hold your flight. Please try again.');
       }
 
+      heldBooking = booking;
       setBookingResult(booking);
 
       const order = await createOrder.mutateAsync({
@@ -269,12 +290,14 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       } else {
         setPaymentState('idle');
         setPaymentError('Payment could not be verified. Please try again.');
+        await releaseHeldBookingSilently(heldBooking);
       }
     } catch (err) {
       setPaymentState('idle');
       const description = (err as { description?: string; message?: string })?.description;
       const message = (err as { message?: string })?.message;
       setPaymentError(description || message || 'Payment was not completed.');
+      await releaseHeldBookingSilently(heldBooking);
     }
   };
 
