@@ -7,12 +7,18 @@ import {
   useTravellersMobile,
   useCreateRazorpayOrderMobile,
   useVerifyRazorpayPaymentMobile,
+  useCustomerProfileMobile,
+  useCreateBookingMobile,
+  BOOKING_STATUS_FAILED,
   type FlightOffer,
   type Traveler,
+  type BookingTravelerRequest,
+  type BookingLegRequest,
+  type CreateBookingResponse,
 } from '@workspace/ui';
 import { findAirportByCode } from '../../data/airports';
 import { AirlineLogo } from './FlightResultsScreen';
-import { WhatsIncludedSection } from './WhatsIncludedSection';
+import { WhatsIncludedSection, type AddOnSelection } from './WhatsIncludedSection';
 import { FareRulesModal, type FareRulesLeg } from './FareRulesModal';
 import { styles } from './TravelerDetailsScreen.styles';
 
@@ -88,15 +94,19 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   onEditTraveler,
 }) => {
   const { data: travelers, isLoading } = useTravellersMobile();
+  const { data: customerProfile } = useCustomerProfileMobile();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [showAllTravelers, setShowAllTravelers] = useState(false);
   const [addOnTotal, setAddOnTotal] = useState(0);
+  const [addOnSelections, setAddOnSelections] = useState<AddOnSelection[]>([]);
   const [showFareRules, setShowFareRules] = useState(false);
 
   const createOrder = useCreateRazorpayOrderMobile();
   const verifyPayment = useVerifyRazorpayPaymentMobile();
+  const createBooking = useCreateBookingMobile();
   const [paymentState, setPaymentState] = useState<'idle' | 'processing' | 'success'>('idle');
   const [paymentError, setPaymentError] = useState('');
+  const [bookingResult, setBookingResult] = useState<CreateBookingResponse | null>(null);
 
   // Each leg's totalAmount is already the full priced total for the searched
   // passenger count (same figure the results/fare-review screens show), so
@@ -114,19 +124,32 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   // currently checked in the Add travellers block above. Gender/travelerType
   // are needed (not just id/name) because the seat-map add-on hits a real
   // Flyshop endpoint that requires PAX details.
-  const addOnTravelers = useMemo(
-    () =>
-      (travelers ?? [])
-        .filter((t) => selectedIds.has(t.id))
-        .map((t) => ({
-          id: t.id,
-          firstName: t.firstName,
-          lastName: t.lastName,
-          gender: t.gender ?? 'Male',
-          travelerType: t.travelerType,
-        })),
+  const selectedTravelers = useMemo(
+    () => (travelers ?? []).filter((t) => selectedIds.has(t.id)),
     [travelers, selectedIds]
   );
+
+  const addOnTravelers = useMemo(
+    () =>
+      selectedTravelers.map((t) => ({
+        id: t.id,
+        firstName: t.firstName,
+        lastName: t.lastName,
+        gender: t.gender ?? 'Male',
+        travelerType: t.travelerType,
+      })),
+    [selectedTravelers]
+  );
+
+  // Flyshop's PAX_Id is a 1-based sequential index, not our traveller UUID —
+  // this map lets the Whats Included section's per-traveller SSR selections
+  // (keyed by our UUID) be translated into the booking request's PaxId when
+  // Pay Now is tapped.
+  const travelerPaxIds = useMemo(() => {
+    const map = new Map<string, number>();
+    selectedTravelers.forEach((t, index) => map.set(t.id, index + 1));
+    return map;
+  }, [selectedTravelers]);
 
   const legRoutes = useMemo(
     () =>
@@ -177,10 +200,48 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       return;
     }
 
+    if (!customerProfile?.phone || !customerProfile?.email) {
+      setPaymentError('Please add a mobile number and email to your profile before booking.');
+      return;
+    }
+
     setPaymentError('');
     setPaymentState('processing');
 
     try {
+      // The flight is held with the supplier first — before any money moves —
+      // so a customer is never charged for a seat that couldn't actually be
+      // held. See IFlightSupplierClient.CreateBlockTicketAsync (backend) for
+      // why this is a reversible hold, not a final purchase.
+      const bookingTravelers: BookingTravelerRequest[] = selectedTravelers.map((t) => ({
+        paxId: travelerPaxIds.get(t.id) ?? 0,
+        title: t.gender === 'Female' ? 'Ms' : 'Mr',
+        firstName: t.firstName,
+        lastName: t.lastName,
+        gender: t.gender === 'Female' ? 'Female' : 'Male',
+        paxType: t.travelerType === 'Child' || t.travelerType === 'Infant' ? t.travelerType : 'Adult',
+      }));
+
+      const bookingLegs: BookingLegRequest[] = legs.map((leg, legIndex) => ({
+        offerId: leg.offerId,
+        selectedSsrs: addOnSelections
+          .filter((s) => s.legIndex === legIndex)
+          .map((s) => ({ paxId: travelerPaxIds.get(s.travelerId) ?? 0, ssrKey: s.ssrKey })),
+      }));
+
+      const booking = await createBooking.mutateAsync({
+        legs: bookingLegs,
+        travelers: bookingTravelers,
+        passengerMobile: customerProfile.phone,
+        passengerEmail: customerProfile.email,
+      });
+
+      if (booking.statusId === BOOKING_STATUS_FAILED) {
+        throw new Error(booking.failureRemark || 'Could not hold your flight. Please try again.');
+      }
+
+      setBookingResult(booking);
+
       const order = await createOrder.mutateAsync({
         bookingReference,
         amount: totalAmount,
@@ -408,6 +469,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           travelers={addOnTravelers}
           currencyCode={currencyCode}
           onTotalChange={setAddOnTotal}
+          onSelectionsChange={setAddOnSelections}
         />
 
         {paymentState === 'success' ? (
@@ -417,6 +479,12 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
             <Text style={styles.paymentSuccessSubtitle}>
               Your payment of {formatCurrency(totalAmount, currencyCode)} was received. Your booking is confirmed.
             </Text>
+            {!!bookingResult?.bookingRefNo && (
+              <Text style={styles.paymentSuccessSubtitle}>Booking reference: {bookingResult.bookingRefNo}</Text>
+            )}
+            {!!bookingResult?.airlinePnr && (
+              <Text style={styles.paymentSuccessSubtitle}>Airline PNR: {bookingResult.airlinePnr}</Text>
+            )}
           </View>
         ) : (
           <View style={styles.paymentSection}>

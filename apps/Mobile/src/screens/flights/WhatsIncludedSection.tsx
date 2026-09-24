@@ -29,12 +29,20 @@ type AddOnCategory = 'baggage' | 'seat' | 'meal';
 // A traveller's choice per leg/category, or absent entirely for "no add-on
 // selected" — storing the price alongside the ssrKey means the running total
 // never needs to look up options for a leg the user has since tabbed away
-// from (whose fetched data may no longer be in local state).
-interface Selection {
+// from (whose fetched data may no longer be in local state). legIndex/category/
+// travelerId are duplicated from the map key so the parent (which needs to
+// build a per-leg SSR list for the booking request) doesn't have to parse it
+// back apart.
+export interface AddOnSelection {
+  legIndex: number;
+  category: AddOnCategory;
+  travelerId: string;
   ssrKey: string;
   label: string;
   amount: number;
 }
+
+type Selection = AddOnSelection;
 
 // selections: `${legIndex}:${category}:${travelerId}` -> Selection
 type SelectionMap = Record<string, Selection>;
@@ -187,6 +195,9 @@ interface WhatsIncludedSectionProps {
   travelers: AddOnTraveler[];
   currencyCode: string;
   onTotalChange: (total: number) => void;
+  // Fired alongside onTotalChange (same "Save" timing) so the parent can
+  // build the booking request's per-leg SSR selections at Pay Now time.
+  onSelectionsChange?: (selections: AddOnSelection[]) => void;
 }
 
 export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
@@ -194,6 +205,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
   travelers,
   currencyCode,
   onTotalChange,
+  onSelectionsChange,
 }) => {
   const [activeLegIndex, setActiveLegIndex] = useState(0);
   const [selections, setSelections] = useState<SelectionMap>({});
@@ -239,8 +251,10 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
   }, [seatMap.data, activeLegIndex]);
 
   const applyTotal = (next: SelectionMap) => {
-    const grandTotal = Object.values(next).reduce((sum, selection) => sum + selection.amount, 0);
+    const values = Object.values(next);
+    const grandTotal = values.reduce((sum, selection) => sum + selection.amount, 0);
     onTotalChange(grandTotal);
+    onSelectionsChange?.(values);
   };
 
   const handleSelect = (category: AddOnCategory, travelerId: string, option: AncillaryOption | null) => {
@@ -248,7 +262,14 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
       const next = { ...prev };
       const key = selectionKey(activeLegIndex, category, travelerId);
       if (option) {
-        next[key] = { ssrKey: option.ssrKey, label: option.ssrTypeDesc, amount: option.totalAmount };
+        next[key] = {
+          legIndex: activeLegIndex,
+          category,
+          travelerId,
+          ssrKey: option.ssrKey,
+          label: option.ssrTypeDesc,
+          amount: option.totalAmount,
+        };
       } else {
         delete next[key];
       }

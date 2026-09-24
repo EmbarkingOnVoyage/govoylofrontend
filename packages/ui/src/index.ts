@@ -82,6 +82,15 @@ export {
   type LegFareRules,
   type FareRulesResponse,
 } from './features/flights/useFareRulesMobile';
+export {
+  useCreateBookingMobile,
+  BOOKING_STATUS_FAILED,
+  type BookingSsrSelectionRequest,
+  type BookingLegRequest,
+  type BookingTravelerRequest,
+  type CreateBookingRequest,
+  type CreateBookingResponse,
+} from './features/flights/useCreateBookingMobile';
 export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './features/flights/useHolidaysMobile';
 export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';
 export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';
