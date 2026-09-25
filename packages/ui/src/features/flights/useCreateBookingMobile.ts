@@ -37,6 +37,7 @@ export interface CreateBookingResponse {
   statusId: string;
   airlineCode: string | null;
   airlinePnr: string | null;
+  crsPnr: string | null;
   recordLocator: string | null;
   failureRemark: string | null;
 }

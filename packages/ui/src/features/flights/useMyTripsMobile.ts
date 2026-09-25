@@ -20,13 +20,26 @@ export interface TripBooking {
   id: string;
   bookingRefNo: string;
   airlinePnr: string | null;
+  crsPnr: string | null;
   statusId: string;
   localStatus: "Active" | "Cancelled" | "Released";
   totalAmount: number;
   currencyCode: string;
   passengerNames: string;
   createdAt: string;
+  // Only set once localStatus is "Cancelled" — a Released hold has neither.
+  cancellationType: number | null;
+  cancelCode: string | null;
   legs: TripBookingLeg[];
+}
+
+export interface CancelTripBookingRequest {
+  tripBookingId: string;
+  // Both optional — omit for the ordinary cancel button (defaults to a customer-
+  // initiated Normal Cancel on the backend). Supply to request a specific
+  // Air_TicketCancellation type, e.g. 1-Full Refund or 2-No Show.
+  cancellationType?: number;
+  cancelCode?: string;
 }
 
 const MY_BOOKINGS_URL = `${AUTH_BASE_URL}/api/v1/flights/mybookings`;
@@ -49,9 +62,15 @@ export function useCancelTripBookingMobile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (tripBookingId: string): Promise<{ success: boolean; localStatus: string }> => {
+    mutationFn: async ({
+      tripBookingId,
+      cancellationType,
+      cancelCode,
+    }: CancelTripBookingRequest): Promise<{ success: boolean; localStatus: string }> => {
       const response = await mobileAuthFetch(`${MY_BOOKINGS_URL}/${tripBookingId}/cancel`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cancellationType: cancellationType ?? null, cancelCode: cancelCode ?? null }),
       });
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);

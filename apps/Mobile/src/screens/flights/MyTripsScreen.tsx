@@ -58,11 +58,14 @@ export const MyTripsScreen: React.FC = () => {
           text: isHold ? 'Release' : 'Cancel booking',
           style: 'destructive',
           onPress: () => {
-            cancelBooking.mutate(booking.id, {
-              onError: (err) => {
-                Alert.alert('Could not complete this', (err as Error)?.message || 'Please try again.');
-              },
-            });
+            cancelBooking.mutate(
+              { tripBookingId: booking.id },
+              {
+                onError: (err) => {
+                  Alert.alert('Could not complete this', (err as Error)?.message || 'Please try again.');
+                },
+              }
+            );
           },
         },
       ]
@@ -72,7 +75,7 @@ export const MyTripsScreen: React.FC = () => {
   const renderItem = ({ item }: { item: TripBooking }) => {
     const status = getStatusDisplay(item);
     const canCancel = item.localStatus === 'Active' && item.statusId !== STATUS_ID_FAILED;
-    const isCancellingThis = cancelBooking.isPending && cancelBooking.variables === item.id;
+    const isCancellingThis = cancelBooking.isPending && cancelBooking.variables?.tripBookingId === item.id;
 
     return (
       <View style={styles.card}>
