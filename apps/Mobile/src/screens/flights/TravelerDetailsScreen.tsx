@@ -192,10 +192,6 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
     [legs, legLabels]
   );
 
-  // Stable for the lifetime of this screen so a retried payment reuses the
-  // same BookingPayment row on the backend instead of creating a new one.
-  const bookingReference = useMemo(() => `GV-${Date.now()}`, []);
-
   // Best-effort: if a hold was placed but the flow doesn't end in a completed
   // booking (checkout cancelled, payment failed/unverified, a later step
   // throws), release it via Air_ReleasePNR so the seat isn't held against the
@@ -263,8 +259,11 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       heldBooking = booking;
       setBookingResult(booking);
 
+      // Reuses Flyshop's own Booking_RefNo (not a client-generated id) so the
+      // backend's post-payment AddPayment/Book_Ticket step can look this exact
+      // TripBooking back up by the same reference BookingPayment is stored under.
       const order = await createOrder.mutateAsync({
-        bookingReference,
+        bookingReference: booking.bookingRefNo,
         amount: totalAmount,
         currency: currencyCode,
         sourceClient: 'Mobile',
