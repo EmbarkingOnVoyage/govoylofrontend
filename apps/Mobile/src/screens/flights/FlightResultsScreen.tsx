@@ -141,6 +141,27 @@ function stopsLabel(stopCount: number): string {
   return stopCount === 0 ? 'Non-stop' : `${stopCount} stop${stopCount > 1 ? 's' : ''}`;
 }
 
+// "flyshop" / "tripjack" (see FlightSupplierCodes on the backend) -> the
+// display name shown in the badge. Falls back to the raw code so an unknown
+// or missing supplier still shows something rather than silently disappearing.
+const SUPPLIER_DISPLAY_NAMES: Record<string, string> = {
+  flyshop: 'Flyshop',
+  tripjack: 'TripJack',
+};
+
+// Both suppliers' offers are merged into one result list with no other visual
+// distinction, so this is purely to make it obvious during TripJack testing
+// which supplier a given card actually came from.
+const SupplierBadge: React.FC<{ supplierCode: string }> = ({ supplierCode }) => {
+  if (!supplierCode) return null;
+  const label = SUPPLIER_DISPLAY_NAMES[supplierCode] ?? supplierCode;
+  return (
+    <View style={styles.supplierBadge}>
+      <Text style={styles.supplierBadgeText}>{label}</Text>
+    </View>
+  );
+};
+
 function formatMinutesDuration(minutes: number): string {
   return `${Math.floor(minutes / 60)}h ${String(Math.round(minutes % 60)).padStart(2, '0')}m`;
 }
@@ -1221,6 +1242,7 @@ const FlightOfferCard: React.FC<{ offer: FlightOffer; variant?: FeaturedVariant;
             <AirlineLogo airlineCode={offer.airlineCode} size={24} />
             <Text style={styles.airlineName}>{offer.airlineName}</Text>
             <Text style={styles.flightNumbersText}>{flightNumbers}</Text>
+            <SupplierBadge supplierCode={offer.supplierCode} />
           </View>
           <Text style={styles.priceText}>{formatPrice(offer.totalAmount, offer.currencyCode)}</Text>
         </View>
