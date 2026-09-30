@@ -235,7 +235,17 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         firstName: t.firstName,
         lastName: t.lastName,
         gender: t.gender === 'Female' ? 'Female' : 'Male',
-        paxType: t.travelerType === 'Child' || t.travelerType === 'Infant' ? t.travelerType : 'Adult',
+        // travelerType comes straight from the saved-traveller API as
+        // lowercase ("adult"/"child"/"infant", matching the backend's own
+        // validation) — compare case-insensitively rather than assuming a
+        // capitalized value, which silently mapped every real Child/Infant
+        // traveller to "Adult" here.
+        paxType:
+          t.travelerType.toLowerCase() === 'child'
+            ? 'Child'
+            : t.travelerType.toLowerCase() === 'infant'
+              ? 'Infant'
+              : 'Adult',
       }));
 
       const bookingLegs: BookingLegRequest[] = legs.map((leg, legIndex) => ({
