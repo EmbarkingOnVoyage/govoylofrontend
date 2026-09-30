@@ -246,6 +246,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
             : t.travelerType.toLowerCase() === 'infant'
               ? 'Infant'
               : 'Adult',
+        dateOfBirth: t.dateOfBirth || undefined,
       }));
 
       const bookingLegs: BookingLegRequest[] = legs.map((leg, legIndex) => ({
