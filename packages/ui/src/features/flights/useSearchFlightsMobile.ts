@@ -55,6 +55,10 @@ export interface FlightOffer {
   // one-way/onward leg, 1 for a round-trip return leg. Lets the UI split a
   // round-trip response into its two legs instead of one flat list.
   tripLegIndex: number;
+  // "flyshop" / "tripjack" — which supplier this offer came from. Both
+  // suppliers' prices are merged into one result set, so this is the only
+  // thing that distinguishes them.
+  supplierCode: string;
 }
 
 export interface FlightSearchResponse {

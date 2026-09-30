@@ -23,6 +23,11 @@ export interface BookingTravelerRequest {
   lastName: string;
   gender: string;
   paxType: string;
+  // Optional for Adult/Child, but required by Flyshop for Infant — and, per a
+  // live "Passenger DOB required" rejection, effectively required whenever a
+  // non-Adult traveller is present at all. Always send it when the saved
+  // traveller profile has one.
+  dateOfBirth?: string;
 }
 
 export interface CreateBookingRequest {

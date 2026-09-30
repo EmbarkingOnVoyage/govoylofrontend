@@ -502,6 +502,19 @@ export const styles = StyleSheet.create({
     fontWeight: '400',
     color: '#697691',
   },
+  supplierBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: '#ECEEF3',
+  },
+  supplierBadgeText: {
+    fontSize: 10,
+    lineHeight: 13,
+    fontWeight: '600',
+    color: '#5A6685',
+    textTransform: 'uppercase',
+  },
   journeyRow: {
     flexDirection: 'row',
     alignItems: 'center',
