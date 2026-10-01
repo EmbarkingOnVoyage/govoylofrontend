@@ -2097,10 +2097,15 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   const finalDestination = isRoundTrip
     ? activeSummary?.originCode
     : activeSummary?.request.segments[activeSummary.request.segments.length - 1]?.destination;
+  // Must also START at the trip's origin and be the first pick — a connecting
+  // return leg (e.g. BOM-GOX-DEL) also ends at a round trip's final
+  // destination, but is only the second half of the trip.
   const coversWholeTrip = (offer: FlightOffer | undefined) =>
     !!offer &&
     isMultiLeg &&
+    selectedLegOffers.length === 0 &&
     offer.segments.length > 1 &&
+    offer.segments[0]?.origin === activeSummary?.originCode &&
     offer.segments[offer.segments.length - 1]?.destination === finalDestination;
 
   // Fires the one-way search for whichever multi-city leg is currently being
