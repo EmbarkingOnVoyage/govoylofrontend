@@ -28,6 +28,10 @@ export interface BookingTravelerRequest {
   // non-Adult traveller is present at all. Always send it when the saved
   // traveller profile has one.
   dateOfBirth?: string;
+  // The saved traveller's id. The travellers API only ever returns a passport
+  // number masked, so the backend looks up and fills the passport on file
+  // from this id instead (needed for international bookings).
+  savedTravelerId?: string;
 }
 
 export interface CreateBookingRequest {
@@ -35,6 +39,10 @@ export interface CreateBookingRequest {
   travelers: BookingTravelerRequest[];
   passengerMobile: string;
   passengerEmail: string;
+  // Optional GST invoice details — send all three or none.
+  gstNumber?: string;
+  gstHolderName?: string;
+  gstAddress?: string;
 }
 
 export interface CreateBookingResponse {

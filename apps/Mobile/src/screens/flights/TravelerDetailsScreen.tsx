@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Modal } from 'react-native';
 import { ArrowLeft, ArrowLeftRight, Info, Plus, Check, CheckCircle2 } from 'lucide-react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import RazorpayCheckout from 'react-native-razorpay';
@@ -27,6 +27,9 @@ import { styles } from './TravelerDetailsScreen.styles';
 // 5th+ traveller pushes the rest behind a "More" button that opens the full
 // list in a modal instead of growing this screen indefinitely.
 const INLINE_TRAVELER_LIMIT = 4;
+
+// 2-digit state code, 10-char PAN, entity number, 'Z', checksum character.
+const GSTIN_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
 
 function formatCurrency(amount: number, currencyCode: string): string {
   return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN', {
@@ -101,6 +104,10 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const [addOnTotal, setAddOnTotal] = useState(0);
   const [addOnSelections, setAddOnSelections] = useState<AddOnSelection[]>([]);
   const [showFareRules, setShowFareRules] = useState(false);
+  const [useGst, setUseGst] = useState(false);
+  const [gstNumber, setGstNumber] = useState('');
+  const [gstHolderName, setGstHolderName] = useState('');
+  const [gstAddress, setGstAddress] = useState('');
 
   const createOrder = useCreateRazorpayOrderMobile();
   const verifyPayment = useVerifyRazorpayPaymentMobile();
@@ -219,6 +226,11 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       return;
     }
 
+    if (useGst && (!GSTIN_PATTERN.test(gstNumber.trim().toUpperCase()) || !gstHolderName.trim() || !gstAddress.trim())) {
+      setPaymentError('Please enter a valid 15-character GSTIN, company name and company address.');
+      return;
+    }
+
     setPaymentError('');
     setPaymentState('processing');
 
@@ -247,6 +259,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
               ? 'Infant'
               : 'Adult',
         dateOfBirth: t.dateOfBirth || undefined,
+        savedTravelerId: t.id,
       }));
 
       const bookingLegs: BookingLegRequest[] = legs.map((leg, legIndex) => ({
@@ -261,6 +274,11 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         travelers: bookingTravelers,
         passengerMobile: customerProfile.phone,
         passengerEmail: customerProfile.email,
+        ...(useGst && {
+          gstNumber: gstNumber.trim().toUpperCase(),
+          gstHolderName: gstHolderName.trim(),
+          gstAddress: gstAddress.trim(),
+        }),
       });
 
       if (booking.statusId === BOOKING_STATUS_FAILED) {
@@ -504,6 +522,42 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           onTotalChange={setAddOnTotal}
           onSelectionsChange={setAddOnSelections}
         />
+
+        <TouchableOpacity style={styles.gstToggleRow} onPress={() => setUseGst((v) => !v)} activeOpacity={0.7}>
+          <View style={[styles.checkbox, useGst && styles.checkboxChecked]}>
+            {useGst && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
+          </View>
+          <Text style={styles.gstToggleText}>Use GST for this booking</Text>
+        </TouchableOpacity>
+
+        {useGst && (
+          <View style={styles.gstFields}>
+            <TextInput
+              style={styles.gstInput}
+              placeholder="GSTIN"
+              placeholderTextColor="#ADB8CD"
+              value={gstNumber}
+              onChangeText={setGstNumber}
+              autoCapitalize="characters"
+              maxLength={15}
+            />
+            <TextInput
+              style={styles.gstInput}
+              placeholder="Company name"
+              placeholderTextColor="#ADB8CD"
+              value={gstHolderName}
+              onChangeText={setGstHolderName}
+              maxLength={35}
+            />
+            <TextInput
+              style={styles.gstInput}
+              placeholder="Company address"
+              placeholderTextColor="#ADB8CD"
+              value={gstAddress}
+              onChangeText={setGstAddress}
+            />
+          </View>
+        )}
 
         {paymentState === 'success' ? (
           <View style={styles.paymentSuccessBanner}>
