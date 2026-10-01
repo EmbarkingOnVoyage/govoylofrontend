@@ -306,6 +306,30 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#7C1AEE',
   },
+  gstToggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 16,
+  },
+  gstToggleText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#182339',
+  },
+  gstFields: {
+    gap: 10,
+    marginBottom: 16,
+  },
+  gstInput: {
+    borderWidth: 1,
+    borderColor: '#ADB8CD',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#182339',
+  },
   moreButton: {
     alignSelf: 'center',
     paddingVertical: 10,
