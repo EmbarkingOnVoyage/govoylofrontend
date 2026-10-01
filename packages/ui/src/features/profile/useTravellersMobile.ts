@@ -21,6 +21,7 @@ export interface TravelerPassport {
   maskedPassportNumber: string;
   issuingCountry: string;
   expiryDate: string;
+  issueDate?: string | null;
 }
 
 export interface TravelerDetail extends Traveler {
@@ -39,6 +40,7 @@ export interface TravelerPayload {
   passportNumber?: string;
   passportIssuingCountry?: string;
   passportExpiryDate?: string | null;
+  passportIssueDate?: string | null;
 }
 
 const TRAVELLERS_URL = `${AUTH_BASE_URL}/api/v1/travellers`;
@@ -118,6 +120,7 @@ export function useSaveTravellerMobile() {
           passportNumber: payload.passportNumber,
           issuingCountry: payload.passportIssuingCountry,
           expiryDate: payload.passportExpiryDate,
+          issueDate: payload.passportIssueDate,
         };
         await sendJson(
           `${TRAVELLERS_URL}/${travelerId}/passport`,
