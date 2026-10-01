@@ -51,6 +51,7 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
   const [state, setState] = useState('');
   const [passportNumber, setPassportNumber] = useState('');
   const [passportExpiryDate, setPassportExpiryDate] = useState('');
+  const [passportIssueDate, setPassportIssueDate] = useState('');
   const [passportIssuingCountry, setPassportIssuingCountry] = useState('');
   const [autoAddTravelInsurance, setAutoAddTravelInsurance] = useState(false);
   const [passportEdited, setPassportEdited] = useState(false);
@@ -70,6 +71,7 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
     if (d.passport) {
       setPassportNumber(d.passport.maskedPassportNumber);
       setPassportExpiryDate(formatDate(d.passport.expiryDate));
+      setPassportIssueDate(formatDate(d.passport.issueDate));
       setPassportIssuingCountry(d.passport.issuingCountry);
     }
     setPassportEdited(false);
@@ -84,6 +86,16 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
     }
     if (!parseDisplayDate(dateOfBirth)) {
       setSaveError('Please enter a valid date of birth.');
+      return;
+    }
+    // The saved number only ever comes back masked — sending it unchanged would
+    // overwrite the real number on file with the mask.
+    if (passportEdited && detail?.passport && passportNumber === detail.passport.maskedPassportNumber) {
+      setSaveError('Please re-enter the full passport number to update passport details.');
+      return;
+    }
+    if (passportEdited && passportIssueDate.trim() && !parseDisplayDate(passportIssueDate)) {
+      setSaveError('Please enter a valid passport issue date.');
       return;
     }
 
@@ -102,6 +114,7 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
           autoAddTravelInsurance,
           passportNumber: passportEdited ? passportNumber : undefined,
           passportExpiryDate: passportEdited ? parseDisplayDate(passportExpiryDate) : undefined,
+          passportIssueDate: passportEdited ? parseDisplayDate(passportIssueDate) : undefined,
           passportIssuingCountry: passportEdited ? passportIssuingCountry : undefined,
         },
       });
@@ -192,6 +205,18 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
             value={passportExpiryDate}
             onChangeText={(text) => {
               setPassportExpiryDate(text);
+              setPassportEdited(true);
+            }}
+            placeholder="DD/MM/YYYY"
+          />
+        </View>
+        <View style={styles.fieldWrapperFull}>
+          <Text style={styles.label}>Issue date</Text>
+          <TextInput
+            style={styles.input}
+            value={passportIssueDate}
+            onChangeText={(text) => {
+              setPassportIssueDate(text);
               setPassportEdited(true);
             }}
             placeholder="DD/MM/YYYY"
