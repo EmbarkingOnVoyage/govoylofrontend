@@ -8,6 +8,7 @@ import { styles } from './MyTripsScreen.styles';
 // this is Flyshop's status at the moment of booking, distinct from localStatus
 // below, which reflects what this app has since done to the booking.
 const STATUS_ID_FAILED = '22';
+const STATUS_ID_TICKETING = '44';
 
 function formatDate(iso: string): string {
   const date = new Date(iso);
@@ -37,6 +38,10 @@ function getStatusDisplay(booking: TripBooking): { label: string; color: string;
   }
   if (booking.statusId === '33') {
     return { label: 'Held', color: '#B45309', background: '#FEF3C7' };
+  }
+  // Paid, with the airline still issuing the ticket — not a releasable hold.
+  if (booking.statusId === STATUS_ID_TICKETING) {
+    return { label: 'Ticketing in progress', color: '#1D4ED8', background: '#DBEAFE' };
   }
   return { label: 'Confirmed', color: '#15803D', background: '#DCFCE7' };
 }
@@ -74,7 +79,8 @@ export const MyTripsScreen: React.FC = () => {
 
   const renderItem = ({ item }: { item: TripBooking }) => {
     const status = getStatusDisplay(item);
-    const canCancel = item.localStatus === 'Active' && item.statusId !== STATUS_ID_FAILED;
+    const canCancel =
+      item.localStatus === 'Active' && item.statusId !== STATUS_ID_FAILED && item.statusId !== STATUS_ID_TICKETING;
     const isCancellingThis = cancelBooking.isPending && cancelBooking.variables?.tripBookingId === item.id;
 
     return (

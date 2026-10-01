@@ -2088,6 +2088,21 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   const legBarLabel = (index: number) => (isRoundTrip ? 'Onward flight' : `Flight ${index + 1}`);
   const usingSequentialFlow = isMultiLeg && roundTripView === 'individual';
 
+  // Some suppliers price a whole multi-leg trip as ONE offer instead of one per
+  // leg — Tripjack returns an international return as a single combined option
+  // (its tripInfos "COMBO") whose segments run there and back, tagged as the
+  // first leg, with no separate return list to pick from. Such an offer already
+  // ends at the trip's final destination, so picking it completes the trip
+  // rather than advancing to the next leg's list.
+  const finalDestination = isRoundTrip
+    ? activeSummary?.originCode
+    : activeSummary?.request.segments[activeSummary.request.segments.length - 1]?.destination;
+  const coversWholeTrip = (offer: FlightOffer | undefined) =>
+    !!offer &&
+    isMultiLeg &&
+    offer.segments.length > 1 &&
+    offer.segments[offer.segments.length - 1]?.destination === finalDestination;
+
   // Fires the one-way search for whichever multi-city leg is currently being
   // picked, once, the first time that leg is reached — round-trip needs no
   // equivalent since its own search already covers both legs.
@@ -2194,6 +2209,11 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   // own segments, same as "Combine Flights".
   const handleOfferPress = (offer: FlightOffer) => {
     if (usingSequentialFlow) {
+      if (coversWholeTrip(offer)) {
+        setDetailsLegs([offer]);
+        setDetailsLegLabels(undefined);
+        return;
+      }
       if (!isLastLeg) {
         setDetailsLegs([offer]);
         setDetailsLegLabels(undefined);
@@ -2220,7 +2240,8 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   // True while the open modal is previewing a leg candidate that isn't the
   // last one in the sequential flow — the one case where Continue means
   // "select this leg" rather than "done reviewing, close".
-  const isPreviewingLegCandidate = usingSequentialFlow && !isLastLeg && detailsLegs.length === 1;
+  const isPreviewingLegCandidate =
+    usingSequentialFlow && !isLastLeg && detailsLegs.length === 1 && !coversWholeTrip(detailsLegs[0]);
 
   const handleContinueLegCandidate = () => {
     if (detailsLegs[0]) {
