@@ -34,10 +34,20 @@ export interface FlightOfferSegment {
 export interface FareOption {
   fareId: string;
   refundable: boolean;
+  // Per adult — the fare picker's "/adult" figure.
   totalAmount: number;
   currencyCode: string;
   checkInBaggage: string | null;
   handBaggage: string | null;
+  // This fare for every searched passenger.
+  bookingTotalAmount: number;
+  // Supplier fare type, e.g. "PUBLISHED" / "SPECIAL_RETURN".
+  fareIdentifier: string | null;
+  // Supplier special-return pairing: a fare is only bookable on a round trip
+  // with an other-leg fare whose specialReturnId is in its
+  // matchingSpecialReturnIds.
+  specialReturnId: string | null;
+  matchingSpecialReturnIds: string[];
 }
 
 export interface FlightOffer {
@@ -59,6 +69,10 @@ export interface FlightOffer {
   // suppliers' prices are merged into one result set, so this is the only
   // thing that distinguishes them.
   supplierCode: string;
+  // Set when a specific fare (not the default) is chosen for this leg — the
+  // fare picker's choice, or the matched fare of a supplier package. totalAmount
+  // and fares then reflect that fare; the booking sends it as the leg's fareId.
+  selectedFareId?: string;
 }
 
 export interface FlightSearchResponse {
