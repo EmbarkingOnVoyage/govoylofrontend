@@ -267,6 +267,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
       const bookingLegs: BookingLegRequest[] = legs.map((leg, legIndex) => ({
         offerId: leg.offerId,
+        fareId: leg.selectedFareId,
         selectedSsrs: addOnSelections
           .filter((s) => s.legIndex === legIndex)
           .map((s) => ({ paxId: travelerPaxIds.get(s.travelerId) ?? 0, ssrKey: s.ssrKey })),

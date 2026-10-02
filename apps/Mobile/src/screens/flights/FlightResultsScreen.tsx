@@ -329,45 +329,92 @@ function pickFeaturedFlights(offers: FlightOffer[]): FeaturedFlights {
   return { best, fastest, cheapest, rest };
 }
 
-// A round-trip "Combine Flights" card pairs one onward offer with one return
-// offer into a single bookable unit. Flyshop returns onward and return
-// options as two independently-priced lists (see FlightResultsScreen's
-// onward/return split by tripLegIndex) — there's no supplier-provided
-// pairing between them.
+// A round-trip "Combine Flights" card is a package the SUPPLIER priced as a
+// whole — never an app-made pairing of independently priced legs (which the
+// supplier may refuse to book: mixed suppliers, or a special-return fare
+// paired with a non-matching return). Two kinds:
+// - a single whole-trip offer (Tripjack prices an international return as one
+//   combined option): onward is that offer, returnOffer is null;
+// - a supplier special-return pair: one onward fare + the return fare its
+//   matchingSpecialReturnIds names, each pinned onto its offer (pinFare).
 interface CombinedRoundTripOffer {
   id: string;
   onward: FlightOffer;
-  returnOffer: FlightOffer;
+  returnOffer: FlightOffer | null;
   totalAmount: number;
   currencyCode: string;
 }
 
-// Cheapest-onward-with-cheapest-return, 2nd-with-2nd, etc. (by each leg's own
-// price rank) is the simplest pairing that surfaces the best combined deals
-// first without computing the full cross-product of every onward × every
-// return option.
-function pairOffersForCombine(onwardOffers: FlightOffer[], returnOffers: FlightOffer[]): CombinedRoundTripOffer[] {
-  const sortedOnward = [...onwardOffers].sort((a, b) => a.totalAmount - b.totalAmount);
-  const sortedReturn = [...returnOffers].sort((a, b) => a.totalAmount - b.totalAmount);
-  const pairCount = Math.min(sortedOnward.length, sortedReturn.length);
+// A special-return fare is only bookable paired with its matching fare on the
+// other leg (Tripjack errCode 1080 otherwise), so it's never offered on its own.
+export function isStandaloneFare(fare: FareOption): boolean {
+  return fare.fareIdentifier !== 'SPECIAL_RETURN';
+}
+
+// The offer with one specific fare chosen: priced at that fare for every
+// passenger, and carrying only that fare so it can't be changed afterwards.
+export function pinFare(offer: FlightOffer, fare: FareOption): FlightOffer {
+  return {
+    ...offer,
+    selectedFareId: fare.fareId,
+    refundable: fare.refundable,
+    totalAmount: fare.bookingTotalAmount || offer.totalAmount,
+    fares: [fare],
+  };
+}
+
+// Caps the special-return cross-matching, cheapest first.
+const MAX_SPECIAL_RETURN_PACKAGES = 150;
+
+function buildRoundTripPackages(
+  wholeTripOffers: FlightOffer[],
+  onwardOffers: FlightOffer[],
+  returnOffers: FlightOffer[]
+): CombinedRoundTripOffer[] {
+  const packages: CombinedRoundTripOffer[] = wholeTripOffers.map((offer) => ({
+    id: offer.offerId,
+    onward: offer,
+    returnOffer: null,
+    totalAmount: offer.totalAmount,
+    currencyCode: offer.currencyCode,
+  }));
+
+  const returnFaresBySri = new Map<string, { offer: FlightOffer; fare: FareOption }[]>();
+  for (const offer of returnOffers) {
+    for (const fare of offer.fares ?? []) {
+      if (!fare.specialReturnId) continue;
+      const list = returnFaresBySri.get(fare.specialReturnId) ?? [];
+      list.push({ offer, fare });
+      returnFaresBySri.set(fare.specialReturnId, list);
+    }
+  }
 
   const pairs: CombinedRoundTripOffer[] = [];
-  for (let i = 0; i < pairCount; i++) {
-    const onward = sortedOnward[i];
-    const returnOffer = sortedReturn[i];
-    pairs.push({
-      id: `${onward.offerId}_${returnOffer.offerId}`,
-      onward,
-      returnOffer,
-      totalAmount: onward.totalAmount + returnOffer.totalAmount,
-      currencyCode: onward.currencyCode,
-    });
+  for (const onward of onwardOffers) {
+    for (const onwardFare of onward.fares ?? []) {
+      for (const sri of onwardFare.matchingSpecialReturnIds ?? []) {
+        for (const match of returnFaresBySri.get(sri) ?? []) {
+          if (match.offer.supplierCode !== onward.supplierCode) continue;
+          const pinnedOnward = pinFare(onward, onwardFare);
+          const pinnedReturn = pinFare(match.offer, match.fare);
+          pairs.push({
+            id: `${onward.offerId}:${onwardFare.fareId}_${match.offer.offerId}:${match.fare.fareId}`,
+            onward: pinnedOnward,
+            returnOffer: pinnedReturn,
+            totalAmount: pinnedOnward.totalAmount + pinnedReturn.totalAmount,
+            currencyCode: onward.currencyCode,
+          });
+        }
+      }
+    }
   }
-  return pairs;
+  pairs.sort((a, b) => a.totalAmount - b.totalAmount);
+
+  return [...packages, ...pairs.slice(0, MAX_SPECIAL_RETURN_PACKAGES)];
 }
 
 function getCombinedDurationMinutes(pair: CombinedRoundTripOffer): number {
-  return getTotalDurationMinutes(pair.onward) + getTotalDurationMinutes(pair.returnOffer);
+  return getTotalDurationMinutes(pair.onward) + (pair.returnOffer ? getTotalDurationMinutes(pair.returnOffer) : 0);
 }
 
 interface FeaturedCombined {
@@ -1354,9 +1401,15 @@ const CombinedFlightOfferCard: React.FC<{
         </View>
       )}
       <View style={styles.cardBody}>
-        <CombinedLegRow offer={pair.onward} label="Onward" />
-        <View style={styles.dashedDivider} />
-        <CombinedLegRow offer={pair.returnOffer} label="Return" />
+        {pair.returnOffer ? (
+          <>
+            <CombinedLegRow offer={pair.onward} label="Onward" />
+            <View style={styles.dashedDivider} />
+            <CombinedLegRow offer={pair.returnOffer} label="Return" />
+          </>
+        ) : (
+          <CombinedLegRow offer={pair.onward} label="Round trip" />
+        )}
         <View style={styles.combinedPriceRow}>
           <Text style={styles.priceText}>{formatPrice(pair.totalAmount, pair.currencyCode)}</Text>
         </View>
@@ -1522,14 +1575,23 @@ interface FareSelection {
   fareId: string | null;
 }
 
+// The fares a leg's picker offers: just the pinned fare for a package leg,
+// otherwise every fare bookable on its own.
+function selectableFares(offer: FlightOffer): FareOption[] {
+  const fares = offer.fares ?? [];
+  if (offer.selectedFareId) return fares;
+  const standalone = fares.filter(isStandaloneFare);
+  return standalone.length > 0 ? standalone : fares;
+}
+
 function cheapestFareSelection(offer: FlightOffer | null): FareSelection {
-  const cheapest = offer ? [...(offer.fares ?? [])].sort((a, b) => a.totalAmount - b.totalAmount)[0] : undefined;
+  const cheapest = offer ? [...selectableFares(offer)].sort((a, b) => a.totalAmount - b.totalAmount)[0] : undefined;
   return { tier: cheapest ? cabinTierForFare(cheapest) : null, fareId: cheapest?.fareId ?? null };
 }
 
 function resolveSelectedFare(offer: FlightOffer | null, selection: FareSelection): FareOption | undefined {
   if (!offer) return undefined;
-  const inTier = (offer.fares ?? [])
+  const inTier = selectableFares(offer)
     .filter((f) => cabinTierForFare(f) === selection.tier)
     .sort((a, b) => a.totalAmount - b.totalAmount);
   return inTier.find((f) => f.fareId === selection.fareId) ?? inTier[0];
@@ -1551,7 +1613,8 @@ const FlightDetailsModal: React.FC<{
   // a step preview (round-trip "Individual Flights" / multi-city's Flight N)
   // it means "select this leg"; on the last step it hands off to Traveller
   // details instead of just dismissing the modal.
-  onContinue?: () => void;
+  // Receives the fare chosen for each leg (parallel to legs).
+  onContinue?: (selectedFares: (FareOption | undefined)[]) => void;
   // Overrides the footer button's label — used alongside onContinue so a
   // step preview reads "Select Return Flight" / "Select Flight 3" instead of
   // "Continue".
@@ -1587,7 +1650,7 @@ const FlightDetailsModal: React.FC<{
 
   const first = activeOffer.segments[0];
   const last = activeOffer.segments[activeOffer.segments.length - 1];
-  const allFares = activeOffer.fares ?? [];
+  const allFares = selectableFares(activeOffer);
 
   const tierSummaries = CABIN_TIER_ORDER.map((tier) => {
     const faresInTier = allFares.filter((f) => cabinTierForFare(f) === tier);
@@ -1781,7 +1844,7 @@ const FlightDetailsModal: React.FC<{
                 for {passengerCount} Traveller{passengerCount > 1 ? 's' : ''}
               </Text>
             </View>
-            <TouchableOpacity style={styles.detailsContinueButton} onPress={onContinue ?? onClose}>
+            <TouchableOpacity style={styles.detailsContinueButton} onPress={() => (onContinue ? onContinue(perLegSelectedFares) : onClose())}>
               <Text style={styles.detailsContinueButtonText}>{continueLabel}</Text>
             </TouchableOpacity>
           </View>
@@ -2065,10 +2128,34 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   const isMultiCity = activeSummary?.request.tripType === 'MultiCity';
   const isMultiLeg = isRoundTrip || isMultiCity;
   const legCount = isMultiCity ? activeSummary?.request.segments.length ?? 1 : isRoundTrip ? 2 : 1;
+
+  // A supplier package covering the whole trip as ONE offer (Tripjack's
+  // combined international return, or a multi-city bundle): starts at the
+  // trip's origin and ends at its final destination. These belong in "Combine
+  // Flights" only — they aren't a single leg to pick in "Individual Flights".
+  const finalDestination = isRoundTrip
+    ? activeSummary?.originCode
+    : activeSummary?.request.segments[activeSummary.request.segments.length - 1]?.destination;
+  const isWholeTripOffer = (offer: FlightOffer) =>
+    isMultiLeg &&
+    offer.segments.length > 1 &&
+    offer.segments[0]?.origin === activeSummary?.originCode &&
+    offer.segments[offer.segments.length - 1]?.destination === finalDestination;
+
+  // Per-leg options, each from a search the supplier will book that leg from:
+  // a round trip's own search tags both legs. For multi-city, Tripjack prices
+  // legs inside the multi-city search itself and only books legs taken from
+  // that one search, while Flyshop's multi-city search returns bundles only —
+  // so Flyshop's per-leg options come from per-leg one-way searches instead.
+  const perLegFromSearch = (index: number) =>
+    activeOffers.filter((o) => o.tripLegIndex === index && !isWholeTripOffer(o));
   const legOffers = isRoundTrip
-    ? Array.from({ length: legCount }, (_, i) => activeOffers.filter((o) => o.tripLegIndex === i))
+    ? Array.from({ length: legCount }, (_, i) => perLegFromSearch(i))
     : isMultiCity
-      ? Array.from({ length: legCount }, (_, i) => individualLegOffers[i] ?? [])
+      ? Array.from({ length: legCount }, (_, i) => [
+          ...perLegFromSearch(i).filter((o) => o.supplierCode !== 'flyshop'),
+          ...(individualLegOffers[i] ?? []).filter((o) => o.supplierCode === 'flyshop'),
+        ])
       : [activeOffers];
   const onwardOffers = legOffers[0] ?? [];
   const returnOffers = legOffers[1] ?? [];
@@ -2087,26 +2174,6 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   const legTabLabel = (index: number) => (isRoundTrip ? (index === 0 ? 'Onward' : 'Return') : `Flight ${index + 1}`);
   const legBarLabel = (index: number) => (isRoundTrip ? 'Onward flight' : `Flight ${index + 1}`);
   const usingSequentialFlow = isMultiLeg && roundTripView === 'individual';
-
-  // Some suppliers price a whole multi-leg trip as ONE offer instead of one per
-  // leg — Tripjack returns an international return as a single combined option
-  // (its tripInfos "COMBO") whose segments run there and back, tagged as the
-  // first leg, with no separate return list to pick from. Such an offer already
-  // ends at the trip's final destination, so picking it completes the trip
-  // rather than advancing to the next leg's list.
-  const finalDestination = isRoundTrip
-    ? activeSummary?.originCode
-    : activeSummary?.request.segments[activeSummary.request.segments.length - 1]?.destination;
-  // Must also START at the trip's origin and be the first pick — a connecting
-  // return leg (e.g. BOM-GOX-DEL) also ends at a round trip's final
-  // destination, but is only the second half of the trip.
-  const coversWholeTrip = (offer: FlightOffer | undefined) =>
-    !!offer &&
-    isMultiLeg &&
-    selectedLegOffers.length === 0 &&
-    offer.segments.length > 1 &&
-    offer.segments[0]?.origin === activeSummary?.originCode &&
-    offer.segments[offer.segments.length - 1]?.destination === finalDestination;
 
   // Fires the one-way search for whichever multi-city leg is currently being
   // picked, once, the first time that leg is reached — round-trip needs no
@@ -2155,7 +2222,14 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   // sequential flow the user is on. "Combine Flights" (round-trip's paired
   // cards, or multi-city's own bundled itineraries) uses activeOffers
   // directly instead, below.
-  const listOffers = usingSequentialFlow ? legOffers[currentLegIndex] ?? [] : activeOffers;
+  // Once a leg is picked, the remaining legs must come from the same supplier —
+  // no single supplier booking can mix them.
+  const lockedSupplier = selectedLegOffers[0]?.supplierCode;
+  const listOffers = usingSequentialFlow
+    ? (legOffers[currentLegIndex] ?? []).filter((o) => !lockedSupplier || o.supplierCode === lockedSupplier)
+    : isMultiCity
+      ? activeOffers.filter(isWholeTripOffer)
+      : activeOffers;
 
   // The Airline modal always lists every airline actually in the current
   // list, regardless of what's currently filtered — narrowing the filter
@@ -2183,7 +2257,11 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   // filter means "both legs match"), then paired into priced round-trip
   // cards and featured the same way the single-offer list is above.
   const combinedPairs = isRoundTrip
-    ? pairOffersForCombine(applyCombinedFilters(onwardOffers, combinedFilters), applyCombinedFilters(returnOffers, combinedFilters))
+    ? buildRoundTripPackages(
+        applyCombinedFilters(activeOffers.filter(isWholeTripOffer), combinedFilters),
+        applyCombinedFilters(onwardOffers, combinedFilters),
+        applyCombinedFilters(returnOffers, combinedFilters)
+      )
     : [];
   const combinedFeatured = pickFeaturedCombined(combinedPairs);
 
@@ -2214,11 +2292,6 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   // own segments, same as "Combine Flights".
   const handleOfferPress = (offer: FlightOffer) => {
     if (usingSequentialFlow) {
-      if (coversWholeTrip(offer)) {
-        setDetailsLegs([offer]);
-        setDetailsLegLabels(undefined);
-        return;
-      }
       if (!isLastLeg) {
         setDetailsLegs([offer]);
         setDetailsLegLabels(undefined);
@@ -2233,8 +2306,13 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   };
 
   const handleCombinedPress = (pair: CombinedRoundTripOffer) => {
-    setDetailsLegs([pair.onward, pair.returnOffer]);
-    setDetailsLegLabels(['Onward', 'Return']);
+    if (pair.returnOffer) {
+      setDetailsLegs([pair.onward, pair.returnOffer]);
+      setDetailsLegLabels(['Onward', 'Return']);
+    } else {
+      setDetailsLegs([pair.onward]);
+      setDetailsLegLabels(undefined);
+    }
   };
 
   const handleCloseDetails = () => {
@@ -2246,11 +2324,13 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   // last one in the sequential flow — the one case where Continue means
   // "select this leg" rather than "done reviewing, close".
   const isPreviewingLegCandidate =
-    usingSequentialFlow && !isLastLeg && detailsLegs.length === 1 && !coversWholeTrip(detailsLegs[0]);
+    usingSequentialFlow && !isLastLeg && detailsLegs.length === 1;
 
-  const handleContinueLegCandidate = () => {
+  const handleContinueLegCandidate = (selectedFares: (FareOption | undefined)[]) => {
     if (detailsLegs[0]) {
-      setSelectedLegOffers((prev) => [...prev, detailsLegs[0]]);
+      const fare = selectedFares[0];
+      const chosen = fare ? pinFare(detailsLegs[0], fare) : detailsLegs[0];
+      setSelectedLegOffers((prev) => [...prev, chosen]);
       setCombinedFilters(EMPTY_COMBINED_FILTERS);
       setActiveSortId(null);
     }
@@ -2260,8 +2340,9 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
 
   // Continue on the modal's last step — every leg already has a chosen
   // offer, so this is the fare review's real "done" action.
-  const handleContinueToTraveler = () => {
-    onContinueToTravelerDetails(detailsLegs, detailsLegLabels, activeSummary?.passengerCount ?? 1);
+  const handleContinueToTraveler = (selectedFares: (FareOption | undefined)[]) => {
+    const chosenLegs = detailsLegs.map((leg, i) => (selectedFares[i] ? pinFare(leg, selectedFares[i]!) : leg));
+    onContinueToTravelerDetails(chosenLegs, detailsLegLabels, activeSummary?.passengerCount ?? 1);
   };
 
   return (

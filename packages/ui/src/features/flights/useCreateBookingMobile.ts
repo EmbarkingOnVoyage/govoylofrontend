@@ -14,6 +14,8 @@ export interface BookingSsrSelectionRequest {
 export interface BookingLegRequest {
   offerId: string;
   selectedSsrs: BookingSsrSelectionRequest[];
+  // A non-default fare of this offer to book (FlightOffer.selectedFareId).
+  fareId?: string;
 }
 
 export interface BookingTravelerRequest {
