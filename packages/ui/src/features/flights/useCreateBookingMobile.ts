@@ -53,6 +53,10 @@ export interface CreateBookingResponse {
   crsPnr: string | null;
   recordLocator: string | null;
   failureRemark: string | null;
+  // What the supplier will actually charge (all passengers + add-ons), when it
+  // confirms an amount at booking time — fares can change after search. Null
+  // means charge the searched price.
+  confirmedTotalAmount?: number | null;
 }
 
 // Places a Flyshop Block_Ticket hold (a reversible hold, not a final purchase

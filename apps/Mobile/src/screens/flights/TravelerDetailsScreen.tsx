@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Modal, Alert } from 'react-native';
 import { ArrowLeft, ArrowLeftRight, Info, Plus, Check, CheckCircle2 } from 'lucide-react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import RazorpayCheckout from 'react-native-razorpay';
@@ -116,6 +116,9 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const [paymentState, setPaymentState] = useState<'idle' | 'processing' | 'success'>('idle');
   const [paymentError, setPaymentError] = useState('');
   const [bookingResult, setBookingResult] = useState<CreateBookingResponse | null>(null);
+  // Set once the supplier confirms a different amount than search showed and
+  // the customer accepts it — what the total/success copy then reflect.
+  const [confirmedAmount, setConfirmedAmount] = useState<number | null>(null);
 
   // Each leg's totalAmount is already the full priced total for the searched
   // passenger count (same figure the results/fare-review screens show), so
@@ -288,12 +291,34 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       heldBooking = booking;
       setBookingResult(booking);
 
+      // The supplier re-prices at booking time and the fare can move from what
+      // search showed (in either direction) — charge what it will actually
+      // charge, after the customer has seen and accepted any change.
+      const chargeAmount = booking.confirmedTotalAmount ?? totalAmount;
+      if (Math.round(chargeAmount) !== Math.round(totalAmount)) {
+        const accepted = await new Promise<boolean>((resolve) =>
+          Alert.alert(
+            'Price updated',
+            `The airline has updated the fare for this booking from ${formatCurrency(totalAmount, currencyCode)} to ${formatCurrency(chargeAmount, currencyCode)}.`,
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Continue', onPress: () => resolve(true) },
+            ],
+            { cancelable: false }
+          )
+        );
+        if (!accepted) {
+          throw new Error('Booking cancelled — the fare changed.');
+        }
+        setConfirmedAmount(chargeAmount);
+      }
+
       // Reuses Flyshop's own Booking_RefNo (not a client-generated id) so the
       // backend's post-payment AddPayment/Book_Ticket step can look this exact
       // TripBooking back up by the same reference BookingPayment is stored under.
       const order = await createOrder.mutateAsync({
         bookingReference: booking.bookingRefNo,
-        amount: totalAmount,
+        amount: chargeAmount,
         currency: currencyCode,
         sourceClient: 'Mobile',
       });
@@ -564,7 +589,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
             <CheckCircle2 size={28} color="#1E9E5A" strokeWidth={2} />
             <Text style={styles.paymentSuccessTitle}>Payment Successful</Text>
             <Text style={styles.paymentSuccessSubtitle}>
-              Your payment of {formatCurrency(totalAmount, currencyCode)} was received. Your booking is confirmed.
+              Your payment of {formatCurrency(confirmedAmount ?? totalAmount, currencyCode)} was received. Your booking is confirmed.
             </Text>
             {!!bookingResult?.bookingRefNo && (
               <Text style={styles.paymentSuccessSubtitle}>Booking reference: {bookingResult.bookingRefNo}</Text>
