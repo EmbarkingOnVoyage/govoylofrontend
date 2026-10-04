@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { DashboardLayout } from '../../components/layout/Layout'; 
 import { useMutation } from "@tanstack/react-query"; 
+import { useRequestOtpMutation } from "@workspace/api";
 import { authContextCache } from "./authContextCache";
 import { useAuth } from "./AuthContext";
 // 🔑 IMPORT CENTRALIZED BEST-PRACTICE STYLES
@@ -12,11 +13,14 @@ interface OtpFeatureProps {
   onCloseModal?: () => void;
 }
 
+const RESEND_WAIT_SECONDS = 54;
+
 export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate, variant = "page", onCloseModal }) => {
   const { login } = useAuth();
   const [otp, setOtp] = useState<string[]>(new Array(6).fill(""));
   const [errorMessage, setErrorMessage] = useState("");
-  const [countdown, setCountdown] = useState(54);
+  const [countdown, setCountdown] = useState(RESEND_WAIT_SECONDS);
+  const resendMutation = useRequestOtpMutation();
 
   const userEmail = authContextCache.getEmail();
   const inputRefs = useRef<any[]>([]);
@@ -101,6 +105,24 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate, variant = "p
 
   const isWorking = verifyMutation.isPending;
 
+  // Sends a fresh code (which replaces the previous one) once the countdown has
+  // run out, then restarts the countdown.
+  const handleResend = async () => {
+    if (!userEmail || resendMutation.isPending) return;
+    setErrorMessage("");
+    try {
+      const data = await resendMutation.mutateAsync({ email: userEmail });
+      if (data && data.verificationToken) {
+        authContextCache.setVerificationToken(data.verificationToken);
+      }
+      setOtp(new Array(6).fill(""));
+      inputRefs.current[0]?.focus();
+      setCountdown(RESEND_WAIT_SECONDS);
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Couldn't send a new code. Please try again.");
+    }
+  };
+
   const content = (
       <div className={s.container}>
         <button className={s.backArrow} onClick={() => onNavigate("ON_BACK_TO_LOGIN")}>&larr;</button>
@@ -156,10 +178,20 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate, variant = "p
             </button>
           </form>
 
-          <p className={s.spamText}>
-            Didn't receive an email? please check your spam folder or request another code in{" "}
-            <span className={s.timerHighlight}>{countdown} seconds</span>.
-          </p>
+          {countdown > 0 ? (
+            <p className={s.spamText}>
+              Didn't receive an email? please check your spam folder or request another code in{" "}
+              <span className={s.timerHighlight}>{countdown} seconds</span>.
+            </p>
+          ) : (
+            <p className={s.spamText}>
+              Didn't receive an email? please check your spam folder or{" "}
+              <button type="button" className={s.timerHighlight} onClick={handleResend} disabled={resendMutation.isPending}>
+                {resendMutation.isPending ? "sending a new code..." : "resend the code"}
+              </button>
+              .
+            </p>
+          )}
         </div>
       </div>
   );

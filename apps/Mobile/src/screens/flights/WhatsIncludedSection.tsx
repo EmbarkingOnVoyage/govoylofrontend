@@ -212,8 +212,9 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
   const [openModal, setOpenModal] = useState<AddOnCategory | null>(null);
   const activeLegRoute = legRoutes[activeLegIndex];
 
-  const ancillaries = useFlightAncillariesMobile(activeLegRoute?.offerId);
-  const seatMap = useSeatMapMobile(activeLegRoute?.offerId);
+  const itineraryOfferIds = legRoutes.map((route) => route.offerId);
+  const ancillaries = useFlightAncillariesMobile(activeLegRoute?.offerId, itineraryOfferIds);
+  const seatMap = useSeatMapMobile(activeLegRoute?.offerId, itineraryOfferIds);
 
   // Seat pricing needs real PAX details, so it's a POST — fetch it whenever the
   // active leg or the traveller list changes, same trigger a useQuery would use.

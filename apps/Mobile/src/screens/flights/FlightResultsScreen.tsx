@@ -99,6 +99,7 @@ function toFormInitialValues(summary: FlightSearchSummary): FlightSearchFormInit
     childCount: summary.request.childCount,
     infantCount: summary.request.infantCount,
     cabinClass: summary.cabinClass,
+    nonStopOnly: summary.nonStopOnly,
   };
 }
 
@@ -1353,6 +1354,7 @@ const CombinedLegRow: React.FC<{ offer: FlightOffer; label: string }> = ({ offer
         <View style={styles.airlineNameRow}>
           <AirlineLogo airlineCode={offer.airlineCode} size={20} />
           <Text style={styles.combinedLegAirlineName}>{offer.airlineName}</Text>
+          <SupplierBadge supplierCode={offer.supplierCode} />
         </View>
         <Text style={styles.combinedLegLabel}>{label}</Text>
       </View>
@@ -1381,6 +1383,24 @@ const CombinedLegRow: React.FC<{ offer: FlightOffer; label: string }> = ({ offer
   );
 };
 
+// A whole-trip offer (one supplier price for outbound + return) split into one
+// offer per trip using each segment's tripIndex, so its card shows DEL-DXB and
+// DXB-DEL rather than a single DEL-DEL journey. Returns [] when the offer has
+// no trip boundaries (e.g. Flyshop, which doesn't report them).
+function splitOfferByTrip(offer: FlightOffer): FlightOffer[] {
+  const trips = new Map<number, FlightOfferSegment[]>();
+  for (const segment of offer.segments) {
+    const tripIndex = segment.tripIndex ?? 0;
+    trips.set(tripIndex, [...(trips.get(tripIndex) ?? []), segment]);
+  }
+  if (trips.size < 2) {
+    return [];
+  }
+  return [...trips.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([, segments]) => ({ ...offer, segments }));
+}
+
 // The "Combine Flights" tab's list card: one onward leg + one return leg
 // stacked in a single card with one combined price, matching the Figma
 // "Round combine" reference. Tapping it opens FlightDetailsModal with both
@@ -1392,6 +1412,7 @@ const CombinedFlightOfferCard: React.FC<{
 }> = ({ pair, variant, onPress }) => {
   const config = variant ? VARIANT_CONFIG[variant] : null;
   const borderColor = config?.color ?? GENERAL_BORDER_COLOR;
+  const wholeTripParts = pair.returnOffer ? [] : splitOfferByTrip(pair.onward);
 
   return (
     <TouchableOpacity activeOpacity={0.8} style={[styles.card, { borderColor }]} onPress={onPress}>
@@ -1406,6 +1427,12 @@ const CombinedFlightOfferCard: React.FC<{
             <CombinedLegRow offer={pair.onward} label="Onward" />
             <View style={styles.dashedDivider} />
             <CombinedLegRow offer={pair.returnOffer} label="Return" />
+          </>
+        ) : wholeTripParts.length > 1 ? (
+          <>
+            <CombinedLegRow offer={wholeTripParts[0]} label="Onward" />
+            <View style={styles.dashedDivider} />
+            <CombinedLegRow offer={wholeTripParts[1]} label="Return" />
           </>
         ) : (
           <CombinedLegRow offer={pair.onward} label="Round trip" />
@@ -1950,6 +1977,12 @@ const EMPTY_COMBINED_FILTERS: CombinedFilterState = {
   durationMax: null,
 };
 
+// The filters a result list starts from (and returns to on a view/leg change):
+// empty, except the search form's "Non stop flight only" choice.
+function initialFilters(summary: FlightSearchSummary | null): CombinedFilterState {
+  return summary?.nonStopOnly ? { ...EMPTY_COMBINED_FILTERS, stops: new Set(['nonstop']) } : EMPTY_COMBINED_FILTERS;
+}
+
 type RoundTripView = 'individual' | 'combine';
 
 // The Figma reference's "Individual Flights | Combine Flights" pill toggle —
@@ -2045,7 +2078,7 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   // Everything the "Filter" screen's tabs and the individual quick-access
   // chips (Non stop, Airline, Time) both read and write — one shared source
   // of truth so either path stays in sync with the other.
-  const [combinedFilters, setCombinedFilters] = useState<CombinedFilterState>(EMPTY_COMBINED_FILTERS);
+  const [combinedFilters, setCombinedFilters] = useState<CombinedFilterState>(() => initialFilters(summary));
   const [roundTripView, setRoundTripView] = useState<RoundTripView>('individual');
   // The sequential-pick flow ("Individual Flights" for round-trip, or the
   // only flow multi-city has): each leg picked so far, in order. Length 0
@@ -2069,7 +2102,7 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
     setRoundTripView('individual');
     setSelectedLegOffers([]);
     setIndividualLegOffers([]);
-    setCombinedFilters(EMPTY_COMBINED_FILTERS);
+    setCombinedFilters(initialFilters(summary));
     setActiveSortId(null);
   }, [offers, summary]);
 
@@ -2268,7 +2301,7 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   const handleChangeRoundTripView = (view: RoundTripView) => {
     setRoundTripView(view);
     setSelectedLegOffers([]);
-    setCombinedFilters(EMPTY_COMBINED_FILTERS);
+    setCombinedFilters(initialFilters(activeSummary));
     setActiveSortId(null);
   };
 
@@ -2277,7 +2310,7 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   // changes context.
   const handleChangeLegAt = (index: number) => {
     setSelectedLegOffers((prev) => prev.slice(0, index));
-    setCombinedFilters(EMPTY_COMBINED_FILTERS);
+    setCombinedFilters(initialFilters(activeSummary));
     setActiveSortId(null);
   };
 
@@ -2331,7 +2364,7 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
       const fare = selectedFares[0];
       const chosen = fare ? pinFare(detailsLegs[0], fare) : detailsLegs[0];
       setSelectedLegOffers((prev) => [...prev, chosen]);
-      setCombinedFilters(EMPTY_COMBINED_FILTERS);
+      setCombinedFilters(initialFilters(activeSummary));
       setActiveSortId(null);
     }
     setDetailsLegs([]);
@@ -2688,6 +2721,8 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
               onResults={(newOffers, newSummary) => {
                 setActiveOffers(newOffers);
                 setActiveSummary(newSummary);
+                setSelectedLegOffers([]);
+                setCombinedFilters(initialFilters(newSummary));
                 setEditVisible(false);
               }}
               initialValues={activeSummary ? toFormInitialValues(activeSummary) : undefined}

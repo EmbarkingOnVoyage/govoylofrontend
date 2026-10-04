@@ -7,13 +7,15 @@ import { styles } from './CoTravellerScreen.styles';
 
 const AVATAR_COLORS = ['#DC9898', '#A8DC98', '#A8C6DC', '#DCC998'];
 
+// Read straight from the "YYYY-MM-DD..." string — see formatTravelerDob in
+// TravelerDetailsScreen for why going through Date showed the wrong month.
 function formatDate(isoDate: string | null | undefined): string {
-  if (!isoDate) return '';
-  const date = new Date(isoDate);
-  if (isNaN(date.getTime())) return '';
-  const day = String(date.getDate()).padStart(2, '0');
+  const match = isoDate ? /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate) : null;
+  if (!match) return '';
+  const [, year, month, day] = match;
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${day} ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+  const monthName = months[Number(month) - 1];
+  return monthName ? `${day} ${monthName} ${year}` : '';
 }
 
 interface CoTravellerScreenProps {

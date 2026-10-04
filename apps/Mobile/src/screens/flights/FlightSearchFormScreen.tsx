@@ -86,6 +86,7 @@ export interface FlightSearchFormInitialValues {
   childCount: number;
   infantCount: number;
   cabinClass: CabinClass;
+  nonStopOnly?: boolean;
 }
 
 interface FlightSearchFormScreenProps {
@@ -127,7 +128,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
   const [cabinClass, setCabinClass] = useState<CabinClass>(initialValues?.cabinClass ?? 'Economy');
 
   const [selectedFare, setSelectedFare] = useState<'Student' | 'SeniorCitizen' | null>(null);
-  const [nonStopOnly, setNonStopOnly] = useState(false);
+  const [nonStopOnly, setNonStopOnly] = useState(initialValues?.nonStopOnly ?? false);
   const [formError, setFormError] = useState('');
 
   const handleSwap = () => {
@@ -220,6 +221,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
         returnDate: segments[1]?.travelDate,
         passengerCount: adultCount + childCount + infantCount,
         cabinClass,
+        nonStopOnly,
       };
 
       onResults(response.offers, summary);

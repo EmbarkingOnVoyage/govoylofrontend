@@ -65,13 +65,16 @@ function formatTotalDuration(startIso: string, endIso: string): string {
   return `${Math.floor(minutes / 60)}h ${String(minutes % 60).padStart(2, '0')}m`;
 }
 
+// A date of birth is a calendar date with no time zone, so it's read straight
+// from the "YYYY-MM-DD..." string. Going through Date mixed a local day with
+// a UTC month, which put a 1st-of-the-month birthday in the previous month.
 function formatTravelerDob(isoDate: string | null | undefined): string {
-  if (!isoDate) return '';
-  const date = new Date(isoDate);
-  if (isNaN(date.getTime())) return '';
-  const day = String(date.getDate()).padStart(2, '0');
+  const match = isoDate ? /^(\d{4})-(\d{2})-(\d{2})/.exec(isoDate) : null;
+  if (!match) return '';
+  const [, year, month, day] = match;
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${day} ${months[date.getUTCMonth()]} ${date.getUTCFullYear()}`;
+  const monthName = months[Number(month) - 1];
+  return monthName ? `${day} ${monthName} ${year}` : '';
 }
 
 interface TravelerDetailsScreenProps {
@@ -167,11 +170,16 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
     () =>
       legs.map((leg, index) => {
         const first = leg.segments[0];
-        const last = leg.segments[leg.segments.length - 1];
-        // fares[0] is always the fare backing this leg's totalAmount (the
-        // backend derives totalAmount from it), so its baggage allowance is
-        // the real one for the price already shown above — not a guess.
-        const primaryFare = leg.fares[0];
+        // A whole-trip offer (outbound + return in one) is labelled by its
+        // turnaround point — the end of its first trip — rather than DEL • DEL.
+        const firstTrip = leg.segments.filter((s) => (s.tripIndex ?? 0) === (first?.tripIndex ?? 0));
+        const last = firstTrip.length < leg.segments.length
+          ? firstTrip[firstTrip.length - 1]
+          : leg.segments[leg.segments.length - 1];
+        // The fare being booked is the one picked in the fare modal
+        // (selectedFareId); its baggage allowance is the real one for the price
+        // shown. fares[0] is only a fallback — it isn't the headline fare.
+        const primaryFare = leg.fares.find((f) => f.fareId === leg.selectedFareId) ?? leg.fares[0];
         return {
           offerId: leg.offerId,
           label: legLabels?.[index] ?? `Flight ${index + 1}`,
