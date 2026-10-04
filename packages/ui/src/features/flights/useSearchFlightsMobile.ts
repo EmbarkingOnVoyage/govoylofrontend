@@ -29,6 +29,9 @@ export interface FlightOfferSegment {
   departureDateTime: string;
   arrivalDateTime: string;
   duration: string;
+  // Which trip of a whole-trip offer (e.g. a Tripjack international return)
+  // this segment belongs to: 0 outbound, 1 return, ... Always 0 otherwise.
+  tripIndex?: number;
 }
 
 export interface FareOption {
@@ -93,6 +96,9 @@ export interface FlightSearchSummary {
   returnDate?: string;
   passengerCount: number;
   cabinClass: CabinClass;
+  // The search form's "Non stop flight only" switch — applied on the results
+  // screen as its starting stops filter (the search itself returns every flight).
+  nonStopOnly?: boolean;
 }
 
 export function useSearchFlightsMobile() {

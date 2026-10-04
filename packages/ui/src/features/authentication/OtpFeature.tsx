@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity } from "react-native";
 import { useMutation } from "@tanstack/react-query";
-import { AUTH_BASE_URL } from "@workspace/api";
+import { AUTH_BASE_URL, useRequestOtpMutation } from "@workspace/api";
 import { authContextCache } from "./authContextCache";
 import { OtpMobileStyles as s } from "@workspace/ui";
 
@@ -9,10 +9,13 @@ interface OtpFeatureProps {
   onNavigate: (rule: string) => void;
 }
 
+const RESEND_WAIT_SECONDS = 54;
+
 export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
   const [otp, setOtp] = useState<string[]>(new Array(6).fill(""));
   const [errorMessage, setErrorMessage] = useState("");
-  const [countdown, setCountdown] = useState(54);
+  const [countdown, setCountdown] = useState(RESEND_WAIT_SECONDS);
+  const resendMutation = useRequestOtpMutation();
 
   const userEmail = authContextCache.getEmail();
   const inputRefs = useRef<any[]>([]);
@@ -93,6 +96,24 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
     }
   };
 
+  // Sends a fresh code (which replaces the previous one) once the countdown has
+  // run out, then restarts the countdown.
+  const handleResend = async () => {
+    if (!userEmail || resendMutation.isPending) return;
+    setErrorMessage("");
+    try {
+      const data = await resendMutation.mutateAsync({ email: userEmail });
+      if (data && data.verificationToken) {
+        authContextCache.setVerificationToken(data.verificationToken);
+      }
+      setOtp(new Array(6).fill(""));
+      inputRefs.current[0]?.focus();
+      setCountdown(RESEND_WAIT_SECONDS);
+    } catch (err: any) {
+      setErrorMessage(err?.message || "Couldn't send a new code. Please try again.");
+    }
+  };
+
   const isCodeComplete = otp.every((digit) => digit !== "");
   const isWorking = verifyMutation.isPending;
   const isDisabled = isWorking || !isCodeComplete;
@@ -139,10 +160,20 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
             </Text>
           </TouchableOpacity>
 
-          <Text style={s.spamText}>
-            Didn't receive an email? please check your spam folder or request another code in{" "}
-            <Text style={s.timerHighlight}>{countdown} seconds</Text>.
-          </Text>
+          {countdown > 0 ? (
+            <Text style={s.spamText}>
+              Didn't receive an email? please check your spam folder or request another code in{" "}
+              <Text style={s.timerHighlight}>{countdown} seconds</Text>.
+            </Text>
+          ) : (
+            <Text style={s.spamText}>
+              Didn't receive an email? please check your spam folder or{" "}
+              <Text style={s.timerHighlight} onPress={handleResend} suppressHighlighting>
+                {resendMutation.isPending ? "sending a new code..." : "resend the code"}
+              </Text>
+              .
+            </Text>
+          )}
         </View>
       </View>
     </View>
