@@ -325,8 +325,14 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           origin: first?.origin ?? '',
           destination: last?.destination ?? '',
           airlineName: leg.airlineName,
+          airlineCode: first?.airlineCode,
           flightNumbers: leg.segments.map((s) => `${s.airlineCode} ${s.flightNumber}`),
           departureDateTime: first?.departureDateTime ?? '',
+          segments: leg.segments.map((s) => ({
+            origin: s.origin,
+            destination: s.destination,
+            departureDateTime: s.departureDateTime,
+          })),
           fareId: leg.selectedFareId ?? null,
         };
       }),

@@ -80,6 +80,7 @@ export {
 export {
   useFareRulesMobile,
   type FareRule,
+  type FareRulePolicy,
   type LegFareRules,
   type FareRulesResponse,
 } from './features/flights/useFareRulesMobile';
