@@ -59,6 +59,9 @@ export interface FareOption {
   // matchingSpecialReturnIds.
   specialReturnId: string | null;
   matchingSpecialReturnIds: string[];
+  // Base fare (before taxes and fees) of bookingTotalAmount; 0 when the
+  // supplier didn't split it.
+  bookingBaseAmount?: number;
 }
 
 export interface FlightOffer {
