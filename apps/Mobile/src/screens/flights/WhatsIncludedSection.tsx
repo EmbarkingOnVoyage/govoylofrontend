@@ -11,6 +11,7 @@ import {
 } from '@workspace/ui';
 import { styles } from './WhatsIncludedSection.styles';
 import { SeatSelectionModal, type SeatPick } from './SeatSelectionModal';
+import { BaggageSelectionModal } from './BaggageSelectionModal';
 
 interface AddOnTraveler {
   id: string;
@@ -239,7 +240,8 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
     return forLeg.length > 0 ? forLeg : all;
   }, [seatMap.data, activeLegIndex]);
 
-  // Infants sit on a lap, so they don't get a seat.
+  // Infants travel on a lap: airlines don't sell them a seat or extra
+  // checked baggage, so they're left out of both pickers.
   const seatTravelers = useMemo(() => travelers.filter((t) => t.travelerType !== 'Infant'), [travelers]);
 
   const seatPicksForLeg = (): SeatPick[] =>
@@ -252,6 +254,37 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
         .find((option) => option.ssrKey === selection.ssrKey);
       return seat ? [{ segmentIndex, travelerId: match[2], seat }] : [];
     });
+
+  // Baggage already added on this leg, per traveller, as the full option.
+  const baggagePicksForLeg = (): Record<string, AncillaryOption> => {
+    const picks: Record<string, AncillaryOption> = {};
+    seatTravelers.forEach((t) => {
+      const selection = selections[selectionKey(activeLegIndex, 'baggage', t.id)];
+      const option = selection && baggageOptions.find((o) => o.ssrKey === selection.ssrKey);
+      if (option) picks[t.id] = option;
+    });
+    return picks;
+  };
+
+  const handleBaggageSave = (picks: Record<string, AncillaryOption>) => {
+    const next: SelectionMap = {};
+    Object.entries(selections).forEach(([key, selection]) => {
+      if (!key.startsWith(`${activeLegIndex}:baggage:`)) next[key] = selection;
+    });
+    Object.entries(picks).forEach(([travelerId, option]) => {
+      next[selectionKey(activeLegIndex, 'baggage', travelerId)] = {
+        legIndex: activeLegIndex,
+        category: 'baggage',
+        travelerId,
+        ssrKey: option.ssrKey,
+        label: option.ssrTypeDesc,
+        amount: option.totalAmount,
+      };
+    });
+    setSelections(next);
+    applyTotal(next);
+    setOpenModal(null);
+  };
 
   const handleSeatSave = (picks: SeatPick[]) => {
     const next: SelectionMap = {};
@@ -360,10 +393,10 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           <Text style={styles.infoCardPrice}>Free</Text>
         </View>
         <TouchableOpacity
-          style={[styles.ctaCard, travelers.length === 0 && styles.ctaCardDisabled]}
-          onPress={() => travelers.length > 0 && setOpenModal('baggage')}
+          style={[styles.ctaCard, seatTravelers.length === 0 && styles.ctaCardDisabled]}
+          onPress={() => seatTravelers.length > 0 && setOpenModal('baggage')}
           activeOpacity={0.8}
-          disabled={travelers.length === 0}
+          disabled={seatTravelers.length === 0}
         >
           <Text style={styles.ctaCardText}>
             {anySelected('baggage') ? 'Baggage added' : 'Add extra Baggage'}
@@ -425,7 +458,23 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           onClose={() => setOpenModal(null)}
         />
       )}
-      {openModal && openModal !== 'seat' && (
+      {openModal === 'baggage' && (
+        <BaggageSelectionModal
+          visible
+          origin={activeLegRoute?.origin ?? ''}
+          destination={activeLegRoute?.destination ?? ''}
+          includedBaggage={activeLegRoute?.checkInBaggage ?? null}
+          options={baggageOptions}
+          isLoading={ancillaries.isLoading}
+          loadError={ancillaries.isError}
+          travelers={seatTravelers}
+          initialSelections={baggagePicksForLeg()}
+          currencyCode={currencyCode}
+          onSave={handleBaggageSave}
+          onClose={() => setOpenModal(null)}
+        />
+      )}
+      {openModal === 'meal' && (
         <AddOnModal
           visible
           title={categoryLabel(openModal)}
