@@ -74,6 +74,11 @@ export function routeTitle(booking: TripBooking): string {
   if (legs.length > 1 && last.destination === first.origin) {
     return `${first.origin} ⇄ ${first.destination}`;
   }
+  // A return trip booked as one combined fare is stored as a single leg from
+  // and back to the same airport; the turnaround city isn't stored.
+  if (first.origin === last.destination) {
+    return `${first.origin} · Round trip`;
+  }
   return `${first.origin} → ${last.destination}`;
 }
 
@@ -82,20 +87,29 @@ function startOfToday(): Date {
   return new Date(now.getFullYear(), now.getMonth(), now.getDate());
 }
 
-// A booking is upcoming until its last flying leg's date has passed.
+// A booking is upcoming until its last flying leg's date has passed. A hold
+// that was never ticketed before then didn't fly, so it counts as cancelled.
 export function tripTab(booking: TripBooking): TripTab {
   if (booking.localStatus !== 'Active' || booking.statusId === STATUS_ID_FAILED) {
     return 'Cancelled';
   }
+  if (booking.statusId === STATUS_ID_HELD && isPast(booking)) {
+    return 'Cancelled';
+  }
+  return isPast(booking) ? 'Completed' : 'Upcoming';
+}
+
+export function isExpiredHold(booking: TripBooking): boolean {
+  return booking.localStatus === 'Active' && booking.statusId === STATUS_ID_HELD && isPast(booking);
+}
+
+function isPast(booking: TripBooking): boolean {
   const flying = booking.legs.filter((leg) => !leg.isCancelled);
   const lastDate = flying
     .map((leg) => parseLocal(leg.travelDate))
     .filter((d): d is Date => !!d)
     .sort((a, b) => b.getTime() - a.getTime())[0];
-  if (lastDate && new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate()) < startOfToday()) {
-    return 'Completed';
-  }
-  return 'Upcoming';
+  return !!lastDate && new Date(lastDate.getFullYear(), lastDate.getMonth(), lastDate.getDate()) < startOfToday();
 }
 
 export interface StatusDisplay {
@@ -113,6 +127,9 @@ export function statusDisplay(booking: TripBooking): StatusDisplay {
   }
   if (booking.statusId === STATUS_ID_FAILED) {
     return { label: 'Failed', color: '#C8102E', background: '#FDECEE' };
+  }
+  if (isExpiredHold(booking)) {
+    return { label: 'Expired', color: '#4C5973', background: '#F1F3F7' };
   }
   if (booking.statusId === STATUS_ID_HELD) {
     return { label: 'On hold', color: '#B45309', background: '#FEF3C7' };

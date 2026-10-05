@@ -1,4 +1,4 @@
-import { Platform, StatusBar, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { PURPLE, INK, MUTED, BORDER, GREEN } from './MyTripsScreen.styles';
 
 // Matches the Figma "View details" (Flight Details) frame and the four
@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 4,
-    paddingTop: (Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0) + 8,
+    paddingTop: 8,
     paddingBottom: 8,
     backgroundColor: '#FFFFFF',
     elevation: 3,

@@ -1,4 +1,4 @@
-import { Platform, StatusBar, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 // Matches the Figma My Trips frames (Product → Phone Dev: Upcoming, Completed,
 // Cancelled, No upcoming trips, Sort by).
@@ -18,7 +18,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: (Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0) + 16,
+    paddingTop: 16,
     paddingBottom: 12,
   },
   greeting: {

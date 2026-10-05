@@ -25,6 +25,7 @@ import {
   passengerCount,
   matchesSearch,
   greeting,
+  isExpiredHold,
 } from './myTripsHelpers';
 
 const TABS: TripTab[] = ['Upcoming', 'Completed', 'Cancelled'];
@@ -180,7 +181,11 @@ export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onExploreTrips }) 
                 <Text style={styles.refundPending}>Being processed</Text>
               ) : (
                 <Text style={[styles.metaValue, { color: MUTED }]}>
-                  {item.localStatus === 'Released' ? 'Hold released' : 'Not ticketed'}
+                  {item.localStatus === 'Released'
+                    ? 'Hold released'
+                    : isExpiredHold(item)
+                      ? 'Hold expired'
+                      : 'Not ticketed'}
                 </Text>
               )}
             </View>
@@ -231,7 +236,9 @@ export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onExploreTrips }) 
               style={[styles.primaryButton, styles.halfButton]}
               onPress={() => setOpenTripId(item.id)}
             >
-              <Text style={styles.primaryButtonText}>View Cancellation Details</Text>
+              <Text style={styles.primaryButtonText}>
+                {item.localStatus === 'Cancelled' ? 'View Cancellation Details' : 'View Details'}
+              </Text>
             </TouchableOpacity>
           </View>
         ) : null}

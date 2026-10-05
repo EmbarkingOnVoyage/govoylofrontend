@@ -9,7 +9,7 @@ import {
 } from '@workspace/ui';
 import { styles, RED } from './TripDetailsScreen.styles';
 import { PURPLE, MUTED, GREEN } from './MyTripsScreen.styles';
-import { REFUND_DESTINATION, formatCurrency, formatShortDate } from './myTripsHelpers';
+import { REFUND_DESTINATION, formatCurrency, formatShortDate, routeTitle } from './myTripsHelpers';
 
 interface CancelBookingModalProps {
   visible: boolean;
@@ -26,7 +26,6 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({ visible,
 
   const legs = [...booking.legs].sort((a, b) => a.legIndex - b.legIndex);
   const first = legs[0];
-  const last = legs[legs.length - 1];
   const money = (amount: number) => formatCurrency(amount, booking.currencyCode);
 
   const handleConfirm = () => {
@@ -154,11 +153,8 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({ visible,
             <Text style={styles.modalTitle}>Cancel your booking?</Text>
             {first ? (
               <View style={styles.modalRouteRow}>
-                <Text style={styles.modalRoute}>
-                  {first.origin} → {legs.length > 1 && last.destination === first.origin ? first.destination : last.destination}
-                </Text>
+                <Text style={styles.modalRoute}>{routeTitle(booking)}</Text>
                 <Text style={styles.modalDate}>· {formatShortDate(first.travelDate)}</Text>
-                {legs.length > 1 ? <Text style={styles.modalDate}>· Round trip</Text> : null}
                 {quote.data?.variant === 'NonRefundable' ? (
                   <View style={[styles.fareChip, { backgroundColor: '#FDECEE' }]}>
                     <Text style={[styles.fareChipText, { color: RED }]}>Non-refundable fare</Text>
