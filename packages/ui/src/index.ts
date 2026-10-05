@@ -100,8 +100,16 @@ export {
 export {
   useMyTripsMobile,
   useCancelTripBookingMobile,
+  useTripBookingDetailsMobile,
+  useCancellationQuoteMobile,
   type TripBooking,
   type TripBookingLeg,
+  type TripBookingSegment,
+  type TripBookingPassenger,
+  type TripBookingDetails,
+  type CancellationQuote,
+  type CancellationQuoteVariant,
+  type CancelTripBookingResponse,
 } from './features/flights/useMyTripsMobile';
 export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './features/flights/useHolidaysMobile';
 export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';

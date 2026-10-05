@@ -1,175 +1,405 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, FlatList, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useMyTripsMobile, useCancelTripBookingMobile, type TripBooking } from '@workspace/ui';
-import { styles } from './MyTripsScreen.styles';
+import React, { useMemo, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  ScrollView,
+  ActivityIndicator,
+  Modal,
+  RefreshControl,
+} from 'react-native';
+import { Bell, Search, Plane, Download, Star, ChevronRight, Luggage, Sparkles, Headset, Check } from 'lucide-react-native';
+import { useMyTripsMobile, useCustomerProfileMobile, type TripBooking } from '@workspace/ui';
+import { styles, PURPLE, MUTED } from './MyTripsScreen.styles';
+import { TripDetailsScreen } from './TripDetailsScreen';
+import {
+  type TripTab,
+  tripTab,
+  statusDisplay,
+  routeTitle,
+  formatDate,
+  formatTime12,
+  formatCurrency,
+  passengerCount,
+  matchesSearch,
+  greeting,
+} from './myTripsHelpers';
 
-// Air_Ticketing's own docs: 11-Success (ticketed), 22-Failed, 33-Block (hold) —
-// this is Flyshop's status at the moment of booking, distinct from localStatus
-// below, which reflects what this app has since done to the booking.
-const STATUS_ID_FAILED = '22';
-const STATUS_ID_TICKETING = '44';
+const TABS: TripTab[] = ['Upcoming', 'Completed', 'Cancelled'];
+const CATEGORIES = ['All', 'Flights', 'Hotels', 'Trains', 'Buses'] as const;
+type Category = (typeof CATEGORIES)[number];
+type SortOrder = 'newest' | 'oldest';
 
-function formatDate(iso: string): string {
-  const date = new Date(iso);
-  if (isNaN(date.getTime())) return '';
-  const day = String(date.getDate()).padStart(2, '0');
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${day} ${months[date.getMonth()]} ${date.getFullYear()}`;
+interface MyTripsScreenProps {
+  // "Explore Trips" on the empty state — opens flight search.
+  onExploreTrips: () => void;
 }
 
-function formatCurrency(amount: number, currencyCode: string): string {
-  return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN', {
-    maximumFractionDigits: 0,
-  })}`;
-}
+export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onExploreTrips }) => {
+  const { data: trips, isLoading, isError, refetch, isRefetching } = useMyTripsMobile();
+  const { data: profile } = useCustomerProfileMobile();
+  const [activeTab, setActiveTab] = useState<TripTab>('Upcoming');
+  const [category, setCategory] = useState<Category>('All');
+  const [search, setSearch] = useState('');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [sortOpen, setSortOpen] = useState(false);
+  const [openTripId, setOpenTripId] = useState<string | null>(null);
 
-// localStatus (Active/Cancelled/Released) is what the badge shows once the user
-// has acted on a booking; otherwise it falls back to Flyshop's own statusId.
-function getStatusDisplay(booking: TripBooking): { label: string; color: string; background: string } {
-  if (booking.localStatus === 'Cancelled') {
-    return { label: 'Cancelled', color: '#6B7280', background: '#F3F4F6' };
-  }
-  if (booking.localStatus === 'Released') {
-    return { label: 'Released', color: '#6B7280', background: '#F3F4F6' };
-  }
-  if (booking.statusId === STATUS_ID_FAILED) {
-    return { label: 'Failed', color: '#EF4444', background: '#FEE2E2' };
-  }
-  if (booking.statusId === '33') {
-    return { label: 'Held', color: '#B45309', background: '#FEF3C7' };
-  }
-  // Paid, with the airline still issuing the ticket — not a releasable hold.
-  if (booking.statusId === STATUS_ID_TICKETING) {
-    return { label: 'Ticketing in progress', color: '#1D4ED8', background: '#DBEAFE' };
-  }
-  return { label: 'Confirmed', color: '#15803D', background: '#DCFCE7' };
-}
+  const byTab = useMemo(() => {
+    const groups: Record<TripTab, TripBooking[]> = { Upcoming: [], Completed: [], Cancelled: [] };
+    (trips ?? []).forEach((trip) => groups[tripTab(trip)].push(trip));
+    return groups;
+  }, [trips]);
 
-export const MyTripsScreen: React.FC = () => {
-  const { data: trips, isLoading } = useMyTripsMobile();
-  const cancelBooking = useCancelTripBookingMobile();
+  const visibleTrips = useMemo(() => {
+    // Only flights can be booked today, so every other category is empty.
+    if (category !== 'All' && category !== 'Flights') return [];
+    const sign = sortOrder === 'newest' ? -1 : 1;
+    return byTab[activeTab]
+      .filter((trip) => matchesSearch(trip, search))
+      .sort((a, b) => sign * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+  }, [byTab, activeTab, category, search, sortOrder]);
 
-  const handleCancel = (booking: TripBooking) => {
-    const isHold = booking.statusId === '33';
-    Alert.alert(
-      isHold ? 'Release this hold?' : 'Cancel this booking?',
-      isHold
-        ? 'This will release the flight hold with the airline. This cannot be undone.'
-        : 'This will cancel your ticket with the airline, subject to their cancellation policy. This cannot be undone.',
-      [
-        { text: 'Keep it', style: 'cancel' },
-        {
-          text: isHold ? 'Release' : 'Cancel booking',
-          style: 'destructive',
-          onPress: () => {
-            cancelBooking.mutate(
-              { tripBookingId: booking.id },
-              {
-                onError: (err) => {
-                  Alert.alert('Could not complete this', (err as Error)?.message || 'Please try again.');
-                },
-              }
-            );
-          },
-        },
-      ]
+  if (openTripId) {
+    return <TripDetailsScreen tripBookingId={openTripId} onBack={() => setOpenTripId(null)} />;
+  }
+
+  const tabIsEmpty = byTab[activeTab].length === 0;
+  const firstName = profile?.firstName?.trim();
+
+  const listTitle = () => {
+    if (activeTab === 'Upcoming') {
+      const n = visibleTrips.length;
+      return `${n} upcoming ${n === 1 ? 'trip' : 'trips'}`;
+    }
+    return activeTab === 'Completed' ? 'Past trips' : 'Cancelled trips';
+  };
+
+  const renderEmptyTab = () => {
+    const copy: Record<TripTab, { title: string; text: string }> = {
+      Upcoming: {
+        title: 'No upcoming trips',
+        text: 'Your next adventure is waiting. Start planning your journey with GoVoylo.',
+      },
+      Completed: { title: 'No past trips', text: 'Trips you have completed will show up here.' },
+      Cancelled: { title: 'No cancelled trips', text: 'Bookings you cancel will show up here.' },
+    };
+    return (
+      <View style={styles.emptyState}>
+        <View style={styles.emptyArt}>
+          <View style={styles.emptyCircle}>
+            <Luggage size={52} color={PURPLE} strokeWidth={1.8} />
+          </View>
+          <View style={{ position: 'absolute', right: 0, top: 6 }}>
+            <Plane size={26} color={PURPLE} strokeWidth={2} />
+          </View>
+          <View style={{ position: 'absolute', left: 6, bottom: 22 }}>
+            <Sparkles size={20} color={PURPLE} strokeWidth={2} />
+          </View>
+        </View>
+        <Text style={styles.emptyTitle}>{copy[activeTab].title}</Text>
+        <Text style={styles.emptyText}>{copy[activeTab].text}</Text>
+        <View style={styles.emptyButtons}>
+          <TouchableOpacity style={styles.primaryButton} onPress={onExploreTrips}>
+            <Text style={styles.primaryButtonText}>Explore Trips</Text>
+          </TouchableOpacity>
+          {activeTab === 'Upcoming' ? (
+            <TouchableOpacity style={styles.secondaryButton} onPress={() => setActiveTab('Completed')}>
+              <Text style={styles.secondaryButtonText}>View Past Trips</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      </View>
     );
   };
 
-  const renderItem = ({ item }: { item: TripBooking }) => {
-    const status = getStatusDisplay(item);
-    const canCancel =
-      item.localStatus === 'Active' && item.statusId !== STATUS_ID_FAILED && item.statusId !== STATUS_ID_TICKETING;
-    const isCancellingThis = cancelBooking.isPending && cancelBooking.variables?.tripBookingId === item.id;
+  const renderCard = ({ item }: { item: TripBooking }) => {
+    const status = statusDisplay(item);
+    const tab = tripTab(item);
+    const firstLeg = [...item.legs].sort((a, b) => a.legIndex - b.legIndex)[0];
+    const time = firstLeg ? formatTime12(firstLeg.travelDate) : '';
+    const pax = passengerCount(item);
 
     return (
       <View style={styles.card}>
-        <View style={styles.cardHeaderRow}>
-          <Text style={styles.routeText}>
-            {item.legs.map((leg) => `${leg.origin}-${leg.destination}`).join('  •  ')}
-          </Text>
+        <View style={styles.cardTopRow}>
+          <View style={styles.typeChip}>
+            <Plane size={14} color={PURPLE} strokeWidth={2} />
+            <Text style={styles.typeChipText}>Flight</Text>
+          </View>
           <View style={[styles.statusBadge, { backgroundColor: status.background }]}>
+            <View style={[styles.statusDot, { backgroundColor: status.color }]} />
             <Text style={[styles.statusBadgeText, { color: status.color }]}>{status.label}</Text>
           </View>
         </View>
 
-        {item.legs.map((leg) => (
-          <View key={leg.legIndex} style={styles.legRow}>
-            <Text style={styles.legText}>
-              {leg.airlineName} {leg.airlineCode} {leg.flightNumber}
-            </Text>
-            <Text style={styles.legText}>{formatDate(leg.travelDate)}</Text>
+        <View style={styles.routeRow}>
+          <View style={styles.planeTile}>
+            <Plane size={20} color={PURPLE} strokeWidth={2} />
           </View>
-        ))}
-
-        <View style={styles.divider} />
-
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Booking ref</Text>
-          <Text style={styles.metaValue}>{item.bookingRefNo}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.routeText} numberOfLines={1}>
+              {routeTitle(item)}
+            </Text>
+            {firstLeg ? (
+              <Text style={styles.dateText}>
+                {formatDate(firstLeg.travelDate)}
+                {time ? ` · ${time}` : ''}
+              </Text>
+            ) : null}
+          </View>
         </View>
-        {item.airlinePnr ? (
-          <View style={styles.metaRow}>
-            <Text style={styles.metaLabel}>Airline PNR</Text>
-            <Text style={styles.metaValue}>{item.airlinePnr}</Text>
+
+        {firstLeg ? (
+          <View style={styles.carrierRow}>
+            <Text style={styles.carrierText}>
+              {firstLeg.airlineName} · {firstLeg.airlineCode} {firstLeg.flightNumber}
+            </Text>
+            <Text style={styles.carrierMuted}>
+              {'  •  '}
+              {pax} {pax === 1 ? 'Passenger' : 'Passengers'}
+            </Text>
           </View>
         ) : null}
+
+        <View style={styles.cardDivider} />
+
         <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Passengers</Text>
-          <Text style={styles.metaValue}>{item.passengerNames}</Text>
-        </View>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Total paid</Text>
-          <Text style={styles.amountText}>{formatCurrency(item.totalAmount, item.currencyCode)}</Text>
+          <View>
+            <Text style={styles.metaLabel}>BOOKING ID</Text>
+            <Text style={styles.metaValue}>{item.bookingRefNo}</Text>
+          </View>
+          {tab === 'Cancelled' ? (
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.metaLabel}>REFUND STATUS</Text>
+              {item.refundAmount != null ? (
+                <Text style={styles.refundText}>{formatCurrency(item.refundAmount, item.currencyCode)} refunded</Text>
+              ) : item.localStatus === 'Cancelled' ? (
+                <Text style={styles.refundPending}>Being processed</Text>
+              ) : (
+                <Text style={[styles.metaValue, { color: MUTED }]}>
+                  {item.localStatus === 'Released' ? 'Hold released' : 'Not ticketed'}
+                </Text>
+              )}
+            </View>
+          ) : (
+            <View style={{ alignItems: 'flex-end' }}>
+              <Text style={styles.metaLabel}>TOTAL</Text>
+              <Text style={styles.amountText}>{formatCurrency(item.totalAmount, item.currencyCode)}</Text>
+            </View>
+          )}
         </View>
 
-        {canCancel && (
-          <TouchableOpacity
-            style={[styles.cancelButton, isCancellingThis && styles.cancelButtonDisabled]}
-            onPress={() => handleCancel(item)}
-            disabled={isCancellingThis}
-          >
-            {isCancellingThis ? (
-              <ActivityIndicator size="small" color="#EF4444" />
-            ) : (
-              <Text style={styles.cancelButtonText}>
-                {item.statusId === '33' ? 'Release hold' : 'Cancel booking'}
-              </Text>
-            )}
-          </TouchableOpacity>
-        )}
+        {tab === 'Upcoming' ? (
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={styles.primaryButton} onPress={() => setOpenTripId(item.id)}>
+              <Text style={styles.primaryButtonText}>View Details</Text>
+            </TouchableOpacity>
+            {/* No action yet — e-tickets aren't generated in the app. */}
+            <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.7}>
+              <Download size={16} color={PURPLE} strokeWidth={2} />
+              <Text style={styles.secondaryButtonText}>Download Ticket</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
+        {tab === 'Completed' ? (
+          <>
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={styles.primaryButton} onPress={() => setOpenTripId(item.id)}>
+                <Text style={styles.primaryButtonText}>View Details</Text>
+              </TouchableOpacity>
+              {/* No action yet. */}
+              <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.7}>
+                <Text style={styles.secondaryButtonText}>Book Again</Text>
+              </TouchableOpacity>
+            </View>
+            {/* No action yet. */}
+            <TouchableOpacity style={styles.rateRow} activeOpacity={0.7}>
+              <Star size={16} color={PURPLE} strokeWidth={2} />
+              <Text style={styles.rateText}>Rate your trip</Text>
+              <ChevronRight size={18} color={PURPLE} strokeWidth={2} />
+            </TouchableOpacity>
+          </>
+        ) : null}
+
+        {tab === 'Cancelled' ? (
+          <View style={styles.buttonRow}>
+            <TouchableOpacity
+              style={[styles.primaryButton, styles.halfButton]}
+              onPress={() => setOpenTripId(item.id)}
+            >
+              <Text style={styles.primaryButtonText}>View Cancellation Details</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
       </View>
+    );
+  };
+
+  const renderList = () => {
+    if (isLoading) {
+      return (
+        <View style={styles.centerState}>
+          <ActivityIndicator size="large" color={PURPLE} />
+        </View>
+      );
+    }
+    if (isError) {
+      return (
+        <View style={styles.centerState}>
+          <Text style={styles.stateText}>We couldn't load your trips.</Text>
+          <TouchableOpacity onPress={() => refetch()}>
+            <Text style={styles.retryText}>Try again</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+    if (tabIsEmpty && category !== 'Hotels' && category !== 'Trains' && category !== 'Buses' && !search.trim()) {
+      return (
+        <ScrollView
+          contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[PURPLE]} />}
+        >
+          {renderEmptyTab()}
+        </ScrollView>
+      );
+    }
+
+    return (
+      <FlatList
+        data={visibleTrips}
+        keyExtractor={(item) => item.id}
+        renderItem={renderCard}
+        contentContainerStyle={styles.listContent}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} colors={[PURPLE]} />}
+        ListHeaderComponent={
+          <View style={styles.listHeader}>
+            <Text style={styles.listTitle}>{listTitle()}</Text>
+            <TouchableOpacity onPress={() => setSortOpen(true)} hitSlop={8}>
+              <Text style={styles.sortLink}>
+                {activeTab === 'Upcoming' ? 'Sort' : sortOrder === 'newest' ? 'Newest first' : 'Oldest first'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        }
+        ListEmptyComponent={
+          <View style={styles.centerState}>
+            <Text style={styles.stateText}>
+              {category !== 'All' && category !== 'Flights'
+                ? `No ${category.toLowerCase()} bookings yet.`
+                : 'No trips match your search.'}
+            </Text>
+          </View>
+        }
+        ListFooterComponent={
+          activeTab === 'Cancelled' && visibleTrips.length > 0 ? (
+            // No action yet.
+            <TouchableOpacity style={styles.helpBanner} activeOpacity={0.7}>
+              <Headset size={22} color="#1E3A8A" strokeWidth={2} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.helpTitle}>Need help with a refund?</Text>
+                <Text style={styles.helpText}>Our travel experts are available around the clock.</Text>
+              </View>
+              <ChevronRight size={18} color="#1E3A8A" strokeWidth={2} />
+            </TouchableOpacity>
+          ) : null
+        }
+      />
     );
   };
 
   return (
     <View style={styles.screen}>
-      <LinearGradient colors={['#6A16CB', '#350B65']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
-        <SafeAreaView>
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>My Trips</Text>
-          </View>
-        </SafeAreaView>
-      </LinearGradient>
-
-      {isLoading ? (
-        <View style={styles.loadingState}>
-          <ActivityIndicator size="large" color="#7C1AEE" />
+      <View style={styles.header}>
+        <View>
+          {firstName ? (
+            <Text style={styles.greeting}>
+              {greeting()}, {firstName}
+            </Text>
+          ) : null}
+          <Text style={styles.title}>My Trips</Text>
         </View>
-      ) : (
-        <FlatList
-          data={trips ?? []}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No trips booked yet.</Text>
-            </View>
-          }
+        {/* No action yet — notifications aren't built. */}
+        <TouchableOpacity style={styles.bellButton} activeOpacity={0.7}>
+          <Bell size={20} color="#3E4B64" strokeWidth={2} />
+          <View style={styles.bellDot} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.searchBox}>
+        <Search size={18} color={MUTED} strokeWidth={2} />
+        <TextInput
+          style={styles.searchInput}
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Search trips, booking ID or destination"
+          placeholderTextColor={MUTED}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          returnKeyType="search"
         />
-      )}
+      </View>
+
+      <View style={styles.tabs}>
+        {TABS.map((tab) => {
+          const active = tab === activeTab;
+          return (
+            <TouchableOpacity key={tab} style={styles.tab} onPress={() => setActiveTab(tab)}>
+              <Text style={[styles.tabText, active && styles.tabTextActive]}>{tab}</Text>
+              {active ? <View style={styles.tabUnderline} /> : null}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {!(tabIsEmpty && !isLoading && !isError) ? (
+        <View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+            {CATEGORIES.map((c) => {
+              const active = c === category;
+              return (
+                <TouchableOpacity key={c} style={[styles.chip, active && styles.chipActive]} onPress={() => setCategory(c)}>
+                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{c}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      ) : null}
+
+      <View style={{ flex: 1 }}>{renderList()}</View>
+
+      <Modal visible={sortOpen} transparent animationType="slide" onRequestClose={() => setSortOpen(false)}>
+        <TouchableOpacity style={styles.sheetBackdrop} activeOpacity={1} onPress={() => setSortOpen(false)}>
+          <TouchableOpacity activeOpacity={1} style={styles.sheet}>
+            <Text style={styles.sheetTitle}>Sort by</Text>
+            {(['newest', 'oldest'] as SortOrder[]).map((order) => {
+              const active = order === sortOrder;
+              return (
+                <TouchableOpacity
+                  key={order}
+                  style={styles.sheetOption}
+                  onPress={() => {
+                    setSortOrder(order);
+                    setSortOpen(false);
+                  }}
+                >
+                  <Text style={[styles.sheetOptionText, active && styles.sheetOptionTextActive]}>
+                    {order === 'newest' ? 'Newest booking first' : 'Oldest booking first'}
+                  </Text>
+                  {active ? <Check size={18} color={PURPLE} strokeWidth={2.5} /> : null}
+                </TouchableOpacity>
+              );
+            })}
+            <TouchableOpacity style={styles.sheetClose} onPress={() => setSortOpen(false)}>
+              <Text style={styles.sheetCloseText}>Close</Text>
+            </TouchableOpacity>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
