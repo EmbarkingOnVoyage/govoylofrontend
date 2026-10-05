@@ -67,7 +67,14 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ECEEF3',
   },
+  // Horizontal tab strips keep their natural height; only the seat map flexes.
+  tabStrip: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   travelerTab: {
+    minHeight: 52,
+    justifyContent: 'center',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderBottomWidth: 2,
@@ -131,6 +138,10 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#697691',
     textAlign: 'center',
+  },
+  // Takes the space between the tabs and the footer, so Total / Save stay on screen.
+  map: {
+    flex: 1,
   },
   mapContent: {
     paddingHorizontal: 12,

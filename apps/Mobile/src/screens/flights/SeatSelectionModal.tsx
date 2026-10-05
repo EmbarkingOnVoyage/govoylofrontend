@@ -263,7 +263,7 @@ export const SeatSelectionModal: React.FC<SeatSelectionModalProps> = ({
         </View>
 
         {segments.length > 1 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.segmentTabs}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabStrip} contentContainerStyle={styles.segmentTabs}>
             {segments.map((s, i) => (
               <TouchableOpacity
                 key={i}
@@ -278,7 +278,7 @@ export const SeatSelectionModal: React.FC<SeatSelectionModalProps> = ({
           </ScrollView>
         )}
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.travelerTabs}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabStrip} contentContainerStyle={styles.travelerTabs}>
           {travelers.map((t) => {
             const active = t.id === activeTravelerId;
             const seat = picks[pickKey(segmentIndex, t.id)];
@@ -320,15 +320,21 @@ export const SeatSelectionModal: React.FC<SeatSelectionModalProps> = ({
         </View>
 
         {isLoading ? (
-          <ActivityIndicator size="small" color="#7C1AEE" style={styles.stateBox} />
+          <View style={styles.map}>
+            <ActivityIndicator size="small" color="#7C1AEE" style={styles.stateBox} />
+          </View>
         ) : loadError ? (
-          <Text style={[styles.stateBox, styles.stateText]}>Couldn't load the seat map right now. Please try again.</Text>
+          <View style={styles.map}>
+            <Text style={[styles.stateBox, styles.stateText]}>Couldn't load the seat map right now. Please try again.</Text>
+          </View>
         ) : sections.length === 0 ? (
-          <Text style={[styles.stateBox, styles.stateText]}>
-            Seat selection isn't available for this flight. A seat will be assigned at check-in.
-          </Text>
+          <View style={styles.map}>
+            <Text style={[styles.stateBox, styles.stateText]}>
+              Seat selection isn't available for this flight. A seat will be assigned at check-in.
+            </Text>
+          </View>
         ) : (
-          <ScrollView contentContainerStyle={styles.mapContent}>
+          <ScrollView style={styles.map} contentContainerStyle={styles.mapContent}>
             {sections.map((section, sectionIndex) => (
               <View key={sectionIndex}>
                 <View style={styles.sectionHeadingRow}>
