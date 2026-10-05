@@ -45,6 +45,7 @@ export {
   type FlightOffer,
   type FlightSearchResponse,
   type FlightSearchSummary,
+  type PassengerCounts,
 } from './features/flights/useSearchFlightsMobile';
 export {
   useFareCalendarMobile,
