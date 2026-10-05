@@ -10,9 +10,26 @@ export interface FareRule {
   fareRuleDesc: string;
 }
 
+// One time band of a structured fare rule (Tripjack): applies from startHours
+// to endHours before departure. airlineFee is per passenger; null means the
+// airline sets it at the time ("Airline policy"). transactionFee is the
+// supplier's own fee on top.
+export interface FareRulePolicy {
+  // The supplier's "DEL-BOM" key — one offer can carry several.
+  route: string;
+  type: "Cancellation" | "DateChange" | "NoShow";
+  startHours: number | null;
+  endHours: number | null;
+  airlineFee: number | null;
+  transactionFee: number | null;
+  info: string | null;
+}
+
+// policies is empty for free-text-only suppliers (Flyshop), whose rules carry the text.
 export interface LegFareRules {
   offerId: string;
   rules: FareRule[];
+  policies: FareRulePolicy[];
 }
 
 export interface FareRulesResponse {
