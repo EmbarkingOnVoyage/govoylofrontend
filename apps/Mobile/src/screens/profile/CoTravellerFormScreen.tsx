@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Check } from 'lucide-react-native';
 import {
@@ -39,7 +39,13 @@ function parseDisplayDate(display: string): string | null {
 }
 
 export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ travellerId, onDone }) => {
-  const { data: detail } = useTravellerDetailMobile(travellerId);
+  const {
+    data: detail,
+    isLoading: isLoadingDetail,
+    isError: detailLoadFailed,
+    refetch: retryLoadDetail,
+    isRefetching: isRetryingDetail,
+  } = useTravellerDetailMobile(travellerId);
   const saveTraveller = useSaveTravellerMobile();
 
   const [firstName, setFirstName] = useState('');
@@ -141,6 +147,28 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
         </SafeAreaView>
       </LinearGradient>
 
+      {/* Editing an existing traveller: the form stays hidden until their saved
+          details have loaded, so it never shows (or saves) blank fields in
+          place of the real ones. */}
+      {travellerId && (isLoadingDetail || (detailLoadFailed && !detail)) ? (
+        <View style={styles.loadState}>
+          {isLoadingDetail || isRetryingDetail ? (
+            <>
+              <ActivityIndicator size="large" color="#7C1AEE" />
+              <Text style={styles.loadStateText}>Loading traveller details...</Text>
+            </>
+          ) : (
+            <>
+              <Text style={[styles.loadStateText, styles.saveError]}>
+                Couldn't load this traveller's details. Check your connection and try again.
+              </Text>
+              <TouchableOpacity style={[styles.saveButton, styles.loadStateButton]} onPress={() => retryLoadDetail()}>
+                <Text style={styles.saveButtonText}>Retry</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      ) : (
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={[styles.sectionHeading, styles.firstSectionHeading]}>General information</Text>
 
@@ -257,6 +285,7 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
 
         {!!saveError && <Text style={[styles.saveFeedback, styles.saveError]}>{saveError}</Text>}
       </ScrollView>
+      )}
     </View>
   );
 };

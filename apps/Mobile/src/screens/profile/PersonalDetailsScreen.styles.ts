@@ -133,4 +133,20 @@ export const styles = StyleSheet.create({
   saveError: {
     color: '#EF4444',
   },
+  loadState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    gap: 12,
+  },
+  loadStateText: {
+    fontSize: 14,
+    color: '#697691',
+    textAlign: 'center',
+  },
+  loadStateButton: {
+    alignSelf: 'stretch',
+    marginTop: 8,
+  },
 });
