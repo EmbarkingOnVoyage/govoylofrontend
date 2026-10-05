@@ -149,4 +149,16 @@ export const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginTop: 8,
   },
+
+  panNote: {
+  fontSize: 12,
+  color: '#666666',
+  marginTop: 6,
+  lineHeight: 18,
+},
+
+panNoteHighlight: {
+  color: '#F97316',
+  fontWeight: '600',
+},
 });

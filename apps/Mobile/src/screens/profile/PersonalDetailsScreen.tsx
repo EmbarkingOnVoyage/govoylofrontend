@@ -257,6 +257,9 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
             }}
             placeholder="Text"
           />
+          <Text style={styles.panNote}>
+    <Text style={styles.panNoteHighlight}>NOTE:</Text> Your PAN No. will only be used for international bookings as per RBI Guidelines
+  </Text>
         </View>
 
         <TouchableOpacity
