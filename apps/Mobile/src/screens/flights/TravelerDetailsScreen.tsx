@@ -16,6 +16,7 @@ import {
   type BookingTravelerRequest,
   type BookingLegRequest,
   type CreateBookingResponse,
+  type PassengerCounts,
 } from '@workspace/ui';
 import { findAirportByCode } from '../../data/airports';
 import { AirlineLogo } from './FlightResultsScreen';
@@ -27,6 +28,91 @@ import { styles } from './TravelerDetailsScreen.styles';
 // 5th+ traveller pushes the rest behind a "More" button that opens the full
 // list in a modal instead of growing this screen indefinitely.
 const INLINE_TRAVELER_LIMIT = 4;
+
+// The saved-traveller API's travelerType values, in the order the booking
+// lists passengers (adults first, then children, then infants).
+type PaxType = 'adult' | 'child' | 'infant';
+const PAX_TYPES: PaxType[] = ['adult', 'child', 'infant'];
+
+const PAX_LABELS: Record<PaxType, { block: string; singular: string; plural: string }> = {
+  adult: { block: 'Adult', singular: 'adult', plural: 'adults' },
+  child: { block: 'Children', singular: 'child', plural: 'children' },
+  infant: { block: 'Infant', singular: 'infant', plural: 'infants' },
+};
+
+function savedPaxType(traveler: Traveler): PaxType {
+  const type = traveler.travelerType?.toLowerCase();
+  return type === 'child' || type === 'infant' ? type : 'adult';
+}
+
+const PAX_API_TYPES: Record<PaxType, 'Adult' | 'Child' | 'Infant'> = {
+  adult: 'Adult',
+  child: 'Child',
+  infant: 'Infant',
+};
+
+// Year/month/day straight from a "YYYY-MM-DD..." string — calendar dates
+// with no time zone, same reasoning as formatTravelerDob.
+function calendarDate(iso: string | null | undefined): [number, number, number] | null {
+  const match = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null;
+  return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+}
+
+function isBefore(a: [number, number, number], b: [number, number, number]): boolean {
+  return a[0] !== b[0] ? a[0] < b[0] : a[1] !== b[1] ? a[1] < b[1] : a[2] < b[2];
+}
+
+// Completed years between a date of birth and a travel date.
+function ageOn(dob: [number, number, number], on: [number, number, number]): number {
+  const hadBirthday = on[1] > dob[1] || (on[1] === dob[1] && on[2] >= dob[2]);
+  return on[0] - dob[0] - (hadBirthday ? 0 : 1);
+}
+
+interface TravelerAgeCheck {
+  type: PaxType;
+  // Shown under the traveller's name when the travel dates change how they fly.
+  note: string;
+  // Born after the first flight — can't be booked at all.
+  blocked: boolean;
+}
+
+// The passenger type a traveller actually flies as, by age on the travel dates
+// (the airline checks date of birth against it): an infant must be under 2 on
+// every flight, so on the last one; a child is 2–11 and an adult 12+ on the
+// first. Without a date of birth the saved type is used as-is.
+function checkTravelerAge(
+  traveler: Traveler,
+  firstTravelIso: string | undefined,
+  lastTravelIso: string | undefined
+): TravelerAgeCheck {
+  const saved = savedPaxType(traveler);
+  const dob = calendarDate(traveler.dateOfBirth);
+  const first = calendarDate(firstTravelIso);
+  const last = calendarDate(lastTravelIso) ?? first;
+  if (!dob || !first || !last) {
+    return { type: saved, note: '', blocked: false };
+  }
+  if (isBefore(first, dob)) {
+    return { type: saved, note: 'Date of birth is after the travel date', blocked: true };
+  }
+
+  const ageFirst = ageOn(dob, first);
+  const ageLast = ageOn(dob, last);
+  const type: PaxType = ageLast < 2 ? 'infant' : ageFirst < 12 ? 'child' : 'adult';
+  if (type === saved) {
+    return { type, note: '', blocked: false };
+  }
+
+  const note =
+    ageFirst < 2 && type === 'child'
+      ? `Turns 2 before ${formatTravelerDob(lastTravelIso)}, so travels as a child`
+      : `Travels as ${type === 'adult' ? 'an adult' : `a ${PAX_LABELS[type].singular}`}: age ${ageFirst} on ${formatTravelerDob(firstTravelIso)}`;
+  return { type, note, blocked: false };
+}
+
+function paxCountText(type: PaxType, count: number): string {
+  return `${count} ${count === 1 ? PAX_LABELS[type].singular : PAX_LABELS[type].plural}`;
+}
 
 // 2-digit state code, 10-char PAN, entity number, 'Z', checksum character.
 const GSTIN_PATTERN = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/;
@@ -82,7 +168,9 @@ interface TravelerDetailsScreenProps {
   // Onward/Return, multi-city's Flight 1/2/..., or a single one-way offer).
   legs: FlightOffer[];
   legLabels?: string[];
-  passengerCount: number;
+  // Travellers of each type the search was for; the screen asks for exactly
+  // these, in separate Adult / Children / Infant blocks.
+  passengerCounts: PassengerCounts;
   onBack: () => void;
   onAddTraveler: () => void;
   onEditTraveler: (id: string) => void;
@@ -95,7 +183,7 @@ interface TravelerDetailsScreenProps {
 export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   legs,
   legLabels,
-  passengerCount,
+  passengerCounts,
   onBack,
   onAddTraveler,
   onEditTraveler,
@@ -103,7 +191,9 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const { data: travelers, isLoading } = useTravellersMobile();
   const { data: customerProfile } = useCustomerProfileMobile();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [showAllTravelers, setShowAllTravelers] = useState(false);
+  // Which type's full list the "More" modal is showing, if open.
+  const [allTravelersType, setAllTravelersType] = useState<PaxType | null>(null);
+  const [selectionHint, setSelectionHint] = useState('');
   const [addOnTotal, setAddOnTotal] = useState(0);
   const [addOnSelections, setAddOnSelections] = useState<AddOnSelection[]>([]);
   const [showFareRules, setShowFareRules] = useState(false);
@@ -131,18 +221,49 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const totalAmount = baseTotalAmount + addOnTotal;
   const currencyCode = legs[0]?.currencyCode ?? 'INR';
 
-  const visibleTravelers = (travelers ?? []).slice(0, INLINE_TRAVELER_LIMIT);
-  const hasMoreTravelers = (travelers ?? []).length > INLINE_TRAVELER_LIMIT;
+  const requiredCounts: Record<PaxType, number> = {
+    adult: passengerCounts.adult,
+    child: passengerCounts.child,
+    infant: passengerCounts.infant,
+  };
+  // Only the passenger types the search included get a block.
+  const visiblePaxTypes = PAX_TYPES.filter((type) => requiredCounts[type] > 0);
+
+  // First and last flight departure dates of the whole trip — what each
+  // traveller's age is checked against.
+  const firstTravelIso = legs[0]?.segments[0]?.departureDateTime;
+  const lastLegSegments = legs[legs.length - 1]?.segments ?? [];
+  const lastTravelIso = lastLegSegments[lastLegSegments.length - 1]?.departureDateTime;
+
+  const ageChecks = useMemo(() => {
+    const checks = new Map<string, TravelerAgeCheck>();
+    (travelers ?? []).forEach((t) => checks.set(t.id, checkTravelerAge(t, firstTravelIso, lastTravelIso)));
+    return checks;
+  }, [travelers, firstTravelIso, lastTravelIso]);
+
+  const paxTypeOf = (traveler: Traveler): PaxType => ageChecks.get(traveler.id)?.type ?? savedPaxType(traveler);
+
+  // Grouped by the type each traveller flies as on these dates, not just the
+  // type saved on their profile.
+  const travelersByType = useMemo(() => {
+    const groups: Record<PaxType, Traveler[]> = { adult: [], child: [], infant: [] };
+    (travelers ?? []).forEach((t) => groups[ageChecks.get(t.id)?.type ?? savedPaxType(t)].push(t));
+    return groups;
+  }, [travelers, ageChecks]);
 
   // Add-ons apply to whichever travellers are actually on this booking, not
   // every saved traveller — so the Whats Included modals only list the ones
   // currently checked in the Add travellers block above. Gender/travelerType
   // are needed (not just id/name) because the seat-map add-on hits a real
   // Flyshop endpoint that requires PAX details.
+  // Adults first, then children, then infants — the order passengers are
+  // sent to the supplier (Pax_Id 1..n).
   const selectedTravelers = useMemo(
-    () => (travelers ?? []).filter((t) => selectedIds.has(t.id)),
-    [travelers, selectedIds]
+    () => PAX_TYPES.flatMap((type) => travelersByType[type].filter((t) => selectedIds.has(t.id))),
+    [travelersByType, selectedIds]
   );
+
+  const selectedCount = (type: PaxType) => travelersByType[type].filter((t) => selectedIds.has(t.id)).length;
 
   const addOnTravelers = useMemo(
     () =>
@@ -151,7 +272,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         firstName: t.firstName,
         lastName: t.lastName,
         gender: t.gender ?? 'Male',
-        travelerType: t.travelerType,
+        travelerType: PAX_API_TYPES[paxTypeOf(t)],
       })),
     [selectedTravelers]
   );
@@ -227,8 +348,13 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   };
 
   const handlePayNow = async () => {
-    if (selectedIds.size === 0) {
-      setPaymentError('Please select at least one traveller.');
+    // Exactly the searched number of each passenger type — the fare was priced
+    // for that mix, and the supplier rejects a booking that doesn't match it.
+    const missing = visiblePaxTypes.filter((type) => selectedCount(type) !== requiredCounts[type]);
+    if (missing.length > 0) {
+      setPaymentError(
+        `Please select ${missing.map((type) => paxCountText(type, requiredCounts[type])).join(', ')} for this booking.`
+      );
       return;
     }
 
@@ -258,17 +384,9 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         firstName: t.firstName,
         lastName: t.lastName,
         gender: t.gender === 'Female' ? 'Female' : 'Male',
-        // travelerType comes straight from the saved-traveller API as
-        // lowercase ("adult"/"child"/"infant", matching the backend's own
-        // validation) — compare case-insensitively rather than assuming a
-        // capitalized value, which silently mapped every real Child/Infant
-        // traveller to "Adult" here.
-        paxType:
-          t.travelerType.toLowerCase() === 'child'
-            ? 'Child'
-            : t.travelerType.toLowerCase() === 'infant'
-              ? 'Infant'
-              : 'Adult',
+        // The type they fly as on these dates (see checkTravelerAge), which
+        // can differ from the type saved on their profile.
+        paxType: PAX_API_TYPES[paxTypeOf(t)],
         dateOfBirth: t.dateOfBirth || undefined,
         savedTravelerId: t.id,
       }));
@@ -363,13 +481,27 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
     }
   };
 
-  const toggleSelected = (id: string) => {
+  const toggleSelected = (traveler: Traveler) => {
+    const type = paxTypeOf(traveler);
+    const check = ageChecks.get(traveler.id);
+    if (!selectedIds.has(traveler.id) && check?.blocked) {
+      setSelectionHint(`${traveler.firstName} ${traveler.lastName} can't travel on these dates: ${check.note.toLowerCase()}.`);
+      return;
+    }
+    if (!selectedIds.has(traveler.id) && selectedCount(type) >= requiredCounts[type]) {
+      setSelectionHint(
+        `This search is for ${paxCountText(type, requiredCounts[type])}. Unselect one to choose another.`
+      );
+      return;
+    }
+    setSelectionHint('');
+    setPaymentError('');
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
+      if (next.has(traveler.id)) {
+        next.delete(traveler.id);
       } else {
-        next.add(id);
+        next.add(traveler.id);
       }
       return next;
     });
@@ -379,7 +511,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
     const isSelected = selectedIds.has(traveler.id);
     return (
       <View key={traveler.id} style={styles.travelerRow}>
-        <TouchableOpacity style={styles.travelerRowLeft} onPress={() => toggleSelected(traveler.id)} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.travelerRowLeft} onPress={() => toggleSelected(traveler)} activeOpacity={0.7}>
           <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
             {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
           </View>
@@ -390,6 +522,9 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
             <Text style={styles.travelerMeta}>
               {[traveler.gender, formatTravelerDob(traveler.dateOfBirth)].filter(Boolean).join(', ')}
             </Text>
+            {!!ageChecks.get(traveler.id)?.note && (
+              <Text style={styles.travelerAgeNote}>{ageChecks.get(traveler.id)?.note}</Text>
+            )}
           </View>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => onEditTraveler(traveler.id)}>
@@ -523,26 +658,37 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           </Text>
         </View>
 
-        <View style={styles.travelerCountRow}>
-          <Text style={styles.travelerCountLabel}>Traveller</Text>
-          <Text style={styles.travelerCountValue}>
-            {selectedIds.size}/{passengerCount} Selected
-          </Text>
-        </View>
-
         {isLoading ? (
           <ActivityIndicator size="small" color="#7C1AEE" style={styles.loadingIndicator} />
-        ) : (travelers ?? []).length === 0 ? (
-          <Text style={styles.emptyStateText}>No saved travellers yet.</Text>
         ) : (
-          visibleTravelers.map(renderTravelerRow)
+          visiblePaxTypes.map((type) => {
+            const ofType = travelersByType[type];
+            return (
+              <View key={type} style={styles.paxBlock}>
+                <View style={styles.travelerCountRow}>
+                  <Text style={styles.travelerCountLabel}>{PAX_LABELS[type].block}</Text>
+                  <Text style={styles.travelerCountValue}>
+                    {selectedCount(type)}/{requiredCounts[type]} Selected
+                  </Text>
+                </View>
+                {ofType.length === 0 ? (
+                  <Text style={styles.emptyStateText}>
+                    No saved {PAX_LABELS[type].plural} yet. Add one below.
+                  </Text>
+                ) : (
+                  ofType.slice(0, INLINE_TRAVELER_LIMIT).map(renderTravelerRow)
+                )}
+                {ofType.length > INLINE_TRAVELER_LIMIT && (
+                  <TouchableOpacity style={styles.moreButton} onPress={() => setAllTravelersType(type)} activeOpacity={0.7}>
+                    <Text style={styles.moreButtonText}>More</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          })
         )}
 
-        {hasMoreTravelers && (
-          <TouchableOpacity style={styles.moreButton} onPress={() => setShowAllTravelers(true)} activeOpacity={0.7}>
-            <Text style={styles.moreButtonText}>More</Text>
-          </TouchableOpacity>
-        )}
+        {!!selectionHint && <Text style={styles.selectionHintText}>{selectionHint}</Text>}
 
         <TouchableOpacity style={styles.addTravelerRow} onPress={onAddTraveler} activeOpacity={0.7}>
           <Text style={styles.addTravelerText}>Add new travellers</Text>
@@ -629,30 +775,37 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         )}
       </ScrollView>
 
-      <Modal visible={showAllTravelers} animationType="slide" transparent onRequestClose={() => setShowAllTravelers(false)}>
+      <Modal visible={allTravelersType !== null} animationType="slide" transparent onRequestClose={() => setAllTravelersType(null)}>
         <View style={styles.allTravelersBackdrop}>
           <View style={styles.allTravelersSheet}>
             <View style={styles.allTravelersHeader}>
               <Text style={styles.allTravelersTitle}>Add Traveller</Text>
             </View>
-            <View style={styles.travelerCountRow}>
-              <Text style={styles.travelerCountLabel}>Adult</Text>
-              <Text style={styles.travelerCountValue}>
-                {selectedIds.size}/{passengerCount} Selected
-              </Text>
-            </View>
-            <ScrollView style={styles.allTravelersList}>{(travelers ?? []).map(renderTravelerRow)}</ScrollView>
+            {allTravelersType && (
+              <>
+                <View style={styles.travelerCountRow}>
+                  <Text style={styles.travelerCountLabel}>{PAX_LABELS[allTravelersType].block}</Text>
+                  <Text style={styles.travelerCountValue}>
+                    {selectedCount(allTravelersType)}/{requiredCounts[allTravelersType]} Selected
+                  </Text>
+                </View>
+                <ScrollView style={styles.allTravelersList}>
+                  {travelersByType[allTravelersType].map(renderTravelerRow)}
+                </ScrollView>
+                {!!selectionHint && <Text style={styles.selectionHintText}>{selectionHint}</Text>}
+              </>
+            )}
             <View style={styles.allTravelersFooter}>
               <TouchableOpacity
                 style={styles.closeButton}
-                onPress={() => setShowAllTravelers(false)}
+                onPress={() => setAllTravelersType(null)}
                 activeOpacity={0.7}
               >
                 <Text style={styles.closeButtonText}>Close</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.addButton}
-                onPress={() => setShowAllTravelers(false)}
+                onPress={() => setAllTravelersType(null)}
                 activeOpacity={0.7}
               >
                 <Text style={styles.addButtonText}>Add</Text>

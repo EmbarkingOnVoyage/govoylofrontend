@@ -13,6 +13,7 @@ import {
   type FareOption,
   type FlightSearchSummary,
   type FlightSearchSegment,
+  type PassengerCounts,
 } from '@workspace/ui';
 import { FlightSearchFormScreen, type FlightSearchFormInitialValues } from './FlightSearchFormScreen';
 import { findAirportByCode, primeAirportCache } from '../../data/airports';
@@ -2052,7 +2053,11 @@ interface FlightResultsScreenProps {
   // Fired when the fare-review modal's Continue is tapped on its last step —
   // every leg the trip needs has a chosen offer at that point, matching the
   // Figma "Traveller details" step this hands off to.
-  onContinueToTravelerDetails: (legs: FlightOffer[], legLabels: string[] | undefined, passengerCount: number) => void;
+  onContinueToTravelerDetails: (
+    legs: FlightOffer[],
+    legLabels: string[] | undefined,
+    passengerCounts: PassengerCounts
+  ) => void;
 }
 
 export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
@@ -2375,7 +2380,12 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   // offer, so this is the fare review's real "done" action.
   const handleContinueToTraveler = (selectedFares: (FareOption | undefined)[]) => {
     const chosenLegs = detailsLegs.map((leg, i) => (selectedFares[i] ? pinFare(leg, selectedFares[i]!) : leg));
-    onContinueToTravelerDetails(chosenLegs, detailsLegLabels, activeSummary?.passengerCount ?? 1);
+    const request = activeSummary?.request;
+    onContinueToTravelerDetails(chosenLegs, detailsLegLabels, {
+      adult: request?.adultCount ?? 1,
+      child: request?.childCount ?? 0,
+      infant: request?.infantCount ?? 0,
+    });
   };
 
   return (

@@ -20,6 +20,14 @@ export interface FlightSearchRequest {
   infantCount: number;
 }
 
+// How many of each passenger type the search was for — Traveller Details
+// asks for exactly this many travellers of each type.
+export interface PassengerCounts {
+  adult: number;
+  child: number;
+  infant: number;
+}
+
 export interface FlightOfferSegment {
   origin: string;
   destination: string;

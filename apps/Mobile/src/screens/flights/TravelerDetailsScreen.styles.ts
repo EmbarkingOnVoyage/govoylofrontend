@@ -228,6 +228,14 @@ export const styles = StyleSheet.create({
     lineHeight: 18,
     color: '#8A5A1E',
   },
+  paxBlock: {
+    marginBottom: 12,
+  },
+  selectionHintText: {
+    color: '#D9822B',
+    fontSize: 13,
+    marginBottom: 8,
+  },
   travelerCountRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -287,6 +295,11 @@ export const styles = StyleSheet.create({
   travelerMeta: {
     fontSize: 12,
     color: '#697691',
+    marginTop: 2,
+  },
+  travelerAgeNote: {
+    fontSize: 12,
+    color: '#D9822B',
     marginTop: 2,
   },
   editLink: {

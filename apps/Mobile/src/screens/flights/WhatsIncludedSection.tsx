@@ -17,6 +17,7 @@ interface AddOnTraveler {
   firstName: string;
   lastName: string;
   gender: string;
+  // 'Adult' | 'Child' | 'Infant' — the type the traveller flies as.
   travelerType: string;
 }
 
