@@ -26,6 +26,12 @@ export interface AncillaryOption {
   totalAmount: number;
   currencyCode: string;
   applicablePaxTypes: number[];
+  // Seats only, when the supplier reports them: position on the cabin grid
+  // (a skipped column is an aisle) and extra-legroom / exit-row flags.
+  seatRow?: number | null;
+  seatColumn?: number | null;
+  isExtraLegroom?: boolean;
+  isExitRow?: boolean;
 }
 
 export interface FlightAncillariesResponse {
@@ -74,6 +80,9 @@ export interface SeatMapRow {
 export interface SeatMapSegment {
   legIndex: number;
   rows: SeatMapRow[];
+  // The flight segment this map is for (a connecting leg has one per segment).
+  origin?: string | null;
+  destination?: string | null;
 }
 
 export interface SeatMapResponse {
