@@ -7,10 +7,10 @@ import {
   SSR_TYPE_BAGGAGE,
   SSR_TYPE_MEALS,
   SSR_TYPE_COMPLIMENTARY_MEALS,
-  SSR_STATUS_AVAILABLE,
   type AncillaryOption,
 } from '@workspace/ui';
 import { styles } from './WhatsIncludedSection.styles';
+import { SeatSelectionModal, type SeatPick } from './SeatSelectionModal';
 
 interface AddOnTraveler {
   id: string;
@@ -52,25 +52,10 @@ function selectionKey(legIndex: number, category: AddOnCategory, travelerId: str
   return `${legIndex}:${category}:${travelerId}`;
 }
 
-// Flyshop prices individual seats, not seat "classes" — there's no semantic
-// tier name in the data. We dedupe available seats by price into at most a
-// couple of selectable tiers (cheapest = Standard, anything pricier =
-// Preferred) so the UI matches the Baggage/Meal pattern instead of listing
-// dozens of individual seat numbers. A real seat-picker (choosing an exact
-// seat on a visual map) is a separate, larger UI task.
-function buildSeatTierOptions(seats: AncillaryOption[]): AncillaryOption[] {
-  const available = seats.filter((s) => s.ssrStatus === SSR_STATUS_AVAILABLE);
-  const cheapestPerPrice = new Map<number, AncillaryOption>();
-  for (const seat of available) {
-    if (!cheapestPerPrice.has(seat.totalAmount)) {
-      cheapestPerPrice.set(seat.totalAmount, seat);
-    }
-  }
-  const tiers = [...cheapestPerPrice.values()].sort((a, b) => a.totalAmount - b.totalAmount);
-  return tiers.map((tier, index) => ({
-    ...tier,
-    ssrTypeDesc: tiers.length > 1 ? (index === 0 ? 'Standard Seat' : 'Preferred Seat') : 'Select Seat',
-  }));
+// Seats are picked per flight segment (a connecting leg has several), so their
+// selection keys carry the segment: `${legIndex}:seat:${segmentIndex}:${travelerId}`.
+function seatSelectionKey(legIndex: number, segmentIndex: number, travelerId: string): string {
+  return `${legIndex}:seat:${segmentIndex}:${travelerId}`;
 }
 
 const AddOnModal: React.FC<{
@@ -246,11 +231,47 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
       ),
     [ancillaries.data]
   );
-  const seatOptions = useMemo(() => {
-    const segment = seatMap.data?.segments.find((s) => s.legIndex === activeLegIndex);
-    const seats = segment?.rows.flatMap((r) => r.seats) ?? [];
-    return buildSeatTierOptions(seats);
+  // This leg's seat maps, one per flight segment. A leg booked as its own offer
+  // (e.g. Flyshop) reports its own legIndex as 0, so fall back to every map.
+  const seatSegments = useMemo(() => {
+    const all = seatMap.data?.segments ?? [];
+    const forLeg = all.filter((s) => s.legIndex === activeLegIndex);
+    return forLeg.length > 0 ? forLeg : all;
   }, [seatMap.data, activeLegIndex]);
+
+  // Infants sit on a lap, so they don't get a seat.
+  const seatTravelers = useMemo(() => travelers.filter((t) => t.travelerType !== 'Infant'), [travelers]);
+
+  const seatPicksForLeg = (): SeatPick[] =>
+    Object.entries(selections).flatMap(([key, selection]) => {
+      const match = new RegExp(`^${activeLegIndex}:seat:(\\d+):(.+)$`).exec(key);
+      if (!match) return [];
+      const segmentIndex = Number(match[1]);
+      const seat = seatSegments[segmentIndex]?.rows
+        .flatMap((r) => r.seats)
+        .find((option) => option.ssrKey === selection.ssrKey);
+      return seat ? [{ segmentIndex, travelerId: match[2], seat }] : [];
+    });
+
+  const handleSeatSave = (picks: SeatPick[]) => {
+    const next: SelectionMap = {};
+    Object.entries(selections).forEach(([key, selection]) => {
+      if (!key.startsWith(`${activeLegIndex}:seat:`)) next[key] = selection;
+    });
+    picks.forEach((pick) => {
+      next[seatSelectionKey(activeLegIndex, pick.segmentIndex, pick.travelerId)] = {
+        legIndex: activeLegIndex,
+        category: 'seat',
+        travelerId: pick.travelerId,
+        ssrKey: pick.seat.ssrKey,
+        label: pick.seat.ssrTypeDesc,
+        amount: pick.seat.totalAmount,
+      };
+    });
+    setSelections(next);
+    applyTotal(next);
+    setOpenModal(null);
+  };
 
   const applyTotal = (next: SelectionMap) => {
     const values = Object.values(next);
@@ -286,15 +307,16 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
 
   const categoryLabel = (category: AddOnCategory) =>
     category === 'baggage' ? 'Checked baggage' : category === 'seat' ? 'Seat selection' : 'Meal selection';
-  const categoryOptions = (category: AddOnCategory) =>
-    category === 'baggage' ? baggageOptions : category === 'seat' ? seatOptions : mealOptions;
+  const categoryOptions = (category: AddOnCategory) => (category === 'baggage' ? baggageOptions : mealOptions);
   const categoryLoading = (category: AddOnCategory) =>
     category === 'seat' ? seatMap.isPending : ancillaries.isLoading;
   const categoryError = (category: AddOnCategory) =>
     category === 'seat' ? seatMap.isError : ancillaries.isError;
 
   const hasSelection = (category: AddOnCategory, travelerId: string) =>
-    !!selections[selectionKey(activeLegIndex, category, travelerId)];
+    category === 'seat'
+      ? Object.keys(selections).some((key) => key.startsWith(`${activeLegIndex}:seat:`) && key.endsWith(`:${travelerId}`))
+      : !!selections[selectionKey(activeLegIndex, category, travelerId)];
   const anySelected = (category: AddOnCategory) => travelers.some((t) => hasSelection(category, t.id));
 
   return (
@@ -359,10 +381,10 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           <Text style={styles.infoCardPrice}>Free</Text>
         </View>
         <TouchableOpacity
-          style={[styles.ctaCard, travelers.length === 0 && styles.ctaCardDisabled]}
-          onPress={() => travelers.length > 0 && setOpenModal('seat')}
+          style={[styles.ctaCard, seatTravelers.length === 0 && styles.ctaCardDisabled]}
+          onPress={() => seatTravelers.length > 0 && setOpenModal('seat')}
           activeOpacity={0.8}
-          disabled={travelers.length === 0}
+          disabled={seatTravelers.length === 0}
         >
           <Text style={styles.ctaCardText}>{anySelected('seat') ? 'Seat selected' : 'Pick a seat'}</Text>
           <ChevronRight size={16} color="#FFFFFF" strokeWidth={2} />
@@ -388,7 +410,22 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
         </TouchableOpacity>
       </View>
 
-      {openModal && (
+      {openModal === 'seat' && (
+        <SeatSelectionModal
+          visible
+          origin={activeLegRoute?.origin ?? ''}
+          destination={activeLegRoute?.destination ?? ''}
+          segments={seatSegments}
+          isLoading={seatMap.isPending}
+          loadError={seatMap.isError}
+          travelers={seatTravelers}
+          initialPicks={seatPicksForLeg()}
+          currencyCode={currencyCode}
+          onSave={handleSeatSave}
+          onClose={() => setOpenModal(null)}
+        />
+      )}
+      {openModal && openModal !== 'seat' && (
         <AddOnModal
           visible
           title={categoryLabel(openModal)}
