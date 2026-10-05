@@ -17,6 +17,7 @@ import {
   STATUS_ID_HELD,
   STATUS_ID_TICKETING,
   canCancel,
+  isExpiredHold,
   formatCurrency,
   formatDuration,
   formatShortDate,
@@ -91,6 +92,9 @@ function bookingStatus(booking: TripBooking): { title: string; color: string; ba
   }
   if (booking.statusId === STATUS_ID_FAILED) {
     return { title: 'Booking Failed', color: RED, background: '#FDECEE', icon: 'x' };
+  }
+  if (isExpiredHold(booking)) {
+    return { title: 'Hold Expired', color: '#4C5973', background: '#F1F3F7', icon: 'x' };
   }
   if (booking.statusId === STATUS_ID_HELD) {
     return { title: 'Booking On Hold', color: '#B45309', background: '#FEF3C7', icon: 'clock' };
@@ -296,7 +300,7 @@ export const TripDetailsScreen: React.FC<TripDetailsScreenProps> = ({ tripBookin
         ) : null}
       </ScrollView>
 
-      {booking.localStatus === 'Active' && booking.statusId !== STATUS_ID_FAILED ? (
+      {booking.localStatus === 'Active' && booking.statusId !== STATUS_ID_FAILED && !isExpiredHold(booking) ? (
         <SafeAreaView>
           <View style={styles.footer}>
             {!isHeld ? (
