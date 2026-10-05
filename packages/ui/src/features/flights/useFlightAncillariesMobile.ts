@@ -41,19 +41,26 @@ export interface FlightAncillariesResponse {
 // A trip booked as separate leg offers (domestic return / multi-city) passes every
 // leg's offerId, in order, as itineraryOfferIds: Tripjack can only price its legs
 // together, so the backend reprices the whole itinerary and returns this leg's part.
-function itineraryQuery(itineraryOfferIds: string[] | undefined): string {
-  if (!itineraryOfferIds || itineraryOfferIds.length < 2) {
-    return "";
+// fareIds: the fare picked for each leg in the fare modal (same order as the
+// legs), so add-ons are fetched for the fare that will actually be booked rather
+// than the offer's default one. An empty entry keeps that leg's default fare.
+function itineraryQuery(itineraryOfferIds: string[] | undefined, fareIds?: string[]): string {
+  const params: string[] = [];
+  if (itineraryOfferIds && itineraryOfferIds.length >= 2) {
+    params.push(...itineraryOfferIds.map((id) => `itinerary=${encodeURIComponent(id)}`));
   }
-  return "?" + itineraryOfferIds.map((id) => `itinerary=${encodeURIComponent(id)}`).join("&");
+  if (fareIds && fareIds.some((id) => !!id)) {
+    params.push(...fareIds.map((id) => `fareIds=${encodeURIComponent(id ?? "")}`));
+  }
+  return params.length ? "?" + params.join("&") : "";
 }
 
-export function useFlightAncillariesMobile(offerId: string | undefined, itineraryOfferIds?: string[]) {
+export function useFlightAncillariesMobile(offerId: string | undefined, itineraryOfferIds?: string[], fareIds?: string[]) {
   return useQuery({
-    queryKey: ["flight-ancillaries", offerId, itineraryOfferIds?.join(",")],
+    queryKey: ["flight-ancillaries", offerId, itineraryOfferIds?.join(","), fareIds?.join(",")],
     enabled: !!offerId,
     queryFn: async (): Promise<FlightAncillariesResponse> => {
-      const response = await mobileAuthFetch(`${AUTH_BASE_URL}/api/v1/flights/offers/${offerId}/ancillaries${itineraryQuery(itineraryOfferIds)}`);
+      const response = await mobileAuthFetch(`${AUTH_BASE_URL}/api/v1/flights/offers/${offerId}/ancillaries${itineraryQuery(itineraryOfferIds, fareIds)}`);
 
       if (!response.ok) {
         const errorBody = await response.json().catch(() => null);
@@ -89,10 +96,10 @@ export interface SeatMapResponse {
   segments: SeatMapSegment[];
 }
 
-export function useSeatMapMobile(offerId: string | undefined, itineraryOfferIds?: string[]) {
+export function useSeatMapMobile(offerId: string | undefined, itineraryOfferIds?: string[], fareIds?: string[]) {
   return useMutation({
     mutationFn: async (travelers: SeatMapTraveler[]): Promise<SeatMapResponse> => {
-      const response = await mobileAuthFetch(`${AUTH_BASE_URL}/api/v1/flights/offers/${offerId}/seatmap${itineraryQuery(itineraryOfferIds)}`, {
+      const response = await mobileAuthFetch(`${AUTH_BASE_URL}/api/v1/flights/offers/${offerId}/seatmap${itineraryQuery(itineraryOfferIds, fareIds)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(travelers),

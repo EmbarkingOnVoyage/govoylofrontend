@@ -62,6 +62,8 @@ function seatSelectionKey(legIndex: number, segmentIndex: number, travelerId: st
 
 interface LegRoute {
   offerId: string;
+  // The fare picked in the fare modal, if any — add-ons are fetched for it.
+  fareId?: string | null;
   label: string;
   origin: string;
   destination: string;
@@ -92,8 +94,11 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
   const activeLegRoute = legRoutes[activeLegIndex];
 
   const itineraryOfferIds = legRoutes.map((route) => route.offerId);
-  const ancillaries = useFlightAncillariesMobile(activeLegRoute?.offerId, itineraryOfferIds);
-  const seatMap = useSeatMapMobile(activeLegRoute?.offerId, itineraryOfferIds);
+  // With a single leg the backend reads the first fareId for that offer;
+  // otherwise one per leg, in the same order as itineraryOfferIds.
+  const itineraryFareIds = legRoutes.map((route) => route.fareId ?? '');
+  const ancillaries = useFlightAncillariesMobile(activeLegRoute?.offerId, itineraryOfferIds, itineraryFareIds);
+  const seatMap = useSeatMapMobile(activeLegRoute?.offerId, itineraryOfferIds, itineraryFareIds);
 
   // Seat pricing needs real PAX details, so it's a POST — fetch it whenever the
   // active leg or the traveller list changes, same trigger a useQuery would use.

@@ -22,12 +22,18 @@ export interface FareRulesResponse {
 // A POST because the backend needs the full list of offerIds in the body (one
 // per leg for round-trip/multi-city), not because this has a side effect —
 // still modeled as a query since it's just fetching data for the modal.
-export function useFareRulesMobile(offerIds: string[]) {
+// fareIds: the fare picked for each offer, same order (empty = the offer's
+// default fare), so the rules shown are for the fare being booked.
+export function useFareRulesMobile(offerIds: string[], fareIds?: string[]) {
+  const fareQuery =
+    fareIds && fareIds.some((id) => !!id)
+      ? "?" + fareIds.map((id) => `fareIds=${encodeURIComponent(id ?? "")}`).join("&")
+      : "";
   return useQuery({
-    queryKey: ["fare-rules", ...offerIds],
+    queryKey: ["fare-rules", ...offerIds, fareQuery],
     enabled: offerIds.length > 0,
     queryFn: async (): Promise<FareRulesResponse> => {
-      const response = await mobileAuthFetch(`${AUTH_BASE_URL}/api/v1/flights/fare-rules`, {
+      const response = await mobileAuthFetch(`${AUTH_BASE_URL}/api/v1/flights/fare-rules${fareQuery}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(offerIds),

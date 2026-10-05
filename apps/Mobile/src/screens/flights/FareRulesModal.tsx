@@ -12,6 +12,8 @@ export interface FareRulesLeg {
   airlineName: string;
   flightNumbers: string[];
   departureDateTime: string;
+  // The fare picked in the fare modal, if any.
+  fareId?: string | null;
 }
 
 interface FareRulesModalProps {
@@ -66,7 +68,8 @@ export const FareRulesModal: React.FC<FareRulesModalProps> = ({ visible, legs, o
   const [activeLegIndex, setActiveLegIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<FareRuleTab>('cancellation');
   const offerIds = useMemo(() => legs.map((l) => l.offerId), [legs]);
-  const { data, isLoading, isError } = useFareRulesMobile(offerIds);
+  const fareIds = useMemo(() => legs.map((l) => l.fareId ?? ''), [legs]);
+  const { data, isLoading, isError } = useFareRulesMobile(offerIds, fareIds);
 
   const activeLeg = legs[activeLegIndex];
   const isMultiLeg = legs.length > 1;
