@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, SafeAreaView, ActivityIndicator } from 'react-native';
-import { ArrowLeft, ChevronRight } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { ChevronRight } from 'lucide-react-native';
 import {
   useFlightAncillariesMobile,
   useSeatMapMobile,
@@ -12,6 +12,7 @@ import {
 import { styles } from './WhatsIncludedSection.styles';
 import { SeatSelectionModal, type SeatPick } from './SeatSelectionModal';
 import { BaggageSelectionModal } from './BaggageSelectionModal';
+import { MealSelectionModal } from './MealSelectionModal';
 
 interface AddOnTraveler {
   id: string;
@@ -58,115 +59,6 @@ function selectionKey(legIndex: number, category: AddOnCategory, travelerId: str
 function seatSelectionKey(legIndex: number, segmentIndex: number, travelerId: string): string {
   return `${legIndex}:seat:${segmentIndex}:${travelerId}`;
 }
-
-const AddOnModal: React.FC<{
-  visible: boolean;
-  title: string;
-  travelers: AddOnTraveler[];
-  options: AncillaryOption[];
-  isLoading: boolean;
-  loadError: boolean;
-  selections: SelectionMap;
-  legIndex: number;
-  category: AddOnCategory;
-  currencyCode: string;
-  onSelect: (travelerId: string, option: AncillaryOption | null) => void;
-  onClose: () => void;
-  onSave: () => void;
-}> = ({
-  visible,
-  title,
-  travelers,
-  options,
-  isLoading,
-  loadError,
-  selections,
-  legIndex,
-  category,
-  currencyCode,
-  onSelect,
-  onClose,
-  onSave,
-}) => {
-  const total = travelers.reduce(
-    (sum, traveler) => sum + (selections[selectionKey(legIndex, category, traveler.id)]?.amount ?? 0),
-    0
-  );
-
-  return (
-    <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={styles.modalScreen}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity style={styles.modalBackButton} onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <ArrowLeft size={22} color="#182339" strokeWidth={2} />
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>{title}</Text>
-          <View style={styles.modalHeaderSpacer} />
-        </View>
-
-        {isLoading ? (
-          <ActivityIndicator size="small" color="#7C1AEE" style={{ marginTop: 24 }} />
-        ) : loadError ? (
-          <Text style={[styles.categorySubtitle, { margin: 16 }]}>
-            Couldn't load add-on options right now. Please try again.
-          </Text>
-        ) : (
-          <ScrollView contentContainerStyle={styles.modalScrollContent}>
-            {travelers.map((traveler) => {
-              const selected = selections[selectionKey(legIndex, category, traveler.id)];
-              return (
-                <View key={traveler.id} style={styles.travelerBlock}>
-                  <Text style={styles.travelerName}>
-                    {traveler.firstName} {traveler.lastName}
-                  </Text>
-                  <View style={styles.optionRow}>
-                    <TouchableOpacity
-                      style={[styles.optionCard, !selected && styles.optionCardSelected]}
-                      onPress={() => onSelect(traveler.id, null)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={styles.optionLabel}>None Added</Text>
-                      <Text style={styles.optionPrice}>Free</Text>
-                    </TouchableOpacity>
-                    {options.map((option) => {
-                      const isSelected = selected?.ssrKey === option.ssrKey;
-                      return (
-                        <TouchableOpacity
-                          key={option.ssrKey}
-                          style={[styles.optionCard, isSelected && styles.optionCardSelected]}
-                          onPress={() => onSelect(traveler.id, option)}
-                          activeOpacity={0.7}
-                        >
-                          <Text style={styles.optionLabel}>{option.ssrTypeDesc}</Text>
-                          <Text style={styles.optionPrice}>
-                            {option.totalAmount > 0 ? formatCurrency(option.totalAmount, currencyCode) : 'Free'}
-                          </Text>
-                        </TouchableOpacity>
-                      );
-                    })}
-                    {options.length === 0 && (
-                      <Text style={styles.optionSublabel}>No paid options available for this flight.</Text>
-                    )}
-                  </View>
-                </View>
-              );
-            })}
-          </ScrollView>
-        )}
-
-        <View style={styles.modalFooter}>
-          <View>
-            <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatCurrency(total, currencyCode)}</Text>
-          </View>
-          <TouchableOpacity style={styles.saveButton} onPress={onSave} activeOpacity={0.8}>
-            <Text style={styles.saveButtonText}>Save</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    </Modal>
-  );
-};
 
 interface LegRoute {
   offerId: string;
@@ -255,26 +147,26 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
       return seat ? [{ segmentIndex, travelerId: match[2], seat }] : [];
     });
 
-  // Baggage already added on this leg, per traveller, as the full option.
-  const baggagePicksForLeg = (): Record<string, AncillaryOption> => {
+  // Baggage or meal already added on this leg, per traveller, as the full option.
+  const picksForLeg = (category: 'baggage' | 'meal', options: AncillaryOption[]): Record<string, AncillaryOption> => {
     const picks: Record<string, AncillaryOption> = {};
-    seatTravelers.forEach((t) => {
-      const selection = selections[selectionKey(activeLegIndex, 'baggage', t.id)];
-      const option = selection && baggageOptions.find((o) => o.ssrKey === selection.ssrKey);
+    travelers.forEach((t) => {
+      const selection = selections[selectionKey(activeLegIndex, category, t.id)];
+      const option = selection && options.find((o) => o.ssrKey === selection.ssrKey);
       if (option) picks[t.id] = option;
     });
     return picks;
   };
 
-  const handleBaggageSave = (picks: Record<string, AncillaryOption>) => {
+  const handleCategorySave = (category: 'baggage' | 'meal', picks: Record<string, AncillaryOption>) => {
     const next: SelectionMap = {};
     Object.entries(selections).forEach(([key, selection]) => {
-      if (!key.startsWith(`${activeLegIndex}:baggage:`)) next[key] = selection;
+      if (!key.startsWith(`${activeLegIndex}:${category}:`)) next[key] = selection;
     });
     Object.entries(picks).forEach(([travelerId, option]) => {
-      next[selectionKey(activeLegIndex, 'baggage', travelerId)] = {
+      next[selectionKey(activeLegIndex, category, travelerId)] = {
         legIndex: activeLegIndex,
-        category: 'baggage',
+        category,
         travelerId,
         ssrKey: option.ssrKey,
         label: option.ssrTypeDesc,
@@ -313,38 +205,8 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
     onSelectionsChange?.(values);
   };
 
-  const handleSelect = (category: AddOnCategory, travelerId: string, option: AncillaryOption | null) => {
-    setSelections((prev) => {
-      const next = { ...prev };
-      const key = selectionKey(activeLegIndex, category, travelerId);
-      if (option) {
-        next[key] = {
-          legIndex: activeLegIndex,
-          category,
-          travelerId,
-          ssrKey: option.ssrKey,
-          label: option.ssrTypeDesc,
-          amount: option.totalAmount,
-        };
-      } else {
-        delete next[key];
-      }
-      return next;
-    });
-  };
 
-  const handleSave = () => {
-    applyTotal(selections);
-    setOpenModal(null);
-  };
 
-  const categoryLabel = (category: AddOnCategory) =>
-    category === 'baggage' ? 'Checked baggage' : category === 'seat' ? 'Seat selection' : 'Meal selection';
-  const categoryOptions = (category: AddOnCategory) => (category === 'baggage' ? baggageOptions : mealOptions);
-  const categoryLoading = (category: AddOnCategory) =>
-    category === 'seat' ? seatMap.isPending : ancillaries.isLoading;
-  const categoryError = (category: AddOnCategory) =>
-    category === 'seat' ? seatMap.isError : ancillaries.isError;
 
   const hasSelection = (category: AddOnCategory, travelerId: string) =>
     category === 'seat'
@@ -468,27 +330,25 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           isLoading={ancillaries.isLoading}
           loadError={ancillaries.isError}
           travelers={seatTravelers}
-          initialSelections={baggagePicksForLeg()}
+          initialSelections={picksForLeg('baggage', baggageOptions)}
           currencyCode={currencyCode}
-          onSave={handleBaggageSave}
+          onSave={(picks) => handleCategorySave('baggage', picks)}
           onClose={() => setOpenModal(null)}
         />
       )}
       {openModal === 'meal' && (
-        <AddOnModal
+        <MealSelectionModal
           visible
-          title={categoryLabel(openModal)}
+          origin={activeLegRoute?.origin ?? ''}
+          destination={activeLegRoute?.destination ?? ''}
+          options={mealOptions}
+          isLoading={ancillaries.isLoading}
+          loadError={ancillaries.isError}
           travelers={travelers}
-          options={categoryOptions(openModal)}
-          isLoading={categoryLoading(openModal)}
-          loadError={categoryError(openModal)}
-          selections={selections}
-          legIndex={activeLegIndex}
-          category={openModal}
+          initialSelections={picksForLeg('meal', mealOptions)}
           currencyCode={currencyCode}
-          onSelect={(travelerId, option) => handleSelect(openModal, travelerId, option)}
+          onSave={(picks) => handleCategorySave('meal', picks)}
           onClose={() => setOpenModal(null)}
-          onSave={handleSave}
         />
       )}
     </View>
