@@ -22,6 +22,7 @@ import { findAirportByCode } from '../../data/airports';
 import { AirlineLogo } from './FlightResultsScreen';
 import { WhatsIncludedSection, type AddOnSelection } from './WhatsIncludedSection';
 import { FareRulesModal, type FareRulesLeg } from './FareRulesModal';
+import { PaymentScreen } from './PaymentScreen';
 import { styles } from './TravelerDetailsScreen.styles';
 
 // The Add Travellers list only shows the first 4 saved travellers inline; a
@@ -212,6 +213,9 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   // Set once the supplier confirms a different amount than search showed and
   // the customer accepts it — what the total/success copy then reflect.
   const [confirmedAmount, setConfirmedAmount] = useState<number | null>(null);
+  // Next opens the Payment page (Figma "Booking details"), where Securely pay
+  // runs the hold → Razorpay → verify flow below.
+  const [step, setStep] = useState<'details' | 'payment'>('details');
 
   // Each leg's totalAmount is already the full priced total for the searched
   // passenger count (same figure the results/fare-review screens show), so
@@ -355,24 +359,35 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
     }
   };
 
-  const handlePayNow = async () => {
+  // What still has to be filled in before payment, or '' when ready.
+  const bookingProblem = (): string => {
     // Exactly the searched number of each passenger type — the fare was priced
     // for that mix, and the supplier rejects a booking that doesn't match it.
     const missing = visiblePaxTypes.filter((type) => selectedCount(type) !== requiredCounts[type]);
     if (missing.length > 0) {
-      setPaymentError(
-        `Please select ${missing.map((type) => paxCountText(type, requiredCounts[type])).join(', ')} for this booking.`
-      );
-      return;
+      return `Please select ${missing.map((type) => paxCountText(type, requiredCounts[type])).join(', ')} for this booking.`;
     }
-
     if (!customerProfile?.phone || !customerProfile?.email) {
-      setPaymentError('Please add a mobile number and email to your profile before booking.');
-      return;
+      return 'Please add a mobile number and email to your profile before booking.';
     }
-
     if (useGst && (!GSTIN_PATTERN.test(gstNumber.trim().toUpperCase()) || !gstHolderName.trim() || !gstAddress.trim())) {
-      setPaymentError('Please enter a valid 15-character GSTIN, company name and company address.');
+      return 'Please enter a valid 15-character GSTIN, company name and company address.';
+    }
+    return '';
+  };
+
+  const handleNext = () => {
+    const problem = bookingProblem();
+    setPaymentError(problem);
+    if (!problem) {
+      setStep('payment');
+    }
+  };
+
+  const handlePayNow = async () => {
+    const problem = bookingProblem();
+    if (problem || !customerProfile?.phone || !customerProfile?.email) {
+      setPaymentError(problem);
       return;
     }
 
@@ -542,8 +557,28 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
     );
   };
 
+  // Traveller Details stays mounted (hidden) behind the Payment page so the
+  // add-on picks held inside WhatsIncludedSection survive going back.
   return (
-    <View style={styles.screen}>
+    <View style={{ flex: 1 }}>
+      {step === 'payment' ? (
+        <PaymentScreen
+          legs={legs}
+          legLabels={legLabels}
+          travellers={selectedTravelers.map((t) => ({ id: t.id, firstName: t.firstName, lastName: t.lastName }))}
+          addOnSelections={addOnSelections}
+          totalAmount={totalAmount}
+          confirmedAmount={confirmedAmount}
+          currencyCode={currencyCode}
+          paymentState={paymentState}
+          paymentError={paymentError}
+          bookingRefNo={bookingResult?.bookingRefNo}
+          airlinePnr={bookingResult?.airlinePnr}
+          onBack={() => setStep('details')}
+          onPay={handlePayNow}
+        />
+      ) : null}
+    <View style={[styles.screen, step === 'payment' && { display: 'none' }]}>
       <SafeAreaView style={styles.headerSafeArea}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
@@ -770,14 +805,8 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
             {!!paymentError && <Text style={styles.paymentErrorText}>{paymentError}</Text>}
 
-            <TouchableOpacity
-              style={[styles.payButton, paymentState === 'processing' && styles.payButtonDisabled]}
-              onPress={handlePayNow}
-              disabled={paymentState === 'processing'}
-            >
-              <Text style={styles.payButtonText}>
-                {paymentState === 'processing' ? 'Processing...' : 'Pay Now'}
-              </Text>
+            <TouchableOpacity style={styles.payButton} onPress={handleNext}>
+              <Text style={styles.payButtonText}>Next</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -824,6 +853,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       </Modal>
 
       <FareRulesModal visible={showFareRules} legs={fareRuleLegs} onClose={() => setShowFareRules(false)} />
+    </View>
     </View>
   );
 };
