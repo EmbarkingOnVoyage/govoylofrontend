@@ -303,6 +303,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         const primaryFare = leg.fares.find((f) => f.fareId === leg.selectedFareId) ?? leg.fares[0];
         return {
           offerId: leg.offerId,
+          fareId: leg.selectedFareId ?? null,
           label: legLabels?.[index] ?? `Flight ${index + 1}`,
           origin: first?.origin ?? '',
           destination: last?.destination ?? '',
@@ -326,6 +327,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           airlineName: leg.airlineName,
           flightNumbers: leg.segments.map((s) => `${s.airlineCode} ${s.flightNumber}`),
           departureDateTime: first?.departureDateTime ?? '',
+          fareId: leg.selectedFareId ?? null,
         };
       }),
     [legs, legLabels]
