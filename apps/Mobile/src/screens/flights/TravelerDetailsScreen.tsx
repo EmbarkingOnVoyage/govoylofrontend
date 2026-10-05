@@ -40,9 +40,74 @@ const PAX_LABELS: Record<PaxType, { block: string; singular: string; plural: str
   infant: { block: 'Infant', singular: 'infant', plural: 'infants' },
 };
 
-function paxTypeOf(traveler: Traveler): PaxType {
+function savedPaxType(traveler: Traveler): PaxType {
   const type = traveler.travelerType?.toLowerCase();
   return type === 'child' || type === 'infant' ? type : 'adult';
+}
+
+const PAX_API_TYPES: Record<PaxType, 'Adult' | 'Child' | 'Infant'> = {
+  adult: 'Adult',
+  child: 'Child',
+  infant: 'Infant',
+};
+
+// Year/month/day straight from a "YYYY-MM-DD..." string — calendar dates
+// with no time zone, same reasoning as formatTravelerDob.
+function calendarDate(iso: string | null | undefined): [number, number, number] | null {
+  const match = iso ? /^(\d{4})-(\d{2})-(\d{2})/.exec(iso) : null;
+  return match ? [Number(match[1]), Number(match[2]), Number(match[3])] : null;
+}
+
+function isBefore(a: [number, number, number], b: [number, number, number]): boolean {
+  return a[0] !== b[0] ? a[0] < b[0] : a[1] !== b[1] ? a[1] < b[1] : a[2] < b[2];
+}
+
+// Completed years between a date of birth and a travel date.
+function ageOn(dob: [number, number, number], on: [number, number, number]): number {
+  const hadBirthday = on[1] > dob[1] || (on[1] === dob[1] && on[2] >= dob[2]);
+  return on[0] - dob[0] - (hadBirthday ? 0 : 1);
+}
+
+interface TravelerAgeCheck {
+  type: PaxType;
+  // Shown under the traveller's name when the travel dates change how they fly.
+  note: string;
+  // Born after the first flight — can't be booked at all.
+  blocked: boolean;
+}
+
+// The passenger type a traveller actually flies as, by age on the travel dates
+// (the airline checks date of birth against it): an infant must be under 2 on
+// every flight, so on the last one; a child is 2–11 and an adult 12+ on the
+// first. Without a date of birth the saved type is used as-is.
+function checkTravelerAge(
+  traveler: Traveler,
+  firstTravelIso: string | undefined,
+  lastTravelIso: string | undefined
+): TravelerAgeCheck {
+  const saved = savedPaxType(traveler);
+  const dob = calendarDate(traveler.dateOfBirth);
+  const first = calendarDate(firstTravelIso);
+  const last = calendarDate(lastTravelIso) ?? first;
+  if (!dob || !first || !last) {
+    return { type: saved, note: '', blocked: false };
+  }
+  if (isBefore(first, dob)) {
+    return { type: saved, note: 'Date of birth is after the travel date', blocked: true };
+  }
+
+  const ageFirst = ageOn(dob, first);
+  const ageLast = ageOn(dob, last);
+  const type: PaxType = ageLast < 2 ? 'infant' : ageFirst < 12 ? 'child' : 'adult';
+  if (type === saved) {
+    return { type, note: '', blocked: false };
+  }
+
+  const note =
+    ageFirst < 2 && type === 'child'
+      ? `Turns 2 before ${formatTravelerDob(lastTravelIso)}, so travels as a child`
+      : `Travels as ${type === 'adult' ? 'an adult' : `a ${PAX_LABELS[type].singular}`}: age ${ageFirst} on ${formatTravelerDob(firstTravelIso)}`;
+  return { type, note, blocked: false };
 }
 
 function paxCountText(type: PaxType, count: number): string {
@@ -164,11 +229,27 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   // Only the passenger types the search included get a block.
   const visiblePaxTypes = PAX_TYPES.filter((type) => requiredCounts[type] > 0);
 
+  // First and last flight departure dates of the whole trip — what each
+  // traveller's age is checked against.
+  const firstTravelIso = legs[0]?.segments[0]?.departureDateTime;
+  const lastLegSegments = legs[legs.length - 1]?.segments ?? [];
+  const lastTravelIso = lastLegSegments[lastLegSegments.length - 1]?.departureDateTime;
+
+  const ageChecks = useMemo(() => {
+    const checks = new Map<string, TravelerAgeCheck>();
+    (travelers ?? []).forEach((t) => checks.set(t.id, checkTravelerAge(t, firstTravelIso, lastTravelIso)));
+    return checks;
+  }, [travelers, firstTravelIso, lastTravelIso]);
+
+  const paxTypeOf = (traveler: Traveler): PaxType => ageChecks.get(traveler.id)?.type ?? savedPaxType(traveler);
+
+  // Grouped by the type each traveller flies as on these dates, not just the
+  // type saved on their profile.
   const travelersByType = useMemo(() => {
     const groups: Record<PaxType, Traveler[]> = { adult: [], child: [], infant: [] };
-    (travelers ?? []).forEach((t) => groups[paxTypeOf(t)].push(t));
+    (travelers ?? []).forEach((t) => groups[ageChecks.get(t.id)?.type ?? savedPaxType(t)].push(t));
     return groups;
-  }, [travelers]);
+  }, [travelers, ageChecks]);
 
   // Add-ons apply to whichever travellers are actually on this booking, not
   // every saved traveller — so the Whats Included modals only list the ones
@@ -191,7 +272,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         firstName: t.firstName,
         lastName: t.lastName,
         gender: t.gender ?? 'Male',
-        travelerType: t.travelerType,
+        travelerType: PAX_API_TYPES[paxTypeOf(t)],
       })),
     [selectedTravelers]
   );
@@ -303,17 +384,9 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         firstName: t.firstName,
         lastName: t.lastName,
         gender: t.gender === 'Female' ? 'Female' : 'Male',
-        // travelerType comes straight from the saved-traveller API as
-        // lowercase ("adult"/"child"/"infant", matching the backend's own
-        // validation) — compare case-insensitively rather than assuming a
-        // capitalized value, which silently mapped every real Child/Infant
-        // traveller to "Adult" here.
-        paxType:
-          t.travelerType.toLowerCase() === 'child'
-            ? 'Child'
-            : t.travelerType.toLowerCase() === 'infant'
-              ? 'Infant'
-              : 'Adult',
+        // The type they fly as on these dates (see checkTravelerAge), which
+        // can differ from the type saved on their profile.
+        paxType: PAX_API_TYPES[paxTypeOf(t)],
         dateOfBirth: t.dateOfBirth || undefined,
         savedTravelerId: t.id,
       }));
@@ -410,6 +483,11 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
   const toggleSelected = (traveler: Traveler) => {
     const type = paxTypeOf(traveler);
+    const check = ageChecks.get(traveler.id);
+    if (!selectedIds.has(traveler.id) && check?.blocked) {
+      setSelectionHint(`${traveler.firstName} ${traveler.lastName} can't travel on these dates: ${check.note.toLowerCase()}.`);
+      return;
+    }
     if (!selectedIds.has(traveler.id) && selectedCount(type) >= requiredCounts[type]) {
       setSelectionHint(
         `This search is for ${paxCountText(type, requiredCounts[type])}. Unselect one to choose another.`
@@ -444,6 +522,9 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
             <Text style={styles.travelerMeta}>
               {[traveler.gender, formatTravelerDob(traveler.dateOfBirth)].filter(Boolean).join(', ')}
             </Text>
+            {!!ageChecks.get(traveler.id)?.note && (
+              <Text style={styles.travelerAgeNote}>{ageChecks.get(traveler.id)?.note}</Text>
+            )}
           </View>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => onEditTraveler(traveler.id)}>

@@ -297,6 +297,11 @@ export const styles = StyleSheet.create({
     color: '#697691',
     marginTop: 2,
   },
+  travelerAgeNote: {
+    fontSize: 12,
+    color: '#D9822B',
+    marginTop: 2,
+  },
   editLink: {
     fontSize: 13,
     fontWeight: '600',
