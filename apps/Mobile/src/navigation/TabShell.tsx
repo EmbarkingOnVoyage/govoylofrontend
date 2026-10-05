@@ -201,7 +201,14 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
       case 'Deals':
         return <PlaceholderScreen title="Deals" onBack={() => {}} />;
       case 'MyTrips':
-        return <MyTripsScreen />;
+        return (
+          <MyTripsScreen
+            onExploreTrips={() => {
+              setHomeScreen('FlightSearch');
+              setActiveTab('Home');
+            }}
+          />
+        );
     }
   };
 

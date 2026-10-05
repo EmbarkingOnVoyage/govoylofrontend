@@ -11,13 +11,19 @@ export interface TripBookingLeg {
   airlineCode: string;
   airlineName: string;
   flightNumber: string;
+  airlinePnr: string | null;
+  crsPnr: string | null;
+  // True once this leg was cancelled on its own (the rest of the booking stands).
+  isCancelled: boolean;
 }
 
-// statusId: Flyshop's own status at booking time (11-Success/22-Failed/33-Block).
+// statusId: the supplier's status at booking time (11-Success/22-Failed/33-Block/
+// 44-Ticketing in progress).
 // localStatus: this app's own lifecycle tracking (Active/Cancelled/Released),
 // which is what the UI should actually key off of for what to show/allow.
 export interface TripBooking {
   id: string;
+  supplierCode: string;
   bookingRefNo: string;
   airlinePnr: string | null;
   crsPnr: string | null;
@@ -31,6 +37,57 @@ export interface TripBooking {
   cancellationType: number | null;
   cancelCode: string | null;
   legs: TripBookingLeg[];
+  cancelledAt: string | null;
+  // What the supplier said it will refund once cancelled; null if it didn't say.
+  refundAmount: number | null;
+}
+
+// legIndex: which leg of the booking the flight belongs to (0 outbound, 1 return).
+export interface TripBookingSegment {
+  legIndex: number;
+  origin: string;
+  destination: string;
+  airlineCode: string;
+  airlineName: string;
+  flightNumber: string;
+  departureDateTime: string;
+  arrivalDateTime: string;
+  durationMinutes: number;
+}
+
+export interface TripBookingPassenger {
+  title: string;
+  firstName: string;
+  lastName: string;
+  paxType: "Adult" | "Child" | "Infant";
+}
+
+// supplierDetailsAvailable is false when the supplier couldn't be reached — the
+// lists are then empty and the screen falls back to the booking's own legs and
+// passenger names.
+export interface TripBookingDetails {
+  booking: TripBooking;
+  supplierDetailsAvailable: boolean;
+  segments: TripBookingSegment[];
+  passengers: TripBookingPassenger[];
+  baseFare: number | null;
+  taxesAndFees: number | null;
+  totalPaid: number;
+}
+
+export type CancellationQuoteVariant = "FreeCancellation" | "NonRefundable" | "PartialRefund" | "Estimated";
+
+export interface CancellationQuote {
+  amountPaid: number;
+  cancellationCharges: number;
+  refundAmount: number;
+  baseFare: number | null;
+  taxesAndFees: number | null;
+  // The supplier can't quote before cancelling, so the fee is estimated from its
+  // fare rules and the final refund is confirmed afterwards.
+  isEstimate: boolean;
+  variant: CancellationQuoteVariant;
+  currencyCode: string;
 }
 
 export interface CancelTripBookingRequest {
@@ -40,9 +97,22 @@ export interface CancelTripBookingRequest {
   // Air_TicketCancellation type, e.g. 1-Full Refund or 2-No Show.
   cancellationType?: number;
   cancelCode?: string;
+  // Omit to cancel every leg.
+  legIndex?: number;
+}
+
+export interface CancelTripBookingResponse {
+  success: boolean;
+  localStatus: string;
+  refundAmount: number | null;
 }
 
 const MY_BOOKINGS_URL = `${AUTH_BASE_URL}/api/v1/flights/mybookings`;
+
+async function errorMessage(response: Response, fallback: string): Promise<string> {
+  const errorBody = await response.json().catch(() => null);
+  return errorBody?.error?.message || fallback;
+}
 
 export function useMyTripsMobile() {
   return useQuery({
@@ -58,6 +128,38 @@ export function useMyTripsMobile() {
   });
 }
 
+export function useTripBookingDetailsMobile(tripBookingId: string | undefined) {
+  return useQuery({
+    queryKey: ["my-trip-details", tripBookingId],
+    enabled: !!tripBookingId && authContextCache.isLoggedIn(),
+    queryFn: async (): Promise<TripBookingDetails> => {
+      const response = await mobileAuthFetch(`${MY_BOOKINGS_URL}/${tripBookingId}`);
+      if (!response.ok) {
+        throw new Error(await errorMessage(response, "Failed to load this booking."));
+      }
+      return response.json();
+    },
+  });
+}
+
+// Read-only — nothing is cancelled. Not cached: the airline's fee can change by the minute.
+export function useCancellationQuoteMobile(tripBookingId: string | undefined, enabled: boolean, legIndex?: number) {
+  return useQuery({
+    queryKey: ["my-trip-cancellation-quote", tripBookingId, legIndex ?? null],
+    enabled: enabled && !!tripBookingId,
+    gcTime: 0,
+    retry: false,
+    queryFn: async (): Promise<CancellationQuote> => {
+      const query = legIndex === undefined ? "" : `?legIndex=${legIndex}`;
+      const response = await mobileAuthFetch(`${MY_BOOKINGS_URL}/${tripBookingId}/cancellation-quote${query}`);
+      if (!response.ok) {
+        throw new Error(await errorMessage(response, "Couldn't get the refund amount right now."));
+      }
+      return response.json();
+    },
+  });
+}
+
 export function useCancelTripBookingMobile() {
   const queryClient = useQueryClient();
 
@@ -66,20 +168,25 @@ export function useCancelTripBookingMobile() {
       tripBookingId,
       cancellationType,
       cancelCode,
-    }: CancelTripBookingRequest): Promise<{ success: boolean; localStatus: string }> => {
+      legIndex,
+    }: CancelTripBookingRequest): Promise<CancelTripBookingResponse> => {
       const response = await mobileAuthFetch(`${MY_BOOKINGS_URL}/${tripBookingId}/cancel`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cancellationType: cancellationType ?? null, cancelCode: cancelCode ?? null }),
+        body: JSON.stringify({
+          cancellationType: cancellationType ?? null,
+          cancelCode: cancelCode ?? null,
+          legIndex: legIndex ?? null,
+        }),
       });
       if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.error?.message || "Failed to cancel this booking.");
+        throw new Error(await errorMessage(response, "Failed to cancel this booking."));
       }
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["my-trips"] });
+      queryClient.invalidateQueries({ queryKey: ["my-trip-details", variables.tripBookingId] });
     },
   });
 }

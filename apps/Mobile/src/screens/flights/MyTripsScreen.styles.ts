@@ -1,4 +1,12 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StatusBar, StyleSheet } from 'react-native';
+
+// Matches the Figma My Trips frames (Product → Phone Dev: Upcoming, Completed,
+// Cancelled, No upcoming trips, Sort by).
+export const PURPLE = '#7C1AEE';
+export const INK = '#182339';
+export const MUTED = '#6B7891';
+export const BORDER = '#D9E1EC';
+export const GREEN = '#15803D';
 
 export const styles = StyleSheet.create({
   screen: {
@@ -6,73 +14,235 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   header: {
-    height: 96,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingBottom: 16,
-    justifyContent: 'flex-end',
+    paddingTop: (Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0) + 16,
+    paddingBottom: 12,
   },
-  headerTitle: {
-    color: '#FFFFFF',
-    fontSize: 18,
+  greeting: {
+    fontSize: 14,
+    color: MUTED,
+  },
+  title: {
+    fontSize: 26,
     fontWeight: '700',
+    color: INK,
+  },
+  bellButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: BORDER,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bellDot: {
+    position: 'absolute',
+    top: 10,
+    right: 11,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#E5122E',
+  },
+  searchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    height: 50,
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: INK,
+    paddingVertical: 0,
+  },
+  tabs: {
+    flexDirection: 'row',
+    marginTop: 18,
+    marginHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ECEEF3',
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    paddingBottom: 10,
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: MUTED,
+  },
+  tabTextActive: {
+    color: PURPLE,
+    fontWeight: '700',
+  },
+  tabUnderline: {
+    position: 'absolute',
+    bottom: -1,
+    height: 3,
+    width: '80%',
+    borderRadius: 2,
+    backgroundColor: PURPLE,
+  },
+  chips: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  chip: {
+    height: 34,
+    paddingHorizontal: 16,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: '#B9C3D3',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipActive: {
+    backgroundColor: PURPLE,
+    borderColor: PURPLE,
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#3E4B64',
+  },
+  chipTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '600',
+  },
+  listHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  listTitle: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: INK,
+  },
+  sortLink: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: PURPLE,
   },
   listContent: {
     flexGrow: 1,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingBottom: 24,
   },
-  loadingState: {
+  centerState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: 64,
+    paddingVertical: 48,
   },
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 64,
-  },
-  emptyStateText: {
+  stateText: {
     fontSize: 15,
-    color: '#4C5973',
+    color: MUTED,
+    textAlign: 'center',
   },
+  retryText: {
+    marginTop: 12,
+    fontSize: 15,
+    fontWeight: '600',
+    color: PURPLE,
+  },
+
+  // --- Trip card
   card: {
     borderWidth: 1,
-    borderColor: '#ECEEF3',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
+    borderColor: BORDER,
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 14,
   },
-  cardHeaderRow: {
+  cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    alignItems: 'center',
   },
-  routeText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#182339',
+  typeChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#F3EAFE',
+  },
+  typeChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: PURPLE,
   },
   statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
   },
+  statusDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
   statusBadgeText: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
   },
-  legRow: {
+  routeRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 12,
   },
-  legText: {
-    fontSize: 13,
-    color: '#4C5973',
+  planeTile: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#F3EAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  divider: {
+  routeText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: INK,
+  },
+  dateText: {
+    fontSize: 14,
+    color: MUTED,
+    marginTop: 1,
+  },
+  carrierRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  carrierText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#3E4B64',
+  },
+  carrierMuted: {
+    fontSize: 14,
+    color: MUTED,
+  },
+  cardDivider: {
     height: 1,
     backgroundColor: '#ECEEF3',
     marginVertical: 12,
@@ -80,37 +250,201 @@ export const styles = StyleSheet.create({
   metaRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 6,
+    alignItems: 'flex-end',
   },
   metaLabel: {
-    fontSize: 13,
-    color: '#4C5973',
+    fontSize: 12,
+    letterSpacing: 0.4,
+    color: MUTED,
   },
   metaValue: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#182339',
-  },
-  amountText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#182339',
+    color: INK,
+    marginTop: 2,
   },
-  cancelButton: {
-    height: 40,
+  amountText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: INK,
+    marginTop: 2,
+  },
+  refundText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: GREEN,
+    marginTop: 2,
+  },
+  refundPending: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#B45309',
+    marginTop: 2,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 14,
+  },
+  primaryButton: {
+    flex: 1,
+    height: 44,
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#EF4444',
+    backgroundColor: PURPLE,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 12,
+    paddingHorizontal: 12,
   },
-  cancelButtonDisabled: {
-    opacity: 0.5,
+  primaryButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    textAlign: 'center',
   },
-  cancelButtonText: {
-    color: '#EF4444',
+  secondaryButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: PURPLE,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  secondaryButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: PURPLE,
+  },
+  halfButton: {
+    flex: 0,
+    width: '50%',
+  },
+  rateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 14,
+  },
+  rateText: {
+    flex: 1,
     fontSize: 14,
     fontWeight: '600',
+    color: PURPLE,
+  },
+  helpBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 14,
+    borderRadius: 12,
+    backgroundColor: '#EEF3FF',
+    marginBottom: 14,
+  },
+  helpTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1E3A8A',
+  },
+  helpText: {
+    fontSize: 13,
+    color: '#3E4B64',
+    marginTop: 2,
+  },
+
+  // --- Empty state
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+  },
+  emptyArt: {
+    width: 140,
+    height: 140,
+    marginBottom: 24,
+  },
+  emptyCircle: {
+    position: 'absolute',
+    left: 10,
+    top: 10,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#F3EAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: INK,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: MUTED,
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 22,
+    paddingHorizontal: 16,
+  },
+  emptyButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 28,
+    alignSelf: 'stretch',
+  },
+
+  // --- Sort sheet
+  sheetBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(24, 35, 57, 0.45)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 16,
+    paddingTop: 20,
+    paddingBottom: 28,
+  },
+  sheetTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: INK,
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  sheetOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: BORDER,
+  },
+  sheetOptionText: {
+    fontSize: 16,
+    color: INK,
+  },
+  sheetOptionTextActive: {
+    color: PURPLE,
+    fontWeight: '700',
+  },
+  sheetClose: {
+    height: 48,
+    borderRadius: 10,
+    backgroundColor: '#F3EAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  sheetCloseText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: PURPLE,
   },
 });
