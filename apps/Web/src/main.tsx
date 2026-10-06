@@ -18,13 +18,12 @@ import {
   decodeFlightSearch,
   encodeFlightSearch,
   flightSearchQueryKey,
-  useBookingSession,
-  type FlightBookingSelection,
 } from "@workspace/ui";
 import { ErrorBoundary, NavigationRule } from "@workspace/core";
 import { useWebFlowNavigation } from "./navigation/useWebFlowNavigation";
 import { RequireAuth } from "./routes/RequireAuth";
 import { FlightResultsRoute } from "./routes/FlightResultsRoute";
+import { FlightReviewRoute, BookingConfirmedRoute } from "./routes/FlightReviewRoute";
 
 // 1. Contract Enforcement: Suppress platform-specific mobile warnings in the browser console
 if (process.env.NODE_ENV === "development") {
@@ -43,13 +42,6 @@ if (process.env.NODE_ENV === "development") {
     originalWarn(...args);
   };
 }
-
-// Booking steps not built yet. Each is replaced by its real page in a later step.
-const FlightReviewPlaceholder: React.FC = () => {
-  const [selection] = useBookingSession<FlightBookingSelection>("flights");
-  if (!selection) return <Navigate to="/" replace />;
-  return <div>{selection.legs.length} flight(s) selected. Traveller details page not built yet.</div>;
-};
 
 const MyTripsPlaceholder: React.FC = () => <div>My Trips page not built yet.</div>;
 
@@ -99,9 +91,19 @@ const AppWorkflowRouter: React.FC = () => {
         <Route
           path="/flights/review"
           element={
-            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
+            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
               <RequireAuth>
-                <FlightReviewPlaceholder />
+                <FlightReviewRoute />
+              </RequireAuth>
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/flights/booked"
+          element={
+            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
+              <RequireAuth>
+                <BookingConfirmedRoute />
               </RequireAuth>
             </DashboardLayout>
           }

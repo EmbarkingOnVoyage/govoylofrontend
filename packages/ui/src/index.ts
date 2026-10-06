@@ -124,6 +124,11 @@ export { encodeFlightSearch, decodeFlightSearch, summaryFromRequest } from './fe
 export { FlightResultsPageWeb } from './features/flights/results/FlightResultsPageWeb.web';
 export type { FlightResultsChoice } from './features/flights/results/useFlightResultsFlow';
 export { FareRulesPanelWeb } from './features/flights/results/FareRulesPanelWeb.web';
+export {
+  FlightReviewPageWeb,
+  BookingConfirmedWeb,
+  type BookingConfirmation,
+} from './features/flights/booking/FlightReviewPageWeb.web';
 export { AirlineLogoWeb } from './features/flights/results/AirlineLogoWeb.web';
 export { useAirportLookup } from './features/flights/results/useAirportLookup';
 export type { FlightBookingSelection } from './features/flights/flightBookingSession';

@@ -14,7 +14,7 @@ import {
   INDIAN_STATE_OPTIONS,
   INDIAN_CITY_OPTIONS,
   COUNTRY_OPTIONS,
-} from '../../data/selectOptions';
+} from '@workspace/ui/src/data/selectOptions';
 import { styles } from './PersonalDetailsScreen.styles';
 
 interface PersonalDetailsScreenProps {
