@@ -13,7 +13,8 @@ export type NavigationRule =
   | 'ON_NAVIGATE_TO_PROFILE'
   | 'ON_NAVIGATE_TO_SIGN_IN'
   | 'ON_CONTINUE_AS_GUEST'
-  | 'ON_NAVIGATE_TO_MY_TRIPS';
+  | 'ON_NAVIGATE_TO_MY_TRIPS'
+  | 'ON_NAVIGATE_TO_FLIGHTS';
 
 // 3. The Centralized Flow Map Matrix Contract
 export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<NavigationRule, AppScreen>>> = {
@@ -23,6 +24,7 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
     ON_NAVIGATE_TO_PROFILE: 'Profile',
     ON_NAVIGATE_TO_MY_TRIPS: 'MyTrips',
+    ON_NAVIGATE_TO_FLIGHTS: 'Landing',
   },
   SearchWidget: {
     ON_SEARCH_SUBMIT: 'BookingDashboard',
@@ -30,6 +32,7 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
   },
   SignIn: {
     ON_BACK: 'Landing',
+    ON_NAVIGATE_TO_FLIGHTS: 'Landing',
     ON_SUBMIT_SUCCESS: "OTP",
     ON_NAVIGATE_TO_PROFILE: 'Profile',
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
@@ -45,6 +48,7 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
   // Configured as a flat matrix object matching your strict matrix contract parameters
   OTP: {
     ON_OTP_VERIFIED: "Landing",
+    ON_NAVIGATE_TO_FLIGHTS: 'Landing',
     ON_BACK_TO_LOGIN: "SignIn",
     ON_NAVIGATE_TO_PROFILE: 'Profile',
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
@@ -55,16 +59,19 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
     ON_NAVIGATE_TO_PROFILE: 'Profile',
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
     ON_NAVIGATE_TO_MY_TRIPS: 'MyTrips',
+    ON_NAVIGATE_TO_FLIGHTS: 'Landing',
   }, 
   Profile: {
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
     ON_NAVIGATE_TO_PROFILE: 'Profile',
     ON_NAVIGATE_TO_MY_TRIPS: 'MyTrips',
+    ON_NAVIGATE_TO_FLIGHTS: 'Landing',
   },
   MyTrips: {
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
     ON_NAVIGATE_TO_PROFILE: 'Profile',
     ON_NAVIGATE_TO_MY_TRIPS: 'MyTrips',
+    ON_NAVIGATE_TO_FLIGHTS: 'Landing',
   },
   
   Settings: {}, Help: {}, Feedback: {}, Notifications: {},
