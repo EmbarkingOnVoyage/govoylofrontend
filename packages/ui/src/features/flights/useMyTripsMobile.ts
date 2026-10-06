@@ -114,6 +114,16 @@ async function errorMessage(response: Response, fallback: string): Promise<strin
   return errorBody?.error?.message || fallback;
 }
 
+// The booking's e-ticket PDF (the same one emailed after ticketing). Only a
+// ticketed booking has one; anything else comes back as an error message.
+export async function fetchETicketPdfMobile(tripBookingId: string): Promise<Blob> {
+  const response = await mobileAuthFetch(`${MY_BOOKINGS_URL}/${tripBookingId}/eticket`);
+  if (!response.ok) {
+    throw new Error(await errorMessage(response, "Couldn't download the e-ticket right now."));
+  }
+  return response.blob();
+}
+
 export function useMyTripsMobile() {
   return useQuery({
     queryKey: ["my-trips"],

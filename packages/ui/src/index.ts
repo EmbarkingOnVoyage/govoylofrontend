@@ -103,6 +103,7 @@ export {
   useCancelTripBookingMobile,
   useTripBookingDetailsMobile,
   useCancellationQuoteMobile,
+  fetchETicketPdfMobile,
   type TripBooking,
   type TripBookingLeg,
   type TripBookingSegment,
