@@ -92,7 +92,8 @@ export function useSaveTravellerMobile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (params: { id?: string; hasExistingPassport: boolean; payload: TravelerPayload }) => {
+    // Resolves with the traveller's id (the new one, when created).
+    mutationFn: async (params: { id?: string; hasExistingPassport: boolean; payload: TravelerPayload }): Promise<string | undefined> => {
       const { id, hasExistingPassport, payload } = params;
 
       const travelerBody = {
@@ -128,6 +129,8 @@ export function useSaveTravellerMobile() {
           passportBody
         );
       }
+
+      return travelerId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["travellers"] });

@@ -3,10 +3,28 @@
 import "./global.css";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { AppProvider, AuthProvider, AuthModal, LoginWebFeature, OtpWebFeature, ProfileStep1, BookingDashboard, DashboardLayout, FlightSearchFormWeb, type FlightOffer } from "@workspace/ui";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  AppProvider,
+  AuthProvider,
+  AuthModal,
+  LoginWebFeature,
+  OtpWebFeature,
+  ProfileStep1,
+  BookingDashboard,
+  DashboardLayout,
+  FlightSearchFormWeb,
+  decodeFlightSearch,
+  encodeFlightSearch,
+  flightSearchQueryKey,
+} from "@workspace/ui";
 import { ErrorBoundary, NavigationRule } from "@workspace/core";
 import { useWebFlowNavigation } from "./navigation/useWebFlowNavigation";
+import { RequireAuth } from "./routes/RequireAuth";
+import { FlightResultsRoute } from "./routes/FlightResultsRoute";
+import { FlightReviewRoute, BookingConfirmedRoute } from "./routes/FlightReviewRoute";
+import { MyTripsRoute, TripDetailsRoute } from "./routes/MyTripsRoute";
 
 // 1. Contract Enforcement: Suppress platform-specific mobile warnings in the browser console
 if (process.env.NODE_ENV === "development") {
@@ -29,7 +47,8 @@ if (process.env.NODE_ENV === "development") {
 const AppWorkflowRouter: React.FC = () => {
   const { navigateByRule } = useWebFlowNavigation();
   const navigate = useNavigate();
-  const [flightOffers, setFlightOffers] = React.useState<FlightOffer[] | null>(null);
+  const { search } = useLocation();
+  const queryClient = useQueryClient();
 
   // Several screen components still type their onNavigate prop as a plain
   // (rule: string) => void rather than the NavigationRule union. navigateByRule
@@ -44,10 +63,14 @@ const AppWorkflowRouter: React.FC = () => {
           path="/"
           element={
             <FlightSearchFormWeb
+              // "Modify search" comes back here with the search in the URL.
+              key={search}
+              initialSummary={decodeFlightSearch(search)}
               onNavigate={onNavigateLoose}
-              onResults={(offers) => {
-                setFlightOffers(offers);
-                navigate('/search');
+              onResults={(response, summary) => {
+                // Seed the results page's query so it doesn't search twice.
+                queryClient.setQueryData(flightSearchQueryKey(summary.request), response);
+                navigate(`/flights/results?${encodeFlightSearch(summary)}`);
               }}
             />
           }
@@ -55,13 +78,52 @@ const AppWorkflowRouter: React.FC = () => {
         <Route path="/signin" element={<LoginWebFeature onNavigate={onNavigateLoose} />} />
         <Route path="/otp" element={<OtpWebFeature onNavigate={onNavigateLoose} />} />
         <Route path="/booking-dashboard" element={<BookingDashboard />} />
+        <Route path="/search" element={<Navigate to="/" replace />} />
         <Route
-          path="/search"
+          path="/flights/results"
           element={
-            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
-              <div>
-                {flightOffers ? `${flightOffers.length} flight(s) found. Results screen not built yet.` : 'No search yet.'}
-              </div>
+            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
+              <FlightResultsRoute />
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/flights/review"
+          element={
+            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
+              <RequireAuth>
+                <FlightReviewRoute />
+              </RequireAuth>
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/flights/booked"
+          element={
+            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
+              <RequireAuth>
+                <BookingConfirmedRoute />
+              </RequireAuth>
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/my-trips"
+          element={
+            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
+              <RequireAuth>
+                <MyTripsRoute />
+              </RequireAuth>
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/my-trips/:tripBookingId"
+          element={
+            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
+              <RequireAuth>
+                <TripDetailsRoute />
+              </RequireAuth>
             </DashboardLayout>
           }
         />

@@ -2,7 +2,8 @@ import React from 'react';
 import { MenuBar } from './MenuBar';
 import { Sidebar, TabItem } from './Sidebar';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
-import { BASE_URL, type CustomerProfile } from '../../features/profile/useCustomerProfile';
+import { AUTH_BASE_URL } from '@workspace/api';
+import { type CustomerProfile } from '../../features/profile/useCustomerProfile';
 import profileBannerBg from '../../assets/images/profile-banner-bg.png';
 
 interface DashboardLayoutProps {
@@ -11,6 +12,8 @@ interface DashboardLayoutProps {
   activeTab?: string;
   setActiveTab?: (tab: string) => void;
   showSidebar?: boolean; // New control flag
+  // Without the sidebar: 'centered' is the narrow sign-in card layout, 'wide' a full-width page (booking flow).
+  variant?: 'centered' | 'wide';
   onNavigate?: (routePath: string) => void;
   profile?: CustomerProfile;
 }
@@ -26,6 +29,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   activeTab = '',
   setActiveTab = () => {},
   showSidebar = true,
+  variant = 'centered',
   onNavigate,
   profile
 }) => {
@@ -47,7 +51,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <div className={s.avatarWrapper}>
                   {profile?.profileImageUrl ? (
                     <img
-                      src={`${BASE_URL}${profile.profileImageUrl}`}
+                      src={`${AUTH_BASE_URL}${profile.profileImageUrl}`}
                       alt="Avatar Profile"
                       className={s.avatarImg}
                     />
@@ -77,6 +81,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             </section>
           </main>
         </>
+      ) : variant === 'wide' ? (
+        <main className="min-h-[calc(100vh-73px)] bg-[#F4F4F6]">{children}</main>
       ) : (
         /* Minimalist Centered Workspace Mode Layout (Used for Login & OTP screens) */
         <main className="flex items-center justify-center min-h-[calc(100vh-73px)] p-6 bg-[#F4F4F6]">

@@ -1,6 +1,6 @@
 // packages/core/src/navigation/navigationConfig.ts
 
-export type AppScreen = 'Landing' | 'SignIn' | 'SignUp' | 'SearchWidget' | 'BookingDashboard' | 'OTP' | 'Search' | 'Profile' | 'Settings' | 'Help' | 'Feedback' | 'Notifications' | 'TermsAndConditions' | 'PrivacyPolicy' | 'AboutUs' | 'ContactUs' | 'FAQ' | 'Support' | 'Dashboard' | 'Reports' | 'Analytics' | 'UserManagement' | 'AdminPanel' | 'Billing' | 'Subscription' | 'PaymentMethods' | 'Invoices' | 'TransactionHistory' | 'ActivityLog' | 'SystemSettings' | 'Integrations' | 'APIKeys' | 'Webhooks';
+export type AppScreen = 'Landing' | 'SignIn' | 'SignUp' | 'SearchWidget' | 'BookingDashboard' | 'OTP' | 'Search' | 'Profile' | 'Settings' | 'Help' | 'Feedback' | 'Notifications' | 'TermsAndConditions' | 'PrivacyPolicy' | 'AboutUs' | 'ContactUs' | 'FAQ' | 'Support' | 'Dashboard' | 'Reports' | 'Analytics' | 'UserManagement' | 'AdminPanel' | 'Billing' | 'Subscription' | 'PaymentMethods' | 'Invoices' | 'TransactionHistory' | 'ActivityLog' | 'SystemSettings' | 'Integrations' | 'APIKeys' | 'Webhooks' | 'MyTrips';
 
 export type NavigationRule = 
   | 'ON_CONTINUE' 
@@ -12,7 +12,8 @@ export type NavigationRule =
   | 'ON_BACK_TO_LOGIN'
   | 'ON_NAVIGATE_TO_PROFILE'
   | 'ON_NAVIGATE_TO_SIGN_IN'
-  | 'ON_CONTINUE_AS_GUEST';
+  | 'ON_CONTINUE_AS_GUEST'
+  | 'ON_NAVIGATE_TO_MY_TRIPS';
 
 // 3. The Centralized Flow Map Matrix Contract
 export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<NavigationRule, AppScreen>>> = {
@@ -21,6 +22,7 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
     ON_SIGN_IN_PRESS: 'SignIn',
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
     ON_NAVIGATE_TO_PROFILE: 'Profile',
+    ON_NAVIGATE_TO_MY_TRIPS: 'MyTrips',
   },
   SearchWidget: {
     ON_SEARCH_SUBMIT: 'BookingDashboard',
@@ -52,10 +54,17 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
   Search: {
     ON_NAVIGATE_TO_PROFILE: 'Profile',
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
+    ON_NAVIGATE_TO_MY_TRIPS: 'MyTrips',
   }, 
   Profile: {
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
     ON_NAVIGATE_TO_PROFILE: 'Profile',
+    ON_NAVIGATE_TO_MY_TRIPS: 'MyTrips',
+  },
+  MyTrips: {
+    ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
+    ON_NAVIGATE_TO_PROFILE: 'Profile',
+    ON_NAVIGATE_TO_MY_TRIPS: 'MyTrips',
   },
   
   Settings: {}, Help: {}, Feedback: {}, Notifications: {},
@@ -78,6 +87,7 @@ export const SCREEN_TO_PATH: Partial<Record<AppScreen, string>> = {
   BookingDashboard: '/booking-dashboard',
   Search: '/search',
   Profile: '/profile',
+  MyTrips: '/my-trips',
 };
 
 export const PATH_TO_SCREEN: Record<string, AppScreen> = Object.fromEntries(

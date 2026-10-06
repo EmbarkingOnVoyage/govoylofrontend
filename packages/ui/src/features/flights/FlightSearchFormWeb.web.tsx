@@ -1,11 +1,18 @@
 import React, { useState } from 'react';
-import { ArrowLeftRight, Calendar, Menu, PlaneTakeoff, PlaneLanding, ShieldCheck, User, Users, X, ChevronRight } from 'lucide-react';
-import { useSearchFlightsMobile, type TripType, type FlightSearchSegment, type FlightOffer } from './useSearchFlightsMobile';
+import { ArrowLeftRight, Calendar, PlaneTakeoff, PlaneLanding, ShieldCheck, Users, X, ChevronRight } from 'lucide-react';
+import {
+  useSearchFlightsMobile,
+  type TripType,
+  type FlightSearchSegment,
+  type FlightSearchResponse,
+  type FlightSearchSummary,
+} from './useSearchFlightsMobile';
+import { summaryFromRequest } from './flightSearchParams';
 import { AirportSearchDropdown } from './AirportSearchDropdown.web';
 import { FareCalendarDropdown } from './FareCalendarDropdown.web';
 import { TravellersClassDropdown, type CabinClass, type TravellersClassValues } from './TravellersClassDropdown.web';
-import type { Airport } from './airports';
-import govoyloLogo from '../../assets/images/govoylo-logo.svg';
+import { AIRPORTS, type Airport } from './airports';
+import { MenuBar } from '../../components/layout/MenuBar';
 import iconFlights from '../../assets/images/icon-flights.png';
 import iconHotels from '../../assets/images/icon-hotels.png';
 import iconFlightsHotels from '../../assets/images/icon-flights-hotels.png';
@@ -33,6 +40,16 @@ function formatDisplayDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   return `${day}/${month}/${date.getFullYear()}`;
+}
+
+// A search's travel date (midnight UTC ISO) as the form's DD/MM/YYYY.
+function displayDateFromIso(iso: string | undefined): string {
+  const match = iso?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : '';
+}
+
+function airportForCode(code: string): Airport {
+  return AIRPORTS.find((a) => a.code === code) ?? { code, city: code, state: '', name: code };
 }
 
 function formatShortDate(display: string): string {
@@ -66,31 +83,47 @@ type ActiveDropdown =
   | null;
 
 export interface FlightSearchFormWebProps {
-  onResults: (offers: FlightOffer[]) => void;
+  onResults: (response: FlightSearchResponse, summary: FlightSearchSummary) => void;
   onNavigate?: (route: string) => void;
+  // A previous search to start from ("Modify search" on the results page).
+  initialSummary?: FlightSearchSummary | null;
 }
 
-export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({ onResults, onNavigate }) => {
+export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({ onResults, onNavigate, initialSummary }) => {
+  const initial = initialSummary?.request;
+  const initialSegments = initial?.segments ?? [];
   const searchFlights = useSearchFlightsMobile();
 
   const [activeDropdown, setActiveDropdown] = useState<ActiveDropdown>(null);
-  const [tripType, setTripType] = useState<TripType>('OneWay');
+  const [tripType, setTripType] = useState<TripType>(initial?.tripType ?? 'OneWay');
 
-  const [origin, setOrigin] = useState<Airport | null>(null);
-  const [destination, setDestination] = useState<Airport | null>(null);
-  const [departureDate, setDepartureDate] = useState('');
-  const [returnDate, setReturnDate] = useState('');
+  const [origin, setOrigin] = useState<Airport | null>(initialSegments[0] ? airportForCode(initialSegments[0].origin) : null);
+  const [destination, setDestination] = useState<Airport | null>(
+    initialSegments[0] ? airportForCode(initialSegments[0].destination) : null
+  );
+  const [departureDate, setDepartureDate] = useState(displayDateFromIso(initialSegments[0]?.travelDate));
+  const [returnDate, setReturnDate] = useState(
+    initial?.tripType === 'RoundTrip' ? displayDateFromIso(initialSegments[1]?.travelDate) : ''
+  );
 
-  const [multiCitySegments, setMultiCitySegments] = useState<MultiCitySegment[]>([
-    { origin: null, destination: null, date: '' },
-    { origin: null, destination: null, date: '' },
-  ]);
+  const [multiCitySegments, setMultiCitySegments] = useState<MultiCitySegment[]>(
+    initial?.tripType === 'MultiCity'
+      ? initialSegments.map((segment) => ({
+          origin: airportForCode(segment.origin),
+          destination: airportForCode(segment.destination),
+          date: displayDateFromIso(segment.travelDate),
+        }))
+      : [
+          { origin: null, destination: null, date: '' },
+          { origin: null, destination: null, date: '' },
+        ]
+  );
 
-  const [adultCount, setAdultCount] = useState(1);
-  const [childCount, setChildCount] = useState(0);
-  const [infantCount, setInfantCount] = useState(0);
-  const [cabinClass, setCabinClass] = useState<CabinClass>('Economy');
-  const [nonStopOnly, setNonStopOnly] = useState(false);
+  const [adultCount, setAdultCount] = useState(initial?.adultCount ?? 1);
+  const [childCount, setChildCount] = useState(initial?.childCount ?? 0);
+  const [infantCount, setInfantCount] = useState(initial?.infantCount ?? 0);
+  const [cabinClass, setCabinClass] = useState<CabinClass>(initial?.cabinClass ?? 'Economy');
+  const [nonStopOnly, setNonStopOnly] = useState(initialSummary?.nonStopOnly ?? false);
 
   const [selectedFare, setSelectedFare] = useState<'Student' | 'SeniorCitizen' | null>(null);
   const [formError, setFormError] = useState('');
@@ -157,16 +190,11 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({ onResu
       }
     }
 
+    const request = { tripType, cabinClass, segments, adultCount, childCount, infantCount };
+
     try {
-      const response = await searchFlights.mutateAsync({
-        tripType,
-        cabinClass,
-        segments,
-        adultCount,
-        childCount,
-        infantCount,
-      });
-      onResults(response.offers);
+      const response = await searchFlights.mutateAsync(request);
+      onResults(response, summaryFromRequest(request, nonStopOnly));
     } catch (err: any) {
       setFormError(err?.message || 'Failed to search flights.');
     }
@@ -308,25 +336,8 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({ onResu
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Top nav */}
-      <div className="bg-white">
-        <div className="max-w-[1440px] mx-auto px-8 h-16 flex items-center justify-between">
-          <img src={govoyloLogo} alt="goVoylo" className="h-8 w-auto" />
-          <div className="flex items-center gap-6 text-sm font-medium text-[#182339]">
-            <span className="flex items-center gap-1.5">🇮🇳 INR</span>
-            <span className="cursor-pointer hover:text-[#7C1AEE]">Help &amp; support</span>
-            <button
-              type="button"
-              onClick={() => onNavigate?.('/signin')}
-              className="flex items-center gap-1.5 hover:text-[#7C1AEE]"
-            >
-              <User size={16} />
-              Log in/Sign up
-            </button>
-            <Menu size={20} className="cursor-pointer" />
-          </div>
-        </div>
-      </div>
+      {/* Same site header as every other page: sign-in, account menu, My Trips. */}
+      <MenuBar onNavigate={onNavigate} />
 
       {/* Hero banner */}
       <div

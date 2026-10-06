@@ -29,7 +29,7 @@ import {
   greeting,
   isExpiredHold,
   eTicketUnavailableReason,
-} from './myTripsHelpers';
+} from '@workspace/ui/src/features/flights/logic/myTrips';
 
 const TABS: TripTab[] = ['Upcoming', 'Completed', 'Cancelled'];
 const CATEGORIES = ['All', 'Flights', 'Hotels', 'Trains', 'Buses'] as const;
