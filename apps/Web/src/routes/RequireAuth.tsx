@@ -5,11 +5,15 @@ import { useAuth } from "@workspace/ui";
 // gets the sign-in modal over a short prompt instead of a redirect, so the
 // URL — and whatever was being booked — is still there once they sign in.
 export const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isLoggedIn, openLogin } = useAuth();
+  const { isLoggedIn, openLogin, closeModal } = useAuth();
 
   useEffect(() => {
-    if (!isLoggedIn) openLogin();
-  }, [isLoggedIn, openLogin]);
+    if (isLoggedIn) return;
+    openLogin();
+    // Leaving the page (e.g. Back) without signing in shouldn't leave the
+    // sign-in modal over whatever page comes next.
+    return closeModal;
+  }, [isLoggedIn, openLogin, closeModal]);
 
   if (isLoggedIn) return <>{children}</>;
 

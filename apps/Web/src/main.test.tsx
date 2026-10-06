@@ -33,7 +33,7 @@ vi.mock('@workspace/ui', async () => {
     ProfileStep1: () => <div>Profile Mock</div>,
     BookingDashboard: () => <div>Booking Dashboard Mock</div>,
     FlightSearchFormWeb: () => <div data-testid="flight-search-form">Flight Search Form Mock</div>,
-    useAuth: () => ({ isLoggedIn: false, openLogin: vi.fn() }),
+    useAuth: () => ({ isLoggedIn: false, openLogin: vi.fn(), closeModal: vi.fn() }),
     useBookingSession: () => [null, vi.fn()],
     useFlightSearchQuery: () => ({ data: undefined, isPending: true, error: null }),
     decodeFlightSearch: () => null,

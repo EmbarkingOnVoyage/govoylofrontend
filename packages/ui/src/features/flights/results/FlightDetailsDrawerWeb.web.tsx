@@ -10,7 +10,6 @@ import {
   formatPrice,
   formatTime24,
   formatTotalDuration,
-  formatWeekdayDate,
   resolveSelectedFare,
   selectableFares,
   stopsLabel,
@@ -21,6 +20,18 @@ import { AirlineLogoWeb } from './AirlineLogoWeb.web';
 import { FareRulesPanelWeb } from './FareRulesPanelWeb.web';
 
 type DrawerTab = 'details' | 'rules';
+
+// "Sat, 28 Nov" — the Web Dev popup's date format.
+function formatWeekdayDate(iso: string): string {
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return '';
+  return date.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }).replace(/^(\w+)/, '$1,');
+}
+
+// Suppliers sometimes send a bare number of kilos ("5") for baggage.
+function baggageText(value: string): string {
+  return /^\d+(\.\d+)?$/.test(value.trim()) ? `${value.trim()} kg` : value;
+}
 
 const EMPTY_SELECTION: FareSelection = { tier: null, fareId: null };
 
@@ -55,6 +66,8 @@ const FareFeature: React.FC<{ ok: boolean; text: string }> = ({ ok, text }) => (
 export const FlightDetailsDrawerWeb: React.FC<{
   legs: FlightOffer[];
   legLabels?: string[];
+  // The leg tab to open on (the leg just picked, in a step-by-step flow).
+  initialLegIndex?: number;
   passengerCount: number;
   cabinLabel: string;
   cityFor: (code: string) => string;
@@ -62,9 +75,9 @@ export const FlightDetailsDrawerWeb: React.FC<{
   actionLabel: string;
   onAction: (selectedFares: (FareOption | undefined)[]) => void;
   onClose: () => void;
-}> = ({ legs, legLabels, passengerCount, cabinLabel, cityFor, nameFor, actionLabel, onAction, onClose }) => {
+}> = ({ legs, legLabels, initialLegIndex = 0, passengerCount, cabinLabel, cityFor, nameFor, actionLabel, onAction, onClose }) => {
   const [tab, setTab] = useState<DrawerTab>('details');
-  const [activeLegIndex, setActiveLegIndex] = useState(0);
+  const [activeLegIndex, setActiveLegIndex] = useState(initialLegIndex);
   const [selections, setSelections] = useState<FareSelection[]>(() => legs.map((leg) => cheapestFareSelection(leg)));
 
   useEffect(() => {
@@ -262,10 +275,10 @@ export const FlightDetailsDrawerWeb: React.FC<{
                           <span className="text-[11px] text-[#697691]">/adult</span>
                         </div>
                         <ul className="px-3 py-3 space-y-1.5 flex-1">
-                          <FareFeature ok={!!fare.handBaggage} text={fare.handBaggage ? `Cabin bag ${fare.handBaggage}` : 'No cabin bag info'} />
+                          <FareFeature ok={!!fare.handBaggage} text={fare.handBaggage ? `Cabin bag ${baggageText(fare.handBaggage)}` : 'No cabin bag info'} />
                           <FareFeature
                             ok={/[1-9]/.test(fare.checkInBaggage ?? '')}
-                            text={fare.checkInBaggage ? `Check-in ${fare.checkInBaggage}` : 'No check-in baggage'}
+                            text={fare.checkInBaggage ? `Check-in ${baggageText(fare.checkInBaggage)}` : 'No check-in baggage'}
                           />
                           <FareFeature ok={fare.refundable} text={fare.refundable ? 'Refundable' : 'Non-refundable'} />
                         </ul>

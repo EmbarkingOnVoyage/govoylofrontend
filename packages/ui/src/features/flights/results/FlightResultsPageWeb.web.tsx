@@ -428,6 +428,7 @@ export const FlightResultsPageWeb: React.FC<FlightResultsPageWebProps> = ({
           key={flow.detailsLegs.map((l) => l.offerId).join('|')}
           legs={flow.detailsLegs}
           legLabels={flow.detailsLegLabels}
+          initialLegIndex={flow.usingSequentialFlow ? flow.detailsLegs.length - 1 : 0}
           passengerCount={summary.passengerCount}
           cabinLabel={CABIN_CLASS_LABELS[summary.cabinClass]}
           cityFor={cityFor}

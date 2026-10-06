@@ -6,6 +6,9 @@ import {
   buildRoundTripPackages,
   cabinTierForFare,
   cheapestFareSelection,
+  fareDisplayName,
+  formatPrice,
+  hasCheckInBaggage,
   getLayoverCities,
   initialFilters,
   isStandaloneFare,
@@ -172,5 +175,27 @@ describe('round trips and multi-city', () => {
       { origin: 'BOM', destination: 'BOM', travelDate: '' },
     ]);
     expect(groups.map((g) => g.map((s) => s.destination))).toEqual([['DXB', 'BOM'], ['GOI', 'BOM']]);
+  });
+});
+
+describe('display helpers', () => {
+  test('prices use Indian grouping and show paise only when present', () => {
+    expect(formatPrice(123456, 'INR')).toBe('₹1,23,456');
+    expect(formatPrice(1588.5, 'INR')).toBe('₹1,588.50');
+    expect(formatPrice(99, 'USD')).toBe('USD 99');
+  });
+
+  test('fare names follow the e-ticket labels', () => {
+    expect(fareDisplayName(fare({ fareIdentifier: 'PUBLISHED' }))).toBe('Regular Fare');
+    expect(fareDisplayName(fare({ fareIdentifier: null }))).toBe('Regular Fare');
+    expect(fareDisplayName(fare({ fareIdentifier: 'OFFER_FARE_WITH_PNR' }))).toBe('Offer Fare');
+    expect(fareDisplayName(fare({ fareIdentifier: 'SME_FARE' }))).toBe('Sme Fare');
+    expect(fareDisplayName(fare({ fareIdentifier: 'CORPORATE' }))).toBe('Corporate Fare');
+  });
+
+  test('the check-in baggage filter needs a non-zero allowance', () => {
+    expect(hasCheckInBaggage(offer('a', { fares: [fare({ checkInBaggage: '15 KG' })] }))).toBe(true);
+    expect(hasCheckInBaggage(offer('b', { fares: [fare({ checkInBaggage: '0 KG' })] }))).toBe(false);
+    expect(hasCheckInBaggage(offer('c', { fares: [fare({ checkInBaggage: null })] }))).toBe(false);
   });
 });

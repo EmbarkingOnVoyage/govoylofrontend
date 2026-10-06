@@ -68,7 +68,12 @@ const CURRENCY_SYMBOLS: Record<string, string> = { INR: '₹' };
 
 export function formatPrice(amount: number, currencyCode: string): string {
   const symbol = CURRENCY_SYMBOLS[currencyCode] ?? `${currencyCode} `;
-  return `${symbol}${amount.toLocaleString()}`;
+  // Indian digit grouping; paise only when there are any (₹1,588.50, ₹4,250).
+  const fractionDigits = Number.isInteger(amount) ? 0 : 2;
+  return `${symbol}${amount.toLocaleString('en-IN', {
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
+  })}`;
 }
 
 // Total journey duration (first departure to last arrival) — not the same as
