@@ -162,6 +162,10 @@ export const TripDetailsScreen: React.FC<TripDetailsScreenProps> = ({ tripBookin
           });
   const isHeld = booking.statusId === STATUS_ID_HELD;
   const showCancel = canCancel(booking);
+  // A hold has no e-ticket, and one with no airline PNR can't be released from
+  // the app either — the footer is left out rather than shown empty.
+  const showTicket =
+    !isHeld && booking.localStatus === 'Active' && booking.statusId !== STATUS_ID_FAILED && !isExpiredHold(booking);
 
   const handleCancelPress = () => {
     if (!isHeld) {
@@ -300,10 +304,10 @@ export const TripDetailsScreen: React.FC<TripDetailsScreenProps> = ({ tripBookin
         ) : null}
       </ScrollView>
 
-      {booking.localStatus === 'Active' && booking.statusId !== STATUS_ID_FAILED && !isExpiredHold(booking) ? (
+      {showTicket || showCancel ? (
         <SafeAreaView>
           <View style={styles.footer}>
-            {!isHeld ? (
+            {showTicket ? (
               // No action yet — e-tickets aren't generated in the app.
               <TouchableOpacity style={styles.ticketButton} activeOpacity={0.7}>
                 <Text style={styles.ticketButtonText}>Download E-Ticket</Text>
