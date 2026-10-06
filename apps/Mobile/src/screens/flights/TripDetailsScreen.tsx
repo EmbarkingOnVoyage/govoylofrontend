@@ -24,7 +24,7 @@ import {
   formatDuration,
   formatShortDate,
   formatTime24,
-} from './myTripsHelpers';
+} from '@workspace/ui/src/features/flights/logic/myTrips';
 
 interface TripDetailsScreenProps {
   tripBookingId: string;

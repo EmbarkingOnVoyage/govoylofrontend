@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { DashboardLayout } from '../../components/layout/Layout'; 
 import { useMutation } from "@tanstack/react-query"; 
-import { useRequestOtpMutation } from "@workspace/api";
+import { AUTH_BASE_URL, useRequestOtpMutation } from "@workspace/api";
 import { authContextCache } from "./authContextCache";
 import { useAuth } from "./AuthContext";
 // 🔑 IMPORT CENTRALIZED BEST-PRACTICE STYLES
@@ -33,7 +33,7 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate, variant = "p
 
   const verifyMutation = useMutation({
     mutationFn: async (code: string) => {
-      const response = await fetch("https://localhost:5037/api/auth/login-otp", {
+      const response = await fetch(`${AUTH_BASE_URL}/api/auth/login-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

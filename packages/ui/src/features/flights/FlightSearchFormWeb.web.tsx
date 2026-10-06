@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import { ArrowLeftRight, Calendar, Menu, PlaneTakeoff, PlaneLanding, ShieldCheck, User, Users, X, ChevronRight } from 'lucide-react';
-import { useSearchFlightsMobile, type TripType, type FlightSearchSegment, type FlightOffer } from './useSearchFlightsMobile';
+import {
+  useSearchFlightsMobile,
+  type TripType,
+  type FlightSearchSegment,
+  type FlightSearchResponse,
+  type FlightSearchSummary,
+} from './useSearchFlightsMobile';
+import { summaryFromRequest } from './flightSearchParams';
 import { AirportSearchDropdown } from './AirportSearchDropdown.web';
 import { FareCalendarDropdown } from './FareCalendarDropdown.web';
 import { TravellersClassDropdown, type CabinClass, type TravellersClassValues } from './TravellersClassDropdown.web';
@@ -66,7 +73,7 @@ type ActiveDropdown =
   | null;
 
 export interface FlightSearchFormWebProps {
-  onResults: (offers: FlightOffer[]) => void;
+  onResults: (response: FlightSearchResponse, summary: FlightSearchSummary) => void;
   onNavigate?: (route: string) => void;
 }
 
@@ -157,16 +164,11 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({ onResu
       }
     }
 
+    const request = { tripType, cabinClass, segments, adultCount, childCount, infantCount };
+
     try {
-      const response = await searchFlights.mutateAsync({
-        tripType,
-        cabinClass,
-        segments,
-        adultCount,
-        childCount,
-        infantCount,
-      });
-      onResults(response.offers);
+      const response = await searchFlights.mutateAsync(request);
+      onResults(response, summaryFromRequest(request, nonStopOnly));
     } catch (err: any) {
       setFormError(err?.message || 'Failed to search flights.');
     }

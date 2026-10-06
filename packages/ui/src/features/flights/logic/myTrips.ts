@@ -1,4 +1,4 @@
-import type { TripBooking } from '@workspace/ui';
+import type { TripBooking } from '../useMyTripsMobile';
 
 // The supplier's status at booking time: 11-Success (ticketed), 22-Failed,
 // 33-Block (hold), 44-paid with the ticket still being issued.

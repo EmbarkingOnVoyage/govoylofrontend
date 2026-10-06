@@ -2,7 +2,8 @@ import React from 'react';
 import { MenuBar } from './MenuBar';
 import { Sidebar, TabItem } from './Sidebar';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
-import { BASE_URL, type CustomerProfile } from '../../features/profile/useCustomerProfile';
+import { AUTH_BASE_URL } from '@workspace/api';
+import { type CustomerProfile } from '../../features/profile/useCustomerProfile';
 import profileBannerBg from '../../assets/images/profile-banner-bg.png';
 
 interface DashboardLayoutProps {
@@ -47,7 +48,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 <div className={s.avatarWrapper}>
                   {profile?.profileImageUrl ? (
                     <img
-                      src={`${BASE_URL}${profile.profileImageUrl}`}
+                      src={`${AUTH_BASE_URL}${profile.profileImageUrl}`}
                       alt="Avatar Profile"
                       className={s.avatarImg}
                     />

@@ -13,22 +13,34 @@ vi.mock('@workspace/core', async (importOriginal) => {
   };
 });
 
-vi.mock('@workspace/ui', () => ({
-  AppProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  AuthModal: () => null,
-  BaseLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  DashboardLayout: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="dashboard-layout">{children}</div>
-  ),
-  LoginWebFeature: () => <div data-testid="login-feature">Login Form Mock</div>,
-  OtpWebFeature: () => <div>OTP Form Mock</div>,
-  LoginMobileFeature: () => <div data-testid="login-feature">Login Form Mock</div>,
-  OtpMobileFeature: () => <div>OTP Form Mock</div>,
-  ProfileStep1: () => <div>Profile Mock</div>,
-  BookingDashboard: () => <div>Booking Dashboard Mock</div>,
-  FlightSearchFormWeb: () => <div data-testid="flight-search-form">Flight Search Form Mock</div>,
-}));
+vi.mock('@workspace/ui', async () => {
+  const { QueryClient, QueryClientProvider } = await import('@tanstack/react-query');
+  const queryClient = new QueryClient();
+  return {
+    AppProvider: ({ children }: { children: React.ReactNode }) => (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    ),
+    AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    AuthModal: () => null,
+    BaseLayout: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+    DashboardLayout: ({ children }: { children: React.ReactNode }) => (
+      <div data-testid="dashboard-layout">{children}</div>
+    ),
+    LoginWebFeature: () => <div data-testid="login-feature">Login Form Mock</div>,
+    OtpWebFeature: () => <div>OTP Form Mock</div>,
+    LoginMobileFeature: () => <div data-testid="login-feature">Login Form Mock</div>,
+    OtpMobileFeature: () => <div>OTP Form Mock</div>,
+    ProfileStep1: () => <div>Profile Mock</div>,
+    BookingDashboard: () => <div>Booking Dashboard Mock</div>,
+    FlightSearchFormWeb: () => <div data-testid="flight-search-form">Flight Search Form Mock</div>,
+    useAuth: () => ({ isLoggedIn: false, openLogin: vi.fn() }),
+    useBookingSession: () => [null, vi.fn()],
+    useFlightSearchQuery: () => ({ data: undefined, isPending: true, error: null }),
+    decodeFlightSearch: () => null,
+    encodeFlightSearch: () => '',
+    flightSearchQueryKey: () => ['flight-search'],
+  };
+});
 
 // 🔑 Tiny utility to pause execution briefly, letting React complete its initial rendering cycle
 const flushReactRenderQueue = () => new Promise((resolve) => setTimeout(resolve, 50));

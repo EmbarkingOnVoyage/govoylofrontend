@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AUTH_BASE_URL } from "@workspace/api";
 import { useAuth } from "../authentication/AuthContext";
-
-export const BASE_URL = "https://localhost:5037";
 
 export interface CustomerProfile {
   id: string;
@@ -35,7 +34,7 @@ export function useCustomerProfile() {
   return useQuery({
     queryKey: ["customer-profile"],
     queryFn: async (): Promise<CustomerProfile> => {
-      const response = await authFetch(`${BASE_URL}/api/v1/customer/profile`);
+      const response = await authFetch(`${AUTH_BASE_URL}/api/v1/customer/profile`);
 
       if (!response.ok) {
         throw new Error("Failed to load profile details.");
@@ -89,13 +88,13 @@ export function useUpdateCustomerProfile() {
 
   return useMutation({
     mutationFn: async (payload: UpdateProfilePayload) => {
-      await postJson(`${BASE_URL}/api/v1/customer/profile`, authFetch, {
+      await postJson(`${AUTH_BASE_URL}/api/v1/customer/profile`, authFetch, {
         firstName: payload.firstName,
         lastName: payload.lastName,
         phone: payload.phone,
       });
 
-      await postJson(`${BASE_URL}/api/v1/customer/profile/details`, authFetch, {
+      await postJson(`${AUTH_BASE_URL}/api/v1/customer/profile/details`, authFetch, {
         gender: payload.gender,
         dateOfBirth: payload.dateOfBirth,
         nationality: payload.nationality,

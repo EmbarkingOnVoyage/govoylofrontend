@@ -4,9 +4,26 @@ import "./global.css";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
-import { AppProvider, AuthProvider, AuthModal, LoginWebFeature, OtpWebFeature, ProfileStep1, BookingDashboard, DashboardLayout, FlightSearchFormWeb, type FlightOffer } from "@workspace/ui";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  AppProvider,
+  AuthProvider,
+  AuthModal,
+  LoginWebFeature,
+  OtpWebFeature,
+  ProfileStep1,
+  BookingDashboard,
+  DashboardLayout,
+  FlightSearchFormWeb,
+  encodeFlightSearch,
+  flightSearchQueryKey,
+  useBookingSession,
+  type FlightBookingSelection,
+} from "@workspace/ui";
 import { ErrorBoundary, NavigationRule } from "@workspace/core";
 import { useWebFlowNavigation } from "./navigation/useWebFlowNavigation";
+import { RequireAuth } from "./routes/RequireAuth";
+import { FlightResultsRoute } from "./routes/FlightResultsRoute";
 
 // 1. Contract Enforcement: Suppress platform-specific mobile warnings in the browser console
 if (process.env.NODE_ENV === "development") {
@@ -26,10 +43,19 @@ if (process.env.NODE_ENV === "development") {
   };
 }
 
+// Booking steps not built yet. Each is replaced by its real page in a later step.
+const FlightReviewPlaceholder: React.FC = () => {
+  const [selection] = useBookingSession<FlightBookingSelection>("flights");
+  if (!selection) return <Navigate to="/" replace />;
+  return <div>{selection.legs.length} flight(s) selected. Traveller details page not built yet.</div>;
+};
+
+const MyTripsPlaceholder: React.FC = () => <div>My Trips page not built yet.</div>;
+
 const AppWorkflowRouter: React.FC = () => {
   const { navigateByRule } = useWebFlowNavigation();
   const navigate = useNavigate();
-  const [flightOffers, setFlightOffers] = React.useState<FlightOffer[] | null>(null);
+  const queryClient = useQueryClient();
 
   // Several screen components still type their onNavigate prop as a plain
   // (rule: string) => void rather than the NavigationRule union. navigateByRule
@@ -45,9 +71,10 @@ const AppWorkflowRouter: React.FC = () => {
           element={
             <FlightSearchFormWeb
               onNavigate={onNavigateLoose}
-              onResults={(offers) => {
-                setFlightOffers(offers);
-                navigate('/search');
+              onResults={(response, summary) => {
+                // Seed the results page's query so it doesn't search twice.
+                queryClient.setQueryData(flightSearchQueryKey(summary.request), response);
+                navigate(`/flights/results?${encodeFlightSearch(summary)}`);
               }}
             />
           }
@@ -55,13 +82,42 @@ const AppWorkflowRouter: React.FC = () => {
         <Route path="/signin" element={<LoginWebFeature onNavigate={onNavigateLoose} />} />
         <Route path="/otp" element={<OtpWebFeature onNavigate={onNavigateLoose} />} />
         <Route path="/booking-dashboard" element={<BookingDashboard />} />
+        <Route path="/search" element={<Navigate to="/" replace />} />
         <Route
-          path="/search"
+          path="/flights/results"
           element={
             <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
-              <div>
-                {flightOffers ? `${flightOffers.length} flight(s) found. Results screen not built yet.` : 'No search yet.'}
-              </div>
+              <FlightResultsRoute />
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/flights/review"
+          element={
+            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
+              <RequireAuth>
+                <FlightReviewPlaceholder />
+              </RequireAuth>
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/my-trips"
+          element={
+            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
+              <RequireAuth>
+                <MyTripsPlaceholder />
+              </RequireAuth>
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/my-trips/:tripBookingId"
+          element={
+            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
+              <RequireAuth>
+                <MyTripsPlaceholder />
+              </RequireAuth>
             </DashboardLayout>
           }
         />

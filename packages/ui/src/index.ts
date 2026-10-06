@@ -36,6 +36,9 @@ export {
 } from './features/profile/useTravellersMobile';
 export {
   useSearchFlightsMobile,
+  useFlightSearchQuery,
+  searchFlights,
+  flightSearchQueryKey,
   type TripType,
   type CabinClass,
   type FlightSearchSegment,
@@ -117,6 +120,15 @@ export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './featur
 export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';
 export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';
 export { useHolidaysWeb } from './features/flights/useHolidaysWeb';
+export { encodeFlightSearch, decodeFlightSearch, summaryFromRequest } from './features/flights/flightSearchParams';
+export type { FlightBookingSelection } from './features/flights/flightBookingSession';
+export {
+  useBookingSession,
+  readBookingSession,
+  writeBookingSession,
+  clearBookingSession,
+  type BookingVertical,
+} from './features/booking/bookingSession';
 export { FlightSearchFormWeb } from './features/flights/FlightSearchFormWeb.web';
 export { DashboardLayout } from './components/layout/Layout';
 export { AuthProvider, useAuth } from './features/authentication/AuthContext';
