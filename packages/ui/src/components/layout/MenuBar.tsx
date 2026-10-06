@@ -12,7 +12,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate }) => {
   const { isLoggedIn, openLogin, logout } = useAuth();
 
   const handleAction = (
-    target: "LOGIN" | "PROFILE" | "BOOKINGS" | "SAVED" | "SIGNOUT",
+    target: "LOGIN" | "PROFILE" | "BOOKINGS" | "SAVED" | "SIGNOUT" | "FLIGHTS",
   ) => {
     setIsOpen(false); // Close dropdown immediately on select
 
@@ -25,6 +25,10 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate }) => {
     switch (target) {
       case "PROFILE":
         onNavigate("ON_NAVIGATE_TO_PROFILE");
+        break;
+
+      case "FLIGHTS":
+        onNavigate("ON_NAVIGATE_TO_FLIGHTS");
         break;
 
       case "BOOKINGS":
@@ -45,9 +49,13 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate }) => {
     <nav className={s.navbar}>
       <div className={s.navInner}>
       <div className={s.navLeft}>
-        <img src={govoyloLogo} alt="goVoylo" className={s.logo} />
+        <button type="button" onClick={() => handleAction("FLIGHTS")} aria-label="GoVoylo home">
+          <img src={govoyloLogo} alt="goVoylo" className={s.logo} />
+        </button>
         <div className={s.navLinks}>
-          <span className={s.navLink}>Flight</span>
+          <button type="button" className={s.navLink} onClick={() => handleAction("FLIGHTS")}>
+            Flight
+          </button>
           <span className={s.navLink}>Hotel</span>
           <span className={s.navLink}>Cabs</span>
         </div>
