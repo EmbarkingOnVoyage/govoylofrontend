@@ -16,6 +16,9 @@ export interface BookingLegRequest {
   selectedSsrs: BookingSsrSelectionRequest[];
   // A non-default fare of this offer to book (FlightOffer.selectedFareId).
   fareId?: string;
+  // The booked fare's supplier fare type (FareOption.fareIdentifier, e.g.
+  // "PUBLISHED"), printed on the e-ticket.
+  fareType?: string;
 }
 
 export interface BookingTravelerRequest {
