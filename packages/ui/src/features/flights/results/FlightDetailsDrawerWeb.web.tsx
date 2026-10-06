@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { CheckCircle2, Info, Plane, X, XCircle } from 'lucide-react';
 import type { FareOption, FlightOffer } from '../useSearchFlightsMobile';
 import {
@@ -16,8 +16,10 @@ import {
   type FareSelection,
 } from '../logic/flightResults';
 import type { FareRulesLeg } from '../logic/fareRules';
+import { baggageText } from '../logic/addOns';
 import { AirlineLogoWeb } from './AirlineLogoWeb.web';
 import { FareRulesPanelWeb } from './FareRulesPanelWeb.web';
+import { useEscapeKey } from '../useEscapeKey.web';
 
 type DrawerTab = 'details' | 'rules';
 
@@ -28,10 +30,6 @@ function formatWeekdayDate(iso: string): string {
   return date.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }).replace(/^(\w+)/, '$1,');
 }
 
-// Suppliers sometimes send a bare number of kilos ("5") for baggage.
-function baggageText(value: string): string {
-  return /^\d+(\.\d+)?$/.test(value.trim()) ? `${value.trim()} kg` : value;
-}
 
 const EMPTY_SELECTION: FareSelection = { tier: null, fareId: null };
 
@@ -80,11 +78,7 @@ export const FlightDetailsDrawerWeb: React.FC<{
   const [activeLegIndex, setActiveLegIndex] = useState(initialLegIndex);
   const [selections, setSelections] = useState<FareSelection[]>(() => legs.map((leg) => cheapestFareSelection(leg)));
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useEscapeKey(onClose);
 
   const isMultiLeg = legs.length > 1;
   const activeOffer = legs[Math.min(activeLegIndex, legs.length - 1)];

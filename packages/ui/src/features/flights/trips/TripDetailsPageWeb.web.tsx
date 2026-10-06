@@ -23,6 +23,7 @@ import {
 import { AirlineLogoWeb } from '../results/AirlineLogoWeb.web';
 import { downloadETicketWeb } from './downloadETicket.web';
 import { NoticeDialogWeb } from './NoticeDialogWeb.web';
+import { useEscapeKey } from '../useEscapeKey.web';
 
 const RED = '#C8102E';
 const GREEN = '#15803D';
@@ -65,6 +66,7 @@ const CancelBookingDialogWeb: React.FC<{
   const [error, setError] = useState('');
   const money = (amount: number) => formatCurrency(amount, booking.currencyCode);
   const first = [...booking.legs].sort((a, b) => a.legIndex - b.legIndex)[0];
+  useEscapeKey(onClose, !cancel.isPending);
 
   const notice = (q: CancellationQuote) => {
     if (q.variant === 'NonRefundable') {
@@ -375,7 +377,7 @@ export const TripDetailsPageWeb: React.FC<{ tripBookingId: string; onBack: () =>
               </div>
             )}
             <div className="flex justify-between pt-2 border-t border-[#E4E7EC] font-semibold">
-              <span className="text-[#182339]">Total paid</span>
+              <span className="text-[#182339]">{isHeld ? 'Amount due' : 'Total paid'}</span>
               <span className="text-[#182339]">{money(data.totalPaid)}</span>
             </div>
             {booking.localStatus === 'Cancelled' && (

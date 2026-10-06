@@ -10,8 +10,9 @@ import {
   type AncillaryOption,
   type SeatMapSegment,
 } from '../useFlightAncillariesMobile';
-import { buildSeatSections, describeBaggage, layoutSeatRow, mealKind, seatLabelParts, uniqueOptions } from '../logic/addOns';
+import { baggageText, buildSeatSections, describeBaggage, layoutSeatRow, mealKind, seatLabelParts, uniqueOptions } from '../logic/addOns';
 import type { AddOnCategory, AddOnSelection } from '../logic/booking';
+import { useEscapeKey } from '../useEscapeKey.web';
 
 export interface AddOnTraveller {
   id: string;
@@ -46,31 +47,34 @@ const PanelShell: React.FC<{
   onSave: () => void;
   onClose: () => void;
   children: React.ReactNode;
-}> = ({ title, subtitle, total, currencyCode, onSave, onClose, children }) => (
-  <div className="fixed inset-0 z-40 flex justify-end bg-black/40" onClick={onClose}>
-    <div className="w-full max-w-[560px] h-full bg-white flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
-      <div className="flex items-center justify-between px-6 py-4 border-b border-[#E4E7EC]">
-        <div>
-          <h3 className="text-base font-semibold text-[#182339]">{title}</h3>
-          <p className="text-xs text-[#697691]">{subtitle}</p>
+}> = ({ title, subtitle, total, currencyCode, onSave, onClose, children }) => {
+  useEscapeKey(onClose);
+  return (
+    <div className="fixed inset-0 z-40 flex justify-end bg-black/40" onClick={onClose}>
+      <div className="w-full max-w-[560px] h-full bg-white flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E4E7EC]">
+          <div>
+            <h3 className="text-base font-semibold text-[#182339]">{title}</h3>
+            <p className="text-xs text-[#697691]">{subtitle}</p>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Close" className="p-2 rounded hover:bg-[#F1F3F7]">
+            <X size={20} />
+          </button>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close" className="p-2 rounded hover:bg-[#F1F3F7]">
-          <X size={20} />
-        </button>
-      </div>
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">{children}</div>
-      <div className="flex items-center justify-between px-6 py-4 border-t border-[#E4E7EC]">
-        <div>
-          <div className="text-xs text-[#697691]">Total</div>
-          <div className="text-lg font-bold text-[#7C1AEE]">{total > 0 ? rupees(total, currencyCode) : '₹0'}</div>
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">{children}</div>
+        <div className="flex items-center justify-between px-6 py-4 border-t border-[#E4E7EC]">
+          <div>
+            <div className="text-xs text-[#697691]">Total</div>
+            <div className="text-lg font-bold text-[#7C1AEE]">{total > 0 ? rupees(total, currencyCode) : '₹0'}</div>
+          </div>
+          <button type="button" onClick={onSave} className="px-10 py-2.5 rounded-lg bg-[#7C1AEE] text-white font-medium hover:opacity-90">
+            Save
+          </button>
         </div>
-        <button type="button" onClick={onSave} className="px-10 py-2.5 rounded-lg bg-[#7C1AEE] text-white font-medium hover:opacity-90">
-          Save
-        </button>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const OptionCard: React.FC<{ selected: boolean; onClick: () => void; children: React.ReactNode }> = ({ selected, onClick, children }) => (
   <button
@@ -129,7 +133,7 @@ const PerTravellerPanel: React.FC<{
   return (
     <PanelShell
       title={kind === 'baggage' ? 'Extra baggage' : 'Meals'}
-      subtitle={`${route.origin} → ${route.destination}${kind === 'baggage' && route.checkInBaggage ? ` · Included: ${route.checkInBaggage}` : ''}`}
+      subtitle={`${route.origin} → ${route.destination}${kind === 'baggage' && route.checkInBaggage ? ` · Included: ${baggageText(route.checkInBaggage)}` : ''}`}
       total={total}
       currencyCode={currencyCode}
       onSave={() => onSave(picks)}
@@ -478,8 +482,8 @@ export const AddOnsSectionWeb: React.FC<{
         title="Baggage"
         subtitle="Adding baggage now is cheaper than at the airport."
         included={[
-          { label: 'Carry-on bag', value: route.handBaggage ?? 'Airline dependent' },
-          { label: 'Checked bag', value: route.checkInBaggage ?? 'Airline dependent' },
+          { label: 'Carry-on bag', value: route.handBaggage ? baggageText(route.handBaggage) : 'Airline dependent' },
+          { label: 'Checked bag', value: route.checkInBaggage ? baggageText(route.checkInBaggage) : 'Airline dependent' },
         ]}
         cta="Add extra baggage"
         category="baggage"

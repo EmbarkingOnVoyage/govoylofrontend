@@ -87,7 +87,7 @@ export const TravellerFormWeb: React.FC<{
 
       <div>
         <h5 className="text-sm font-semibold text-[#182339] mb-2">General information</h5>
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Field label="First name">
             <input className={inputClass} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
           </Field>
@@ -95,7 +95,7 @@ export const TravellerFormWeb: React.FC<{
             <input className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} />
           </Field>
         </div>
-        <div className="grid grid-cols-3 gap-3 mt-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
           <Field label="Gender">
             <select className={inputClass} value={gender} onChange={(e) => setGender(e.target.value)}>
               <option value="">Select</option>
@@ -123,7 +123,7 @@ export const TravellerFormWeb: React.FC<{
           Needed for international flights.
           {existingPassport && ` Passport on file: ${existingPassport.maskedPassportNumber} — enter the full number only to change it.`}
         </p>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Field label="Passport number">
             <input className={inputClass} value={passportNumber} onChange={(e) => setPassportNumber(e.target.value)} />
           </Field>

@@ -39,6 +39,9 @@ export interface IOtpWebStyles {
   otpInput: (isFilled: boolean, hasError: boolean) => string; // Dynamic generator
   errorText: string;
   submitButton: string;
+  // Solid once every digit is in; pale while the code is incomplete.
+  submitButtonReady: string;
+  submitButtonIncomplete: string;
   disabledButton: string;
   submitButtonText: string;
   spamText: string;
@@ -172,7 +175,9 @@ export const web: IOtpWebStyles = {
     }
   `.replace(/\s+/g, ' ').trim(),
   errorText: "text-red-500 text-xs font-medium self-start mb-3 ml-1",
-  submitButton: "w-full h-[54px] bg-[#CEAAFF] hover:bg-[#bfa2f0] text-white font-semibold rounded-xl transition-all duration-200 shadow-md flex items-center justify-center text-base cursor-pointer mb-6 active:scale-[0.99]",
+  submitButton: "w-full h-[54px] text-white font-semibold rounded-xl transition-all duration-200 shadow-md flex items-center justify-center text-base cursor-pointer mb-6 active:scale-[0.99]",
+  submitButtonReady: "bg-[#7F1DFF] hover:bg-[#6A14D9]",
+  submitButtonIncomplete: "bg-[#CEAAFF] hover:bg-[#bfa2f0]",
   disabledButton: "bg-gray-200 text-gray-400 opacity-60 cursor-not-allowed active:scale-100 shadow-none",
   submitButtonText: "text-white text-base font-semibold",
   spamText: "text-xs text-gray-500 text-center leading-relaxed px-3",

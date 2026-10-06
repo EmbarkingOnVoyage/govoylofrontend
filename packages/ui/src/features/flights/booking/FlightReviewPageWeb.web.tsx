@@ -7,7 +7,7 @@ import { useReleaseHoldMobile } from '../useReleaseHoldMobile';
 import { useTravellersMobile, type Traveler } from '../../profile/useTravellersMobile';
 import { useCustomerProfileMobile } from '../../profile/useCustomerProfileMobile';
 import { useCreateRazorpayOrderMobile, useVerifyRazorpayPaymentMobile } from '../../payments/useRazorpayPaymentMobile';
-import { openRazorpayCheckout } from '../../payments/razorpayCheckout.web';
+import { RazorpayCheckoutError, openRazorpayCheckout } from '../../payments/razorpayCheckout.web';
 import {
   CABIN_CLASS_LABELS,
   formatPrice,
@@ -40,6 +40,7 @@ import { FareRulesPanelWeb } from '../results/FareRulesPanelWeb.web';
 import { useAirportLookup } from '../results/useAirportLookup';
 import { TravellerFormWeb } from './TravellerFormWeb.web';
 import { AddOnsSectionWeb, type AddOnLegRoute, type AddOnTraveller } from './AddOnsSectionWeb.web';
+import { useEscapeKey } from '../useEscapeKey.web';
 
 const inputClass =
   'w-full px-3 py-2 rounded-lg border border-[#D5DAE3] text-sm text-[#182339] bg-white focus:outline-none focus:border-[#7C1AEE]';
@@ -94,7 +95,7 @@ const LegCard: React.FC<{ leg: FlightOffer; label?: string; cityFor: (c: string)
   const last = leg.segments[leg.segments.length - 1];
   return (
     <div className="rounded-xl border border-[#E4E7EC] p-4">
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 mb-3">
         <div className="text-sm font-semibold text-[#182339]">
           {label && <span className="text-[#7C1AEE] uppercase text-xs mr-2">{label}</span>}
           {cityFor(first.origin)} → {cityFor(last.destination)}
@@ -108,7 +109,7 @@ const LegCard: React.FC<{ leg: FlightOffer; label?: string; cityFor: (c: string)
         <React.Fragment key={index}>
           <div className="flex items-center gap-4 text-sm">
             <AirlineLogoWeb airlineCode={segment.airlineCode} size={24} />
-            <div className="w-36 text-xs text-[#4C5973]">
+            <div className="w-28 sm:w-36 text-xs text-[#4C5973]">
               {segment.airlineName || leg.airlineName} · {segment.airlineCode} {segment.flightNumber}
             </div>
             <div className="w-24">
@@ -172,6 +173,8 @@ export const FlightReviewPageWeb: React.FC<{
   const [payState, setPayState] = useState<PayState>('idle');
   const [error, setError] = useState('');
   const [priceChange, setPriceChange] = useState<{ from: number; to: number; resolve: (ok: boolean) => void } | null>(null);
+
+  useEscapeKey(() => setShowRules(false), showRules);
 
   // Contact details start from the profile.
   useEffect(() => {
@@ -370,7 +373,15 @@ export const FlightReviewPageWeb: React.FC<{
       });
     } catch (err) {
       setPayState('idle');
-      setError((err as Error)?.message || 'Payment was not completed.');
+      // Razorpay's own failure text ("Please use another method") reads oddly
+      // here once its checkout has closed, so checkout outcomes get our wording.
+      setError(
+        err instanceof RazorpayCheckoutError
+          ? err.dismissed
+            ? 'Payment cancelled. Your booking was not completed — you can pay again.'
+            : "The payment didn't go through. Please try again or use another payment method."
+          : (err as Error)?.message || 'Payment was not completed.'
+      );
       await releaseSilently(held);
     }
   };
@@ -381,8 +392,8 @@ export const FlightReviewPageWeb: React.FC<{
     .filter((g) => g.amount > 0);
 
   return (
-    <div className="max-w-[1280px] mx-auto px-6 py-6 grid grid-cols-[300px_1fr] gap-5 items-start">
-      <aside className="bg-white rounded-xl border border-[#E4E7EC] p-5 sticky top-4 space-y-2 text-sm">
+    <div className="max-w-[1280px] mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5 items-start">
+      <aside className="bg-white rounded-xl border border-[#E4E7EC] p-5 lg:sticky lg:top-4 space-y-2 text-sm">
         <h3 className="text-base font-semibold text-[#182339] mb-2">Fare summary</h3>
         {baseKnown ? (
           <>
@@ -470,7 +481,7 @@ export const FlightReviewPageWeb: React.FC<{
                   {byType[type].length === 0 ? (
                     <p className="text-xs text-[#697691]">No saved {PAX_LABELS[type].plural} yet. Add one below.</p>
                   ) : (
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
                       {byType[type].map((t) => {
                         const selected = selectedIds.has(t.id);
                         const note = ageChecks.get(t.id)?.note;
@@ -491,7 +502,7 @@ export const FlightReviewPageWeb: React.FC<{
                               {selected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
                             </button>
                             <button type="button" onClick={() => toggle(t)} className="flex-1 min-w-0 text-left">
-                              <div className="text-sm font-medium text-[#182339] truncate">
+                              <div className="text-sm font-medium text-[#182339] break-words">
                                 {t.firstName} {t.lastName}
                               </div>
                               <div className="text-[11px] text-[#697691]">
@@ -541,7 +552,7 @@ export const FlightReviewPageWeb: React.FC<{
         </Section>
 
         <Section title="Contact details" subtitle="Your booking confirmation and e-ticket are sent here.">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <label className="block">
               <span className="block text-xs font-medium text-[#4C5973] mb-1">Email address</span>
               <input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -568,7 +579,7 @@ export const FlightReviewPageWeb: React.FC<{
             <span className="text-xs text-[#697691]">Add GST to claim a tax credit</span>
           </label>
           {useGst && (
-            <div className="grid grid-cols-3 gap-3 mt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
               <input className={inputClass} placeholder="GSTIN" maxLength={15} value={gstNumber} onChange={(e) => setGstNumber(e.target.value.toUpperCase())} />
               <input className={inputClass} placeholder="Company name" maxLength={35} value={gstName} onChange={(e) => setGstName(e.target.value)} />
               <input className={inputClass} placeholder="Company address" value={gstAddress} onChange={(e) => setGstAddress(e.target.value)} />
@@ -576,12 +587,12 @@ export const FlightReviewPageWeb: React.FC<{
           )}
         </section>
 
-        <div className="bg-white rounded-xl border border-[#E4E7EC] p-5 flex items-center justify-between gap-4">
+        <div className="bg-white rounded-xl border border-[#E4E7EC] p-5 flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="text-xs text-[#697691]">Total</div>
             <div className="text-xl font-bold text-[#7C1AEE]">{money(totalAmount)}</div>
           </div>
-          <div className="flex items-center gap-4 min-w-0">
+          <div className="flex flex-wrap items-center justify-end gap-4 min-w-0">
             {error && <p className="text-sm text-[#C8102E] max-w-[420px]">{error}</p>}
             {busy && <span className="text-sm text-[#4C5973] whitespace-nowrap">{PAY_STATE_TEXT[payState as Exclude<PayState, 'idle'>]}</span>}
             <button

@@ -51,19 +51,32 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate, variant = "p
     }
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const text = e.target.value;
-    const cleanText = text.replace(/[^0-9]/g, "");
-    if (!cleanText) return;
-
+  // Fills boxes from `index` with the given digits (one typed digit, or a
+  // whole pasted / autofilled code) and moves focus past the last one.
+  const fillDigits = (digits: string, index: number) => {
+    if (!digits) return;
     const newOtp = [...otp];
-    newOtp[index] = cleanText.substring(cleanText.length - 1);
+    const chars = digits.slice(0, 6 - index).split("");
+    chars.forEach((d, offset) => (newOtp[index + offset] = d));
     setOtp(newOtp);
     setErrorMessage("");
+    inputRefs.current[Math.min(index + chars.length, 5)]?.focus();
+  };
 
-    if (index < 5 && newOtp[index] !== "") {
-      inputRefs.current[index + 1]?.focus();
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const cleanText = e.target.value.replace(/[^0-9]/g, "");
+    if (!cleanText) return;
+    // A whole code arrives at once from the browser's one-time-code autofill;
+    // otherwise the newest typed digit replaces this box.
+    if (cleanText.length >= 6) fillDigits(cleanText, 0);
+    else fillDigits(cleanText.slice(-1), index);
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>, index: number) => {
+    const pasted = e.clipboardData.getData("text").replace(/[^0-9]/g, "");
+    if (!pasted) return;
+    e.preventDefault();
+    fillDigits(pasted, pasted.length >= 6 ? 0 : index);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
@@ -104,6 +117,7 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate, variant = "p
   };
 
   const isWorking = verifyMutation.isPending;
+  const isComplete = otp.every((d) => d !== "");
 
   // Sends a fresh code (which replaces the previous one) once the countdown has
   // run out, then restarts the countdown.
@@ -154,9 +168,11 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate, variant = "p
                   inputMode="numeric"
                   ref={(el) => (inputRefs.current[i] = el)}
                   className={s.otpInput(digit !== "", !!errorMessage)} // 🔑 Dynamic function call
-                  maxLength={1}
+                  maxLength={i === 0 ? 6 : 1}
+                  autoComplete={i === 0 ? "one-time-code" : "off"}
                   value={digit}
                   onChange={(e) => handleChange(e, i)}
+                  onPaste={(e) => handlePaste(e, i)}
                   onKeyDown={(e) => handleKeyDown(e, i)}
                   disabled={isWorking}
                   placeholder="-"
@@ -169,7 +185,9 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate, variant = "p
 
             <button 
               type="submit"
-              className={`${s.submitButton} ${isWorking ? s.disabledButton : ""}`} 
+              className={`${s.submitButton} ${
+                isWorking ? s.disabledButton : isComplete ? s.submitButtonReady : s.submitButtonIncomplete
+              }`}
               disabled={isWorking}
             >
               <span className={s.submitButtonText}>

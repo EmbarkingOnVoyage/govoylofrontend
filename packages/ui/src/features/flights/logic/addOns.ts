@@ -6,6 +6,11 @@ function rupees(amount: number, currencyCode: string): string {
   return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 }
 
+// Suppliers sometimes send a bare number of kilos ("5") for an allowance.
+export function baggageText(value: string): string {
+  return /^\d+(\.\d+)?$/.test(value.trim()) ? `${value.trim()} kg` : value;
+}
+
 // The same option can be offered on every segment of a connecting leg; one
 // entry per description and price is enough, cheapest first.
 export function uniqueOptions(options: AncillaryOption[]): AncillaryOption[] {
