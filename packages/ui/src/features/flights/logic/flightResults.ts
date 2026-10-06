@@ -124,6 +124,19 @@ export const CABIN_TIER_LABELS: Record<CabinTierId, string> = {
   business: 'Business',
 };
 
+// A customer-facing name for a supplier fare type — same labels as the
+// e-ticket (PUBLISHED -> "Regular Fare", OFFER_FARE_WITH(OUT)_PNR -> "Offer
+// Fare"); anything else is title-cased.
+export function fareDisplayName(fare: FareOption): string {
+  const id = fare.fareIdentifier?.trim();
+  if (!id) return 'Regular Fare';
+  if (id === 'PUBLISHED') return 'Regular Fare';
+  if (id.startsWith('OFFER_FARE')) return 'Offer Fare';
+  const words = id.toLowerCase().split(/[_\s]+/).filter(Boolean);
+  const name = words.map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+  return /fare$/i.test(name) ? name : `${name} Fare`;
+}
+
 export function cabinTierForFare(fare: FareOption): CabinTierId {
   const weightMatch = fare.checkInBaggage?.match(/(\d+)/);
   const weightKg = weightMatch ? parseInt(weightMatch[1], 10) : 0;
@@ -437,7 +450,7 @@ export interface TimeSelection {
   arrival: TimeBucketId | null;
 }
 
-export type StopBucketId = 'nonstop' | 'onestop' | 'threeplus';
+export type StopBucketId = 'nonstop' | 'onestop' | 'twoplus' | 'threeplus';
 
 export const STOP_BUCKETS: { id: StopBucketId; label: string; matches: (stopCount: number) => boolean }[] = [
   { id: 'nonstop', label: 'Non Stop', matches: (s) => s === 0 },
@@ -447,14 +460,23 @@ export const STOP_BUCKETS: { id: StopBucketId; label: string; matches: (stopCoun
   { id: 'threeplus', label: '3+ Stop', matches: (s) => s >= 3 },
 ];
 
+// The web results page's grouping (Web Dev Figma: Non-Stop / 1 Stop / 2+ Stops).
+export const STOP_BUCKETS_WEB: { id: StopBucketId; label: string; matches: (stopCount: number) => boolean }[] = [
+  STOP_BUCKETS[0],
+  STOP_BUCKETS[1],
+  { id: 'twoplus', label: '2+ Stops', matches: (s) => s >= 2 },
+];
+
+const ALL_STOP_BUCKETS = [...STOP_BUCKETS, STOP_BUCKETS_WEB[2]];
+
 export function offerMatchesAnyStopBucket(offer: FlightOffer, buckets: Set<StopBucketId>): boolean {
   if (buckets.size === 0) return true;
   const stopCount = offer.segments.length - 1;
-  return STOP_BUCKETS.some((b) => buckets.has(b.id) && b.matches(stopCount));
+  return ALL_STOP_BUCKETS.some((b) => buckets.has(b.id) && b.matches(stopCount));
 }
 
 export function cheapestForStopBucket(offers: FlightOffer[], bucket: StopBucketId): number | null {
-  const def = STOP_BUCKETS.find((b) => b.id === bucket)!;
+  const def = ALL_STOP_BUCKETS.find((b) => b.id === bucket)!;
   const matching = offers.filter((o) => def.matches(o.segments.length - 1));
   return matching.length === 0 ? null : Math.min(...matching.map((o) => o.totalAmount));
 }
@@ -470,6 +492,11 @@ export interface CombinedFilterState {
   durationMax: number | null;
 }
 
+// Some fare on the offer includes checked baggage (e.g. "15 KG", "1 pcs").
+export function hasCheckInBaggage(offer: FlightOffer): boolean {
+  return (offer.fares ?? []).some((fare) => /[1-9]/.test(fare.checkInBaggage ?? ''));
+}
+
 export function applyCombinedFilters(
   offers: FlightOffer[],
   state: CombinedFilterState,
@@ -478,6 +505,7 @@ export function applyCombinedFilters(
   return offers
     .filter((o) => offerMatchesAnyStopBucket(o, state.stops))
     .filter((o) => !state.hideNonRefundable || o.refundable)
+    .filter((o) => !state.cabinCheckinBaggage || hasCheckInBaggage(o))
     .filter((o) => {
       if (!state.time.departure) return true;
       const hour = new Date(o.segments[0].departureDateTime).getHours();

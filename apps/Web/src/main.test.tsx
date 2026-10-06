@@ -18,7 +18,7 @@ vi.mock('@workspace/ui', async () => {
   const queryClient = new QueryClient();
   return {
     AppProvider: ({ children }: { children: React.ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      React.createElement(QueryClientProvider, { client: queryClient }, children)
     ),
     AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
     AuthModal: () => null,

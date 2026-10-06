@@ -11,7 +11,7 @@ import { summaryFromRequest } from './flightSearchParams';
 import { AirportSearchDropdown } from './AirportSearchDropdown.web';
 import { FareCalendarDropdown } from './FareCalendarDropdown.web';
 import { TravellersClassDropdown, type CabinClass, type TravellersClassValues } from './TravellersClassDropdown.web';
-import type { Airport } from './airports';
+import { AIRPORTS, type Airport } from './airports';
 import govoyloLogo from '../../assets/images/govoylo-logo.svg';
 import iconFlights from '../../assets/images/icon-flights.png';
 import iconHotels from '../../assets/images/icon-hotels.png';
@@ -40,6 +40,16 @@ function formatDisplayDate(date: Date): string {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   return `${day}/${month}/${date.getFullYear()}`;
+}
+
+// A search's travel date (midnight UTC ISO) as the form's DD/MM/YYYY.
+function displayDateFromIso(iso: string | undefined): string {
+  const match = iso?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : '';
+}
+
+function airportForCode(code: string): Airport {
+  return AIRPORTS.find((a) => a.code === code) ?? { code, city: code, state: '', name: code };
 }
 
 function formatShortDate(display: string): string {
@@ -75,29 +85,45 @@ type ActiveDropdown =
 export interface FlightSearchFormWebProps {
   onResults: (response: FlightSearchResponse, summary: FlightSearchSummary) => void;
   onNavigate?: (route: string) => void;
+  // A previous search to start from ("Modify search" on the results page).
+  initialSummary?: FlightSearchSummary | null;
 }
 
-export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({ onResults, onNavigate }) => {
+export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({ onResults, onNavigate, initialSummary }) => {
+  const initial = initialSummary?.request;
+  const initialSegments = initial?.segments ?? [];
   const searchFlights = useSearchFlightsMobile();
 
   const [activeDropdown, setActiveDropdown] = useState<ActiveDropdown>(null);
-  const [tripType, setTripType] = useState<TripType>('OneWay');
+  const [tripType, setTripType] = useState<TripType>(initial?.tripType ?? 'OneWay');
 
-  const [origin, setOrigin] = useState<Airport | null>(null);
-  const [destination, setDestination] = useState<Airport | null>(null);
-  const [departureDate, setDepartureDate] = useState('');
-  const [returnDate, setReturnDate] = useState('');
+  const [origin, setOrigin] = useState<Airport | null>(initialSegments[0] ? airportForCode(initialSegments[0].origin) : null);
+  const [destination, setDestination] = useState<Airport | null>(
+    initialSegments[0] ? airportForCode(initialSegments[0].destination) : null
+  );
+  const [departureDate, setDepartureDate] = useState(displayDateFromIso(initialSegments[0]?.travelDate));
+  const [returnDate, setReturnDate] = useState(
+    initial?.tripType === 'RoundTrip' ? displayDateFromIso(initialSegments[1]?.travelDate) : ''
+  );
 
-  const [multiCitySegments, setMultiCitySegments] = useState<MultiCitySegment[]>([
-    { origin: null, destination: null, date: '' },
-    { origin: null, destination: null, date: '' },
-  ]);
+  const [multiCitySegments, setMultiCitySegments] = useState<MultiCitySegment[]>(
+    initial?.tripType === 'MultiCity'
+      ? initialSegments.map((segment) => ({
+          origin: airportForCode(segment.origin),
+          destination: airportForCode(segment.destination),
+          date: displayDateFromIso(segment.travelDate),
+        }))
+      : [
+          { origin: null, destination: null, date: '' },
+          { origin: null, destination: null, date: '' },
+        ]
+  );
 
-  const [adultCount, setAdultCount] = useState(1);
-  const [childCount, setChildCount] = useState(0);
-  const [infantCount, setInfantCount] = useState(0);
-  const [cabinClass, setCabinClass] = useState<CabinClass>('Economy');
-  const [nonStopOnly, setNonStopOnly] = useState(false);
+  const [adultCount, setAdultCount] = useState(initial?.adultCount ?? 1);
+  const [childCount, setChildCount] = useState(initial?.childCount ?? 0);
+  const [infantCount, setInfantCount] = useState(initial?.infantCount ?? 0);
+  const [cabinClass, setCabinClass] = useState<CabinClass>(initial?.cabinClass ?? 'Economy');
+  const [nonStopOnly, setNonStopOnly] = useState(initialSummary?.nonStopOnly ?? false);
 
   const [selectedFare, setSelectedFare] = useState<'Student' | 'SeniorCitizen' | null>(null);
   const [formError, setFormError] = useState('');

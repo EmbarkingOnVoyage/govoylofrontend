@@ -3,7 +3,7 @@
 import "./global.css";
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AppProvider,
@@ -15,6 +15,7 @@ import {
   BookingDashboard,
   DashboardLayout,
   FlightSearchFormWeb,
+  decodeFlightSearch,
   encodeFlightSearch,
   flightSearchQueryKey,
   useBookingSession,
@@ -55,6 +56,7 @@ const MyTripsPlaceholder: React.FC = () => <div>My Trips page not built yet.</di
 const AppWorkflowRouter: React.FC = () => {
   const { navigateByRule } = useWebFlowNavigation();
   const navigate = useNavigate();
+  const { search } = useLocation();
   const queryClient = useQueryClient();
 
   // Several screen components still type their onNavigate prop as a plain
@@ -70,6 +72,9 @@ const AppWorkflowRouter: React.FC = () => {
           path="/"
           element={
             <FlightSearchFormWeb
+              // "Modify search" comes back here with the search in the URL.
+              key={search}
+              initialSummary={decodeFlightSearch(search)}
               onNavigate={onNavigateLoose}
               onResults={(response, summary) => {
                 // Seed the results page's query so it doesn't search twice.
@@ -86,7 +91,7 @@ const AppWorkflowRouter: React.FC = () => {
         <Route
           path="/flights/results"
           element={
-            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
+            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
               <FlightResultsRoute />
             </DashboardLayout>
           }

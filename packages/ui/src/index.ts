@@ -121,6 +121,11 @@ export { useAirportsMobile, type AirportResult } from './features/flights/useAir
 export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';
 export { useHolidaysWeb } from './features/flights/useHolidaysWeb';
 export { encodeFlightSearch, decodeFlightSearch, summaryFromRequest } from './features/flights/flightSearchParams';
+export { FlightResultsPageWeb } from './features/flights/results/FlightResultsPageWeb.web';
+export type { FlightResultsChoice } from './features/flights/results/useFlightResultsFlow';
+export { FareRulesPanelWeb } from './features/flights/results/FareRulesPanelWeb.web';
+export { AirlineLogoWeb } from './features/flights/results/AirlineLogoWeb.web';
+export { useAirportLookup } from './features/flights/results/useAirportLookup';
 export type { FlightBookingSelection } from './features/flights/flightBookingSession';
 export {
   useBookingSession,

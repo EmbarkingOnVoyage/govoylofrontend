@@ -69,7 +69,7 @@ import { styles } from './FlightResultsScreen.styles';
 // Metro actually resolves a local RN import like this to an asset module id
 // (number), which is what Image.source expects — cast to match the runtime type.
 import insuranceBannerSrc from '../../assets/images/insurance-banner.png';
-import { AIRLINE_LOGO_XML } from '../../assets/airlines/airlineLogos';
+import { AIRLINE_LOGO_XML } from '@workspace/ui/src/assets/airlines/airlineLogos';
 const insuranceBanner = insuranceBannerSrc as unknown as number;
 
 // Falls back to a code-only stand-in when the airport isn't in the app's small

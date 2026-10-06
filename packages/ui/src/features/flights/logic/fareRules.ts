@@ -1,6 +1,6 @@
 // Pure fare-rule logic shared by the mobile Fare rules modal and the web
 // Fare rules popup: turns a fare's policies into the banded timeline rows.
-import type { FareRule, FareRulePolicy } from '../useFareRulesMobile';
+import type { FareRule, FareRulePolicy, FareRulesResponse } from '../useFareRulesMobile';
 
 export type FareRuleTab = 'Cancellation' | 'DateChange';
 
@@ -80,4 +80,72 @@ export function textRulesFor(rules: FareRule[], tab: FareRuleTab): FareRule[] {
     if (!mentionsCancel && !mentionsChange) return true;
     return tab === 'Cancellation' ? mentionsCancel : mentionsChange;
   });
+}
+
+// One flight (leg) whose fare rules are shown.
+export interface FareRulesLeg {
+  offerId: string;
+  label: string;
+  origin: string;
+  destination: string;
+  airlineName: string;
+  airlineCode?: string;
+  flightNumbers: string[];
+  departureDateTime: string;
+  // Every flight of the leg — a combined return/multi-city fare is one offer
+  // whose rules come back per trip, and each trip gets its own tab.
+  segments?: { origin: string; destination: string; departureDateTime: string }[];
+  // The fare picked for this leg, if any.
+  fareId?: string | null;
+}
+
+// One tab in the flight strip: a leg, or one trip of a combined fare.
+export interface RuleTab {
+  key: string;
+  offerId: string;
+  route: string | null;
+  label: string;
+  origin: string;
+  destination: string;
+  departureDateTime: string;
+}
+
+// One tab per leg, or per trip when a single offer's rules come back for
+// several routes (a combined return or multi-city fare).
+export function buildRuleTabs(legs: FareRulesLeg[], data: FareRulesResponse | undefined): RuleTab[] {
+  const result: RuleTab[] = [];
+  legs.forEach((leg) => {
+    const routes = [...new Set((data?.legs.find((l) => l.offerId === leg.offerId)?.policies ?? []).map((p) => p.route))];
+    if (routes.length <= 1) {
+      result.push({
+        key: leg.offerId,
+        offerId: leg.offerId,
+        route: routes[0] ?? null,
+        label: leg.label,
+        origin: leg.origin,
+        destination: leg.destination,
+        departureDateTime: leg.departureDateTime,
+      });
+      return;
+    }
+    routes.forEach((route) => {
+      const [origin, destination] = route.split('-');
+      const segment = leg.segments?.find((s) => s.origin === origin);
+      result.push({
+        key: `${leg.offerId}-${route}`,
+        offerId: leg.offerId,
+        route,
+        label: '',
+        origin: origin ?? '',
+        destination: destination ?? '',
+        departureDateTime: segment?.departureDateTime ?? '',
+      });
+    });
+  });
+  // Leg labels (Onward/Return) only fit when each tab is a whole leg.
+  const usesLegLabels = result.length === legs.length;
+  return result.map((tab, index) => ({
+    ...tab,
+    label: usesLegLabels && tab.label ? tab.label : `Flight-${index + 1}`,
+  }));
 }
