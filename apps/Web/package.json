@@ -6,8 +6,8 @@
     "dev": "vite",
     "dev:mobile-preview": "vite --mode mobile",
     "dev:uat": "vite --mode uat",
-    "build": "tsc && vite build",
-    "build:uat": "tsc && vite build --mode uat",
+    "build": "tsc -p . && vite build",
+    "build:uat": "tsc -p . && vite build --mode uat",
     "test": "vitest"
   },
   "dependencies": {
