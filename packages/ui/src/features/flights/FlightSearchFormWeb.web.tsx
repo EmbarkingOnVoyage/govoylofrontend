@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeftRight, Calendar, Menu, PlaneTakeoff, PlaneLanding, ShieldCheck, User, Users, X, ChevronRight } from 'lucide-react';
+import { ArrowLeftRight, Calendar, PlaneTakeoff, PlaneLanding, ShieldCheck, Users, X, ChevronRight } from 'lucide-react';
 import {
   useSearchFlightsMobile,
   type TripType,
@@ -12,7 +12,7 @@ import { AirportSearchDropdown } from './AirportSearchDropdown.web';
 import { FareCalendarDropdown } from './FareCalendarDropdown.web';
 import { TravellersClassDropdown, type CabinClass, type TravellersClassValues } from './TravellersClassDropdown.web';
 import { AIRPORTS, type Airport } from './airports';
-import govoyloLogo from '../../assets/images/govoylo-logo.svg';
+import { MenuBar } from '../../components/layout/MenuBar';
 import iconFlights from '../../assets/images/icon-flights.png';
 import iconHotels from '../../assets/images/icon-hotels.png';
 import iconFlightsHotels from '../../assets/images/icon-flights-hotels.png';
@@ -336,25 +336,8 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({ onResu
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Top nav */}
-      <div className="bg-white">
-        <div className="max-w-[1440px] mx-auto px-8 h-16 flex items-center justify-between">
-          <img src={govoyloLogo} alt="goVoylo" className="h-8 w-auto" />
-          <div className="flex items-center gap-6 text-sm font-medium text-[#182339]">
-            <span className="flex items-center gap-1.5">🇮🇳 INR</span>
-            <span className="cursor-pointer hover:text-[#7C1AEE]">Help &amp; support</span>
-            <button
-              type="button"
-              onClick={() => onNavigate?.('/signin')}
-              className="flex items-center gap-1.5 hover:text-[#7C1AEE]"
-            >
-              <User size={16} />
-              Log in/Sign up
-            </button>
-            <Menu size={20} className="cursor-pointer" />
-          </div>
-        </div>
-      </div>
+      {/* Same site header as every other page: sign-in, account menu, My Trips. */}
+      <MenuBar onNavigate={onNavigate} />
 
       {/* Hero banner */}
       <div

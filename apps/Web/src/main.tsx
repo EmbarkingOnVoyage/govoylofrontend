@@ -24,6 +24,7 @@ import { useWebFlowNavigation } from "./navigation/useWebFlowNavigation";
 import { RequireAuth } from "./routes/RequireAuth";
 import { FlightResultsRoute } from "./routes/FlightResultsRoute";
 import { FlightReviewRoute, BookingConfirmedRoute } from "./routes/FlightReviewRoute";
+import { MyTripsRoute, TripDetailsRoute } from "./routes/MyTripsRoute";
 
 // 1. Contract Enforcement: Suppress platform-specific mobile warnings in the browser console
 if (process.env.NODE_ENV === "development") {
@@ -42,8 +43,6 @@ if (process.env.NODE_ENV === "development") {
     originalWarn(...args);
   };
 }
-
-const MyTripsPlaceholder: React.FC = () => <div>My Trips page not built yet.</div>;
 
 const AppWorkflowRouter: React.FC = () => {
   const { navigateByRule } = useWebFlowNavigation();
@@ -111,9 +110,9 @@ const AppWorkflowRouter: React.FC = () => {
         <Route
           path="/my-trips"
           element={
-            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
+            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
               <RequireAuth>
-                <MyTripsPlaceholder />
+                <MyTripsRoute />
               </RequireAuth>
             </DashboardLayout>
           }
@@ -121,9 +120,9 @@ const AppWorkflowRouter: React.FC = () => {
         <Route
           path="/my-trips/:tripBookingId"
           element={
-            <DashboardLayout showSidebar={false} onNavigate={onNavigateLoose}>
+            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
               <RequireAuth>
-                <MyTripsPlaceholder />
+                <TripDetailsRoute />
               </RequireAuth>
             </DashboardLayout>
           }

@@ -5,8 +5,6 @@ import {
   useTripBookingDetailsMobile,
   useCancelTripBookingMobile,
   type TripBooking,
-  type TripBookingDetails,
-  type TripBookingSegment,
 } from '@workspace/ui';
 import { styles, RED } from './TripDetailsScreen.styles';
 import { PURPLE, MUTED, GREEN } from './MyTripsScreen.styles';
@@ -14,6 +12,7 @@ import { AirlineLogo } from './FlightResultsScreen';
 import { CancelBookingModal } from './CancelBookingModal';
 import { downloadETicket } from './downloadETicket';
 import {
+  flightLines,
   STATUS_ID_FAILED,
   STATUS_ID_HELD,
   STATUS_ID_TICKETING,
@@ -29,60 +28,6 @@ import {
 interface TripDetailsScreenProps {
   tripBookingId: string;
   onBack: () => void;
-}
-
-interface FlightLine {
-  key: string;
-  legIndex: number;
-  airlineCode: string;
-  airlineName: string;
-  flightNumber: string;
-  title: string;
-  meta: string;
-}
-
-// One line per leg: the supplier's segments when it answered (times, stops,
-// duration), otherwise the booking's own legs (date only).
-function flightLines(details: TripBookingDetails): FlightLine[] {
-  const { booking, segments } = details;
-  if (segments.length > 0) {
-    const byLeg = new Map<number, TripBookingSegment[]>();
-    segments.forEach((s) => byLeg.set(s.legIndex, [...(byLeg.get(s.legIndex) ?? []), s]));
-    return [...byLeg.entries()]
-      .sort(([a], [b]) => a - b)
-      .map(([legIndex, segs]) => {
-        const first = segs[0];
-        const last = segs[segs.length - 1];
-        const stops = segs.length - 1;
-        // Flying time only: departure/arrival are each airport's local time, so
-        // the gap between them isn't a real duration across time zones.
-        const duration = formatDuration(segs.reduce((sum, s) => sum + s.durationMinutes, 0));
-        return {
-          key: `seg-${legIndex}`,
-          legIndex,
-          airlineCode: first.airlineCode,
-          airlineName: first.airlineName,
-          flightNumber: segs.map((s) => s.flightNumber).join(', '),
-          title: `${first.origin} ${formatTime24(first.departureDateTime)} – ${last.destination} ${formatTime24(
-            last.arrivalDateTime
-          )}`,
-          meta: [formatShortDate(first.departureDateTime), stops === 0 ? 'Non-stop' : `${stops} Stop${stops > 1 ? 's' : ''}`, duration]
-            .filter(Boolean)
-            .join(' · '),
-        };
-      });
-  }
-  return [...booking.legs]
-    .sort((a, b) => a.legIndex - b.legIndex)
-    .map((leg) => ({
-      key: `leg-${leg.legIndex}`,
-      legIndex: leg.legIndex,
-      airlineCode: leg.airlineCode,
-      airlineName: leg.airlineName,
-      flightNumber: leg.flightNumber,
-      title: `${leg.origin} → ${leg.destination}`,
-      meta: formatShortDate(leg.travelDate),
-    }));
 }
 
 function bookingStatus(booking: TripBooking): { title: string; color: string; background: string; icon: 'check' | 'x' | 'clock' } {
