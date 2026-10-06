@@ -49,9 +49,9 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [gender, setGender] = useState('Male');
+  const [gender, setGender] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
-  const [nationality, setNationality] = useState('');
+  const [nationality, setNationality] = useState('India');
   const [maritalStatus, setMaritalStatus] = useState('');
   const [anniversary, setAnniversary] = useState('');
   const [cityOfResidence, setCityOfResidence] = useState('');
@@ -65,6 +65,7 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
   const [passportNumberEdited, setPassportNumberEdited] = useState(false);
   const [panCardNumberEdited, setPanCardNumberEdited] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [showValidation, setShowValidation] = useState(false);
 
   useEffect(() => {
     if (!profile) return;
@@ -88,8 +89,77 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
     setPanCardNumberEdited(false);
   }, [profile]);
 
+function isValidDateOfBirth(value: string): boolean {
+  const match = value.trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (!match) return false;
+
+  const [, day, month, year] = match;
+
+  const dayNumber = Number(day);
+  const monthNumber = Number(month);
+  const yearNumber = Number(year);
+
+  // Create the date
+  const dob = new Date(yearNumber, monthNumber - 1, dayNumber);
+
+  // Check that the entered date is actually valid
+  if (
+    dob.getFullYear() !== yearNumber ||
+    dob.getMonth() !== monthNumber - 1 ||
+    dob.getDate() !== dayNumber
+  ) {
+    return false;
+  }
+
+  // DOB must be before today
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  dob.setHours(0, 0, 0, 0);
+
+  return dob < today;
+}
+
+function isValidPhoneNumber(value: string): boolean {
+  const phone = value.trim();
+
+  return /^[6-9]\d{9}$/.test(phone);
+}
+
   const handleSave = async () => {
     setSaveError('');
+
+  const requiredFieldsMissing =
+    !firstName.trim() ||
+    !lastName.trim() ||
+    !dateOfBirth.trim() ||
+    !nationality.trim() ||
+    !maritalStatus.trim() ||
+    !cityOfResidence.trim() ||
+    !state.trim() ||
+    !phone.trim();
+
+  if (requiredFieldsMissing) {
+    setShowValidation(true);
+    setSaveError('Please fill all required fields');
+    return;
+  }
+
+if (!isValidDateOfBirth(dateOfBirth)) {
+    setShowValidation(true);
+    setSaveError('Please enter a valid date of birth before today.');
+    return;
+  }
+
+  if (!isValidPhoneNumber(phone)) {
+    setShowValidation(true);
+    setSaveError('Please enter a valid 10-digit mobile number.');
+    return;
+  }
+
+  setShowValidation(false);
+    
     try {
       await updateProfile.mutateAsync({
         firstName,
@@ -135,21 +205,33 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
 
         <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>First name</Text>
-          <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="Text" />
+          <TextInput  style={[
+    styles.input,
+    showValidation && !firstName.trim() && styles.inputError,
+  ]} value={firstName} onChangeText={setFirstName} placeholder="Text" />
         </View>
         <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>Last name</Text>
-          <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="Text" />
+          <TextInput  style={[
+    styles.input,
+    showValidation && !lastName.trim() && styles.inputError,
+  ]} value={lastName} onChangeText={setLastName} placeholder="Text" />
         </View>
         <View style={styles.row}>
           <View style={styles.fieldWrapperHalf}>
             <Text style={styles.label}>Gender</Text>
-            <SelectField value={gender} options={GENDER_OPTIONS} onSelect={setGender} title="Select gender" />
+            <SelectField value={gender} options={GENDER_OPTIONS} onSelect={setGender} title="Select gender"  style={showValidation && !gender.trim() ? styles.inputError : undefined} />
           </View>
           <View style={styles.fieldWrapperHalf}>
             <Text style={styles.label}>Date of birth</Text>
             <TextInput
-              style={styles.input}
+              // style={styles.input}
+              style={[
+    styles.input,
+    showValidation &&
+      (!dateOfBirth.trim() || !isValidDateOfBirth(dateOfBirth)) &&
+      styles.inputError,
+  ]}
               value={dateOfBirth}
               onChangeText={setDateOfBirth}
               placeholder="DD/MM/YYYY"
@@ -257,6 +339,9 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
             }}
             placeholder="Text"
           />
+          <Text style={styles.panNote}>
+    <Text style={styles.panNoteHighlight}>NOTE:</Text> Your PAN No. will only be used for international bookings as per RBI Guidelines
+  </Text>
         </View>
 
         <TouchableOpacity

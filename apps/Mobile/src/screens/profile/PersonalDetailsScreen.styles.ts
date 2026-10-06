@@ -62,6 +62,10 @@ export const styles = StyleSheet.create({
     color: '#182339',
     backgroundColor: '#FFFFFF',
   },
+
+  inputError: {
+  borderColor: '#EF4444',
+},
   inputDisplay: {
     height: 44,
     borderWidth: 1,
@@ -149,4 +153,16 @@ export const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginTop: 8,
   },
+
+  panNote: {
+  fontSize: 12,
+  color: '#666666',
+  marginTop: 6,
+  lineHeight: 18,
+},
+
+panNoteHighlight: {
+  color: '#F97316',
+  fontWeight: '600',
+},
 });
