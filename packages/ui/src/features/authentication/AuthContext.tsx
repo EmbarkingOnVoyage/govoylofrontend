@@ -1,4 +1,5 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
+import { AUTH_BASE_URL } from "@workspace/api";
 import { authContextCache } from "./authContextCache";
 
 type AuthModalStep = "signin" | "otp";
@@ -20,8 +21,6 @@ interface AuthContextValue {
   // token itself is invalid/expired, since there's no way to recover.
   authFetch: (url: string, options?: RequestInit) => Promise<Response>;
 }
-
-const AUTH_BASE_URL = "https://localhost:5037";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 

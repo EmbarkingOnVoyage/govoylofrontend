@@ -27,6 +27,10 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate }) => {
         onNavigate("ON_NAVIGATE_TO_PROFILE");
         break;
 
+      case "BOOKINGS":
+        onNavigate("ON_NAVIGATE_TO_MY_TRIPS");
+        break;
+
       case "SIGNOUT":
         logout();
         onNavigate("ON_NAVIGATE_TO_SIGN_IN");

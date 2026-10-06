@@ -4,8 +4,10 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { SearchWidget } from "./SearchWidget";
 
 // 1. Stub out API module boundaries to control state injection profiles
-vi.mock("@workspace/api", () => {
+vi.mock("@workspace/api", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@workspace/api")>();
   return {
+    ...actual,
     useLocations: vi.fn(() => ({
       data: ["Mumbai", "Delhi", "Bangalore"],
       isLoading: false,

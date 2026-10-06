@@ -9,7 +9,7 @@ import {
 } from '@workspace/ui';
 import { styles, RED } from './TripDetailsScreen.styles';
 import { PURPLE, MUTED, GREEN } from './MyTripsScreen.styles';
-import { REFUND_DESTINATION, formatCurrency, formatShortDate, routeTitle } from './myTripsHelpers';
+import { REFUND_DESTINATION, formatCurrency, formatShortDate, routeTitle } from '@workspace/ui/src/features/flights/logic/myTrips';
 
 interface CancelBookingModalProps {
   visible: boolean;

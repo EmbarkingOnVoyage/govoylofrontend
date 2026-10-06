@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { AUTH_BASE_URL } from "@workspace/api";
 import { mobileAuthFetch } from "../authentication/mobileAuthFetch";
 
@@ -112,21 +112,40 @@ export interface FlightSearchSummary {
   nonStopOnly?: boolean;
 }
 
+export async function searchFlights(request: FlightSearchRequest): Promise<FlightSearchResponse> {
+  const response = await mobileAuthFetch(`${AUTH_BASE_URL}/api/v1/flights/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null);
+    throw new Error(errorBody?.error?.message || "Failed to search flights.");
+  }
+
+  return response.json();
+}
+
 export function useSearchFlightsMobile() {
-  return useMutation({
-    mutationFn: async (request: FlightSearchRequest): Promise<FlightSearchResponse> => {
-      const response = await mobileAuthFetch(`${AUTH_BASE_URL}/api/v1/flights/search`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(request),
-      });
+  return useMutation({ mutationFn: searchFlights });
+}
 
-      if (!response.ok) {
-        const errorBody = await response.json().catch(() => null);
-        throw new Error(errorBody?.error?.message || "Failed to search flights.");
-      }
+export function flightSearchQueryKey(request: FlightSearchRequest) {
+  return ["flight-search", request] as const;
+}
 
-      return response.json();
-    },
+// The same search as a cached query, keyed by the request — the web results
+// page reads it from the URL, so a refresh or Back re-uses a recent result
+// instead of hitting the suppliers again. Prices go stale quickly, so the
+// cache is short-lived; the hold re-prices anyway before payment.
+export function useFlightSearchQuery(request: FlightSearchRequest | null) {
+  return useQuery({
+    queryKey: request ? flightSearchQueryKey(request) : ["flight-search", null],
+    queryFn: () => searchFlights(request!),
+    enabled: !!request,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+    retry: false,
   });
 }
