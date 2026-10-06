@@ -62,6 +62,10 @@ export const styles = StyleSheet.create({
     color: '#182339',
     backgroundColor: '#FFFFFF',
   },
+
+  inputError: {
+  borderColor: '#EF4444',
+},
   inputDisplay: {
     height: 44,
     borderWidth: 1,
