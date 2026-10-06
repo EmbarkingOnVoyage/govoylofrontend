@@ -5,6 +5,15 @@ import type { TripBooking } from '@workspace/ui';
 export const STATUS_ID_FAILED = '22';
 export const STATUS_ID_HELD = '33';
 export const STATUS_ID_TICKETING = '44';
+export const STATUS_ID_TICKETED = '11';
+
+// Why there's no e-ticket to download yet, or null when there is one.
+export function eTicketUnavailableReason(booking: TripBooking): string | null {
+  if (booking.statusId === STATUS_ID_TICKETED) return null;
+  if (booking.statusId === STATUS_ID_HELD) return 'This booking is on hold. Your e-ticket will be ready once it is paid for and ticketed.';
+  if (booking.statusId === STATUS_ID_TICKETING) return 'The airline is still issuing your ticket. Please try again in a little while.';
+  return 'There is no e-ticket for this booking.';
+}
 
 export type TripTab = 'Upcoming' | 'Completed' | 'Cancelled';
 

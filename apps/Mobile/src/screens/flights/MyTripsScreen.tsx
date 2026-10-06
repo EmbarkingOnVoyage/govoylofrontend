@@ -9,11 +9,13 @@ import {
   ActivityIndicator,
   Modal,
   RefreshControl,
+  Alert,
 } from 'react-native';
 import { Bell, Search, Plane, Download, Star, ChevronRight, Luggage, Sparkles, Headset, Check } from 'lucide-react-native';
 import { useMyTripsMobile, useCustomerProfileMobile, type TripBooking } from '@workspace/ui';
 import { styles, PURPLE, MUTED } from './MyTripsScreen.styles';
 import { TripDetailsScreen } from './TripDetailsScreen';
+import { downloadETicket } from './downloadETicket';
 import {
   type TripTab,
   tripTab,
@@ -26,6 +28,7 @@ import {
   matchesSearch,
   greeting,
   isExpiredHold,
+  eTicketUnavailableReason,
 } from './myTripsHelpers';
 
 const TABS: TripTab[] = ['Upcoming', 'Completed', 'Cancelled'];
@@ -47,6 +50,23 @@ export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onExploreTrips }) 
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
   const [sortOpen, setSortOpen] = useState(false);
   const [openTripId, setOpenTripId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+  const handleDownloadTicket = async (trip: TripBooking) => {
+    const reason = eTicketUnavailableReason(trip);
+    if (reason) {
+      Alert.alert('E-ticket not ready', reason);
+      return;
+    }
+    setDownloadingId(trip.id);
+    try {
+      await downloadETicket(trip.id, trip.bookingRefNo);
+    } catch (err) {
+      Alert.alert('Could not download the e-ticket', (err as Error)?.message || 'Please try again.');
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const byTab = useMemo(() => {
     const groups: Record<TripTab, TripBooking[]> = { Upcoming: [], Completed: [], Cancelled: [] };
@@ -202,9 +222,17 @@ export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onExploreTrips }) 
             <TouchableOpacity style={styles.primaryButton} onPress={() => setOpenTripId(item.id)}>
               <Text style={styles.primaryButtonText}>View Details</Text>
             </TouchableOpacity>
-            {/* No action yet — e-tickets aren't generated in the app. */}
-            <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.7}>
-              <Download size={16} color={PURPLE} strokeWidth={2} />
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              activeOpacity={0.7}
+              onPress={() => handleDownloadTicket(item)}
+              disabled={downloadingId === item.id}
+            >
+              {downloadingId === item.id ? (
+                <ActivityIndicator size="small" color={PURPLE} />
+              ) : (
+                <Download size={16} color={PURPLE} strokeWidth={2} />
+              )}
               <Text style={styles.secondaryButtonText}>Download Ticket</Text>
             </TouchableOpacity>
           </View>

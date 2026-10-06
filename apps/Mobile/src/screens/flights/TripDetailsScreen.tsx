@@ -12,12 +12,14 @@ import { styles, RED } from './TripDetailsScreen.styles';
 import { PURPLE, MUTED, GREEN } from './MyTripsScreen.styles';
 import { AirlineLogo } from './FlightResultsScreen';
 import { CancelBookingModal } from './CancelBookingModal';
+import { downloadETicket } from './downloadETicket';
 import {
   STATUS_ID_FAILED,
   STATUS_ID_HELD,
   STATUS_ID_TICKETING,
   canCancel,
   isExpiredHold,
+  eTicketUnavailableReason,
   formatCurrency,
   formatDuration,
   formatShortDate,
@@ -113,6 +115,7 @@ export const TripDetailsScreen: React.FC<TripDetailsScreenProps> = ({ tripBookin
   const { data, isLoading, isError, refetch } = useTripBookingDetailsMobile(tripBookingId);
   const releaseHold = useCancelTripBookingMobile();
   const [cancelOpen, setCancelOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   const header = (
     <View style={styles.header}>
@@ -308,9 +311,31 @@ export const TripDetailsScreen: React.FC<TripDetailsScreenProps> = ({ tripBookin
         <SafeAreaView>
           <View style={styles.footer}>
             {showTicket ? (
-              // No action yet — e-tickets aren't generated in the app.
-              <TouchableOpacity style={styles.ticketButton} activeOpacity={0.7}>
-                <Text style={styles.ticketButtonText}>Download E-Ticket</Text>
+              <TouchableOpacity
+                style={[styles.ticketButton, downloading && styles.disabled]}
+                activeOpacity={0.7}
+                disabled={downloading}
+                onPress={async () => {
+                  const reason = eTicketUnavailableReason(booking);
+                  if (reason) {
+                    Alert.alert('E-ticket not ready', reason);
+                    return;
+                  }
+                  setDownloading(true);
+                  try {
+                    await downloadETicket(booking.id, booking.bookingRefNo);
+                  } catch (err) {
+                    Alert.alert('Could not download the e-ticket', (err as Error)?.message || 'Please try again.');
+                  } finally {
+                    setDownloading(false);
+                  }
+                }}
+              >
+                {downloading ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={styles.ticketButtonText}>Download E-Ticket</Text>
+                )}
               </TouchableOpacity>
             ) : null}
             {showCancel ? (

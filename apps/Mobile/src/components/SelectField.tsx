@@ -9,6 +9,7 @@ interface SelectFieldProps {
   onSelect: (value: string) => void;
   placeholder?: string;
   title?: string;
+  style?: any;
 }
 
 export const SelectField: React.FC<SelectFieldProps> = ({
@@ -17,6 +18,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   onSelect,
   placeholder = 'Select',
   title = 'Select an option',
+  style,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -38,7 +40,12 @@ export const SelectField: React.FC<SelectFieldProps> = ({
 
   return (
     <>
-      <TouchableOpacity style={styles.field} onPress={handleOpen} activeOpacity={0.7}>
+      {/* <TouchableOpacity style={styles.field} onPress={handleOpen} activeOpacity={0.7}> */}
+      <TouchableOpacity
+  style={[styles.field, style]}
+  onPress={handleOpen}
+  activeOpacity={0.7}
+>
         <Text style={value ? styles.fieldText : styles.fieldPlaceholder}>{value || placeholder}</Text>
         <ChevronDown size={18} color="#7C8CAD" strokeWidth={2} />
       </TouchableOpacity>

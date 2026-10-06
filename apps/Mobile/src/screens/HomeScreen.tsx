@@ -20,7 +20,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onSelectFlights,
 }) => (
   <View style={styles.screen}>
-    <View style={styles.buttonGroup}>
+    <View style={styles.cardsContainer}>
+     <View style={styles.buttonGroup}>
       <View style={styles.row}>
         <TouchableOpacity style={styles.squareButton} onPress={onSelectFlightsAndHotels} activeOpacity={0.85}>
           <Text style={styles.squareButtonText}>Flights{'\n'}+{'\n'}Hotels</Text>
@@ -29,6 +30,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           <Text style={styles.squareButtonText}>Hotels</Text>
         </TouchableOpacity>
       </View>
+    </View>
+
 
       <TouchableOpacity onPress={onSelectFlights} activeOpacity={0.85}>
         <LinearGradient
@@ -53,8 +56,9 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    paddingHorizontal: 16,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 0,
+    paddingBottom : 0
   },
   buttonGroup: {
     gap: 16,
@@ -125,4 +129,14 @@ const styles = StyleSheet.create({
     top: 28,
     right: 36,
   },
+
+  cardsContainer: {
+  backgroundColor: '#F2EAFA',
+   paddingHorizontal: 12,
+    paddingVertical: 20,
+    borderRadius: 16,
+    gap: 12,
+    width: '100%',
+
+},
 });
