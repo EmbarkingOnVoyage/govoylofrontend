@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, ActivityIndicator } from 'react-native';
+import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { ArrowLeft, ArrowRight, X } from 'lucide-react-native';
 import { SSR_STATUS_AVAILABLE, type AncillaryOption, type SeatMapSegment } from '@workspace/ui';
 import { styles } from './SeatSelectionModal.styles';
@@ -248,7 +249,7 @@ export const SeatSelectionModal: React.FC<SeatSelectionModalProps> = ({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={styles.screen}>
+      <ModalSafeArea style={styles.screen}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <ArrowLeft size={22} color="#182339" strokeWidth={2} />
@@ -375,7 +376,7 @@ export const SeatSelectionModal: React.FC<SeatSelectionModalProps> = ({
             <Text style={styles.saveButtonText}>Save</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </ModalSafeArea>
     </Modal>
   );
 };

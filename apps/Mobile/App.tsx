@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { AppProvider, LoginMobileFeature, OtpMobileFeature, authContextCache } from '@workspace/ui';
 import { useFlowNavigation, NavigationRule } from '@workspace/core';
-import { SafeAreaView } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { LandingScreen } from './src/screens/LandingScreen';
 import { TabShell } from './src/navigation/TabShell';
 
@@ -54,9 +55,14 @@ export default function App() {
 
   return (
     <AppProvider contextName="MOBILE-APP-SHELL">
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
-        {renderScreen()}
-      </SafeAreaView>
+      {/* react-native's SafeAreaView only pads on iOS; this one also keeps content clear
+          of the status and navigation bars on Android 15+, where apps draw edge-to-edge. */}
+      <SafeAreaProvider>
+        <StatusBar style="dark" />
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+          {renderScreen()}
+        </SafeAreaView>
+      </SafeAreaProvider>
     </AppProvider>
   );
 }
