@@ -403,7 +403,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                   </TouchableOpacity>
                 </View>
                 <TouchableOpacity style={styles.swapButton} onPress={handleSwap}>
-                  <ArrowLeftRight size={16} color="#7C1AEE" strokeWidth={2} />
+                  <ArrowLeftRight size={16} color="#182339" strokeWidth={1.5} />
                 </TouchableOpacity>
                 <View style={[styles.odField, styles.odFieldEnd]}>
                   <Text style={styles.odLabel}>{destination ? `To - ${destination.code}` : 'To'}</Text>
@@ -462,7 +462,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                         </TouchableOpacity>
                       </View>
                       <TouchableOpacity style={styles.swapButton} onPress={() => swapMultiCitySegment(index)}>
-                        <ArrowLeftRight size={16} color="#7C1AEE" strokeWidth={2} />
+                        <ArrowLeftRight size={16} color="#182339" strokeWidth={1.5} />
                       </TouchableOpacity>
                       <View style={[styles.odField, styles.odFieldEnd]}>
                         <Text style={styles.odLabel}>{seg.destination ? `To - ${seg.destination.code}` : 'To'}</Text>

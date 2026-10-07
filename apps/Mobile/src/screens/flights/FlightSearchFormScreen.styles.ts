@@ -25,8 +25,8 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 16,
+    paddingTop: 13,
+    paddingBottom: 17,
     position: 'relative',
   },
   backButton: {
@@ -84,15 +84,17 @@ export const styles = StyleSheet.create({
   contentWrap: {
     marginHorizontal: 16,
     marginTop: 6,
-    gap: 8,
+    gap: 9,
   },
   // Matches Figma's "Frame 263": the From/To + Departure/Return group.
   fieldsGroup: {
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#ADB8CD',
-    borderRadius: 8,
-    padding: 8,
+    borderRadius: 6,
+    paddingHorizontal: 9,
+    paddingTop: 6.6,
+    paddingBottom: 6.5,
   },
   // Its own separate white pill, distinct from the fields card below —
   // matches Figma's "one way" tab-bar component (radius 20, 2px gaps).
@@ -141,7 +143,7 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
     fontWeight: '500',
     color: '#697691',
-    marginBottom: 4,
+    marginBottom: 5.7,
   },
   odValue: {
     fontSize: 15,
@@ -152,14 +154,15 @@ export const styles = StyleSheet.create({
   odPlaceholder: {
     fontSize: 15,
     lineHeight: 20,
+    fontWeight: '500',
     color: '#4C5973',
   },
   swapButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 31,
+    height: 31,
+    borderRadius: 15.5,
     borderWidth: 1,
-    borderColor: '#B38AF5',
+    borderColor: 'rgba(124,26,238,0.5)',
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
@@ -168,8 +171,8 @@ export const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#99A6C0',
-    marginTop: 6,
-    marginBottom: 8,
+    marginTop: 4.9,
+    marginBottom: 5.6,
   },
   dateRow: {
     flexDirection: 'row',
@@ -232,7 +235,7 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 9,
     height: 36,
     borderRadius: 6,
     paddingHorizontal: 16,
@@ -246,8 +249,10 @@ export const styles = StyleSheet.create({
   sectionHeading: {
     fontSize: 15,
     lineHeight: 20,
+    fontWeight: '500',
     color: '#3E4B64',
-    marginTop: 4,
+    marginTop: 1.2,
+    marginBottom: 0.8,
   },
   fareRow: {
     flexDirection: 'row',
@@ -260,7 +265,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#697691',
     borderRadius: 4,
-    paddingHorizontal: 11,
+    paddingHorizontal: 12,
   },
   fareButtonSelected: {
     borderColor: '#7C1AEE',
@@ -269,6 +274,7 @@ export const styles = StyleSheet.create({
   fareButtonText: {
     fontSize: 15,
     lineHeight: 20,
+    fontWeight: '500',
     color: '#697691',
   },
   fareButtonTextSelected: {
@@ -278,8 +284,8 @@ export const styles = StyleSheet.create({
   nonStopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginTop: 4,
+    gap: 9,
+    marginTop: 1,
   },
   toggleTrack: {
     width: 44,
@@ -304,10 +310,11 @@ export const styles = StyleSheet.create({
   nonStopLabel: {
     fontSize: 15,
     lineHeight: 20,
+    fontWeight: '500',
     color: '#3E4B64',
   },
   searchButton: {
-    marginTop: 4,
+    marginTop: 3,
     height: 44,
     borderRadius: 12,
     backgroundColor: '#7C1AEE',

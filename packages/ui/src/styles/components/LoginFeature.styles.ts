@@ -84,6 +84,7 @@ export const mobile: ILoginMobileStyles = {
     lineHeight: 32,
   },
   subtitle: {
+    maxWidth: 343,
     fontSize: 15,
     color: '#4C5973',
     lineHeight: 20,
