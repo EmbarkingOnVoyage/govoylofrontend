@@ -509,13 +509,13 @@ const FilterScreen: React.FC<{
         <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={onClose} />
         <View style={[styles.modalSheet, styles.filterScreenSheet]}>
           <View style={styles.filterScreenHeader}>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <ArrowLeft size={20} color="#182339" strokeWidth={2} />
+            <TouchableOpacity onPress={onClose} style={styles.filterBackButton}>
+              <ArrowLeft size={20} color="#182339" strokeWidth={1.2} />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>Filter</Text>
-            <View style={{ width: 20 }} />
+            <Text style={[styles.modalTitle, styles.filterScreenTitle]}>Filter</Text>
+            <View style={{ width: 32 }} />
           </View>
-          <Text style={styles.filterScreenResultCount}>
+          <Text style={[styles.filterScreenResultCount, { textAlign: 'left' }]}>
             {matchCount} out of {allOffers.length} results
           </Text>
 
@@ -547,7 +547,7 @@ const FilterScreen: React.FC<{
                     }))
                   }
                 >
-                  <Text style={styles.checkRowLabel}>Select all Popular</Text>
+                  <Text style={[styles.checkRowLabel, { fontWeight: '500' }]}>Select all Popular</Text>
                   <View style={[styles.checkbox, isPopularAllSelected && styles.checkboxChecked]}>
                     {isPopularAllSelected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
                   </View>
