@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Plane, Sparkles } from 'lucide-react-native';
+import { Sparkles } from 'lucide-react-native';
 // global.d.ts types *.png as `string` for @workspace/ui's web-only re-exports;
 // Metro actually resolves a local RN import like this to an asset module id
 // (number), which is what Image.source expects — cast to match the runtime type.
@@ -41,7 +41,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           style={styles.flightsButton}
         >
           <Image source={flightsButtonClouds} style={styles.flightsButtonClouds} resizeMode="cover" />
-          <Plane size={20} color="#FFFFFF" strokeWidth={2.5} />
           <Text style={styles.flightsButtonText}>Flights</Text>
           <Sparkles size={5} color="#D9D9D9" style={styles.star1} />
           <Sparkles size={8} color="#D9D9D9" style={styles.star2} />
@@ -131,12 +130,13 @@ const styles = StyleSheet.create({
   },
 
   cardsContainer: {
-  backgroundColor: '#F2EAFA',
-   paddingHorizontal: 12,
-    paddingVertical: 20,
-    borderRadius: 16,
-    gap: 12,
+    backgroundColor: '#F2EAFA',
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 16,
+    borderTopLeftRadius: 8,
+    borderTopRightRadius: 8,
+    gap: 16,
     width: '100%',
-
-},
+  },
 });
