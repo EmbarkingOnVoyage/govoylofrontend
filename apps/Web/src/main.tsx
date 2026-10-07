@@ -23,7 +23,7 @@ import { ErrorBoundary, NavigationRule } from "@workspace/core";
 import { useWebFlowNavigation } from "./navigation/useWebFlowNavigation";
 import { RequireAuth } from "./routes/RequireAuth";
 import { FlightResultsRoute } from "./routes/FlightResultsRoute";
-import { FlightReviewRoute, BookingConfirmedRoute } from "./routes/FlightReviewRoute";
+import { FlightReviewRoute, FlightPaymentRoute, BookingConfirmedRoute } from "./routes/FlightReviewRoute";
 import { MyTripsRoute, TripDetailsRoute } from "./routes/MyTripsRoute";
 
 // 1. Contract Enforcement: Suppress platform-specific mobile warnings in the browser console
@@ -82,9 +82,7 @@ const AppWorkflowRouter: React.FC = () => {
         <Route
           path="/flights/results"
           element={
-            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
-              <FlightResultsRoute />
-            </DashboardLayout>
+            <FlightResultsRoute onNavigate={onNavigateLoose} />
           }
         />
         <Route
@@ -93,6 +91,16 @@ const AppWorkflowRouter: React.FC = () => {
             <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
               <RequireAuth>
                 <FlightReviewRoute />
+              </RequireAuth>
+            </DashboardLayout>
+          }
+        />
+        <Route
+          path="/flights/payment"
+          element={
+            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
+              <RequireAuth>
+                <FlightPaymentRoute />
               </RequireAuth>
             </DashboardLayout>
           }

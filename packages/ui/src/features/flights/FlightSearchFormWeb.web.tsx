@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeftRight, Calendar, PlaneTakeoff, PlaneLanding, ShieldCheck, Users, X, ChevronRight } from 'lucide-react';
+import { ArrowLeftRight, Calendar, ChevronDown, PlaneTakeoff, PlaneLanding, ShieldCheck, Users, X, ChevronRight } from 'lucide-react';
 import {
   useSearchFlightsMobile,
   type TripType,
@@ -80,6 +80,7 @@ type ActiveDropdown =
   | { type: 'origin' | 'destination'; segmentIndex: number | null }
   | { type: 'departure' | 'return'; segmentIndex: number | null }
   | { type: 'travellers' }
+  | { type: 'tripType' }
   | null;
 
 export interface FlightSearchFormWebProps {
@@ -87,9 +88,17 @@ export interface FlightSearchFormWebProps {
   onNavigate?: (route: string) => void;
   // A previous search to start from ("Modify search" on the results page).
   initialSummary?: FlightSearchSummary | null;
+  // 'hero': the home page (Web Dev Desktop-7/13). 'bar': the compact search
+  // bar inside the results page header (Desktop-15), without page chrome.
+  variant?: 'hero' | 'bar';
 }
 
-export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({ onResults, onNavigate, initialSummary }) => {
+export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
+  onResults,
+  onNavigate,
+  initialSummary,
+  variant = 'hero',
+}) => {
   const initial = initialSummary?.request;
   const initialSegments = initial?.segments ?? [];
   const searchFlights = useSearchFlightsMobile();
@@ -334,10 +343,273 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({ onResu
     </div>
   );
 
+  // Title-case trip type for the bar's dropdown ("Round Trip").
+  const tripTypeTitle = (key: TripType) =>
+    (TRIP_TYPE_TABS.find((t) => t.key === key)?.label ?? '')
+      .split(' ')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+
+  if (variant === 'bar') {
+    // Desktop-15 search bar: grey #DDDDDD tray, white 48px fields joined by
+    // 1px gaps (rounded only at the ends), Inter 16px medium labels with a
+    // 13px airport line, and a 106x48 Search button.
+    const fieldButton = 'h-12 w-full flex items-center gap-3 px-3 bg-white text-left';
+    const label = 'text-[16px] leading-6 font-medium text-[#3E4B64] whitespace-nowrap';
+
+    const airportField = (
+      type: 'origin' | 'destination',
+      segIndex: number | null,
+      value: Airport | null,
+      onSelect: (airport: Airport) => void,
+      extraClass: string
+    ) => (
+      <div className={`relative min-w-0 ${extraClass}`}>
+        <button
+          type="button"
+          onClick={() =>
+            setActiveDropdown((cur) => (cur?.type === type && cur.segmentIndex === segIndex ? null : { type, segmentIndex: segIndex }))
+          }
+          className={`${fieldButton} ${type === 'destination' ? 'px-6' : ''}`}
+        >
+          {type === 'origin' ? (
+            <PlaneTakeoff size={20} className="text-[#3E4B64] shrink-0" />
+          ) : (
+            <PlaneLanding size={20} className="text-[#3E4B64] shrink-0" />
+          )}
+          {value ? (
+            <span className="flex items-baseline gap-2 min-w-0">
+              <span className={label}>{value.city},</span>
+              <span className="text-[13px] leading-4 text-[#3E4B64] truncate">
+                {value.name} ({value.code})
+              </span>
+            </span>
+          ) : (
+            <span className={`${label} !font-normal`}>{type === 'origin' ? 'From' : 'To'}</span>
+          )}
+        </button>
+        {activeDropdown?.type === type && activeDropdown.segmentIndex === segIndex && (
+          <div className="absolute z-40 top-full left-0 mt-2">
+            <AirportSearchDropdown
+              onSelect={(airport) => {
+                onSelect(airport);
+                closeDropdown();
+              }}
+            />
+          </div>
+        )}
+      </div>
+    );
+
+    const dateField = (
+      field: 'departure' | 'return',
+      segIndex: number | null,
+      value: string,
+      from: Airport | null,
+      to: Airport | null,
+      extraClass: string
+    ) => (
+      <div className={`relative min-w-0 ${extraClass}`}>
+        <button
+          type="button"
+          onClick={() =>
+            setActiveDropdown((cur) => (cur?.type === field && cur.segmentIndex === segIndex ? null : { type: field, segmentIndex: segIndex }))
+          }
+          className={fieldButton}
+        >
+          <Calendar size={20} className="text-[#3E4B64] shrink-0" />
+          <span className={value ? label : `${label} !font-normal`}>
+            {value ? formatShortDate(value) : field === 'return' ? 'Return' : 'Date'}
+          </span>
+        </button>
+        {activeDropdown?.type === field && activeDropdown.segmentIndex === segIndex && (
+          <div className="absolute z-40 top-full left-0 mt-2">
+            <FareCalendarDropdown
+              footerLabel={field === 'departure' ? 'Departure date' : 'Return date'}
+              initialDate={parseDisplayDate(value)}
+              minDate={field === 'return' ? parseDisplayDateLocal(departureDate) ?? undefined : undefined}
+              origin={from?.code}
+              destination={to?.code}
+              showAddReturnLink={false}
+              onAddReturnDate={() => undefined}
+              onConfirm={(date) => {
+                const formatted = formatDisplayDate(date);
+                if (segIndex !== null) updateMultiCitySegment(segIndex, { date: formatted });
+                else if (field === 'departure') setDepartureDate(formatted);
+                else setReturnDate(formatted);
+                closeDropdown();
+              }}
+            />
+          </div>
+        )}
+      </div>
+    );
+
+    const travellersField = (extraClass: string, buttonClass: string) => (
+      <div className={`relative min-w-0 ${extraClass}`}>
+        <button
+          type="button"
+          onClick={() => setActiveDropdown((cur) => (cur?.type === 'travellers' ? null : { type: 'travellers' }))}
+          className={`${fieldButton} ${buttonClass}`}
+        >
+          <Users size={20} className="text-[#3E4B64] shrink-0" />
+          <span className={`${label} truncate`}>{passengerSummary}</span>
+        </button>
+        {activeDropdown?.type === 'travellers' && (
+          <div className="absolute z-40 top-full right-0 mt-2">
+            <TravellersClassDropdown
+              initial={{ adultCount, childCount, infantCount, cabinClass, nonStopOnly }}
+              onConfirm={(values: TravellersClassValues) => {
+                setAdultCount(values.adultCount);
+                setChildCount(values.childCount);
+                setInfantCount(values.infantCount);
+                setCabinClass(values.cabinClass);
+                setNonStopOnly(values.nonStopOnly);
+                closeDropdown();
+              }}
+            />
+          </div>
+        )}
+      </div>
+    );
+
+    const searchButton = (
+      <button
+        type="button"
+        onClick={handleSearch}
+        disabled={searchFlights.isPending}
+        className="h-12 w-[106px] shrink-0 flex items-center justify-center gap-0.5 p-3 rounded-xl bg-[#7C1AEE] text-white text-[15px] leading-5 font-medium disabled:opacity-60"
+      >
+        {searchFlights.isPending ? (
+          'Searching…'
+        ) : (
+          <>
+            Search
+            <ChevronRight size={20} />
+          </>
+        )}
+      </button>
+    );
+
+    const tripTypeField = (
+      <div className="relative w-[22%] min-w-[150px]">
+        <button
+          type="button"
+          onClick={() => setActiveDropdown((cur) => (cur?.type === 'tripType' ? null : { type: 'tripType' }))}
+          className={`${fieldButton} rounded-l-lg justify-between`}
+        >
+          <span className={label}>{tripTypeTitle(tripType)}</span>
+          <ChevronDown size={20} className="text-[#3E4B64]" />
+        </button>
+        {activeDropdown?.type === 'tripType' && (
+          <div className="absolute z-40 top-full left-0 mt-2 w-full bg-white rounded-lg shadow-xl py-1">
+            {TRIP_TYPE_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => {
+                  setTripType(tab.key);
+                  closeDropdown();
+                }}
+                className={`w-full text-left px-4 py-2 text-[15px] ${tab.key === tripType ? 'text-[#7C1AEE] font-medium' : 'text-[#182339]'}`}
+              >
+                {tripTypeTitle(tab.key)}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+
+    return (
+      <div className="flex flex-col gap-3">
+        {tripType !== 'MultiCity' ? (
+          <div className="flex items-center gap-4 bg-[#DDDDDD] rounded-lg p-2">
+            <div className="flex-1 min-w-0 flex items-center gap-px">
+              {tripTypeField}
+              {airportField('origin', null, origin, setOrigin, 'w-[24%]')}
+              {airportField('destination', null, destination, setDestination, 'w-[22%]')}
+              {dateField('departure', null, departureDate, origin, destination, 'w-[11%] min-w-[128px]')}
+              {tripType === 'RoundTrip' && dateField('return', null, returnDate, destination, origin, 'w-[11%] min-w-[128px]')}
+              {travellersField('flex-1', 'rounded-r-lg')}
+            </div>
+            {searchButton}
+          </div>
+        ) : (
+          <div className="flex flex-col gap-2">
+            {multiCitySegments.map((seg, index) => (
+              <div key={index} className="flex items-center gap-4 bg-[#DDDDDD] rounded-lg p-2">
+                <div className="flex-1 min-w-0 flex items-center gap-px">
+                  {index === 0 ? (
+                    tripTypeField
+                  ) : (
+                    <div className="w-[22%] min-w-[150px] h-12 bg-white rounded-l-lg flex items-center px-3 text-[16px] font-medium text-[#697691]">
+                      Flight {index + 1}
+                    </div>
+                  )}
+                  {airportField('origin', index, seg.origin, (a) => updateMultiCitySegment(index, { origin: a }), 'w-[28%]')}
+                  {airportField('destination', index, seg.destination, (a) => updateMultiCitySegment(index, { destination: a }), 'w-[28%]')}
+                  {dateField('departure', index, seg.date, seg.origin, seg.destination, 'flex-1 [&>button]:rounded-r-lg')}
+                </div>
+                {index === 0 ? (
+                  searchButton
+                ) : multiCitySegments.length > 2 ? (
+                  <button
+                    type="button"
+                    onClick={() => removeMultiCitySegment(index)}
+                    aria-label="Remove flight"
+                    className="w-[106px] h-12 flex items-center justify-center bg-white rounded-xl shrink-0"
+                  >
+                    <X size={16} color="#697691" />
+                  </button>
+                ) : (
+                  <span className="w-[106px] shrink-0" />
+                )}
+              </div>
+            ))}
+            <div className="flex items-center gap-3">
+              {multiCitySegments.length < 5 && (
+                <button
+                  type="button"
+                  onClick={addMultiCitySegment}
+                  className="h-11 px-5 rounded-[6px] bg-[#F3E8FF] text-[#6014B7] font-medium text-[15px]"
+                >
+                  Add Flight
+                </button>
+              )}
+              {travellersField('w-[280px]', 'rounded-lg h-11')}
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2">
+          <span className="text-[15px] leading-5 font-medium text-[#3E4B64]">Special Fares (Optional)</span>
+          {(['Student', 'SeniorCitizen'] as const).map((fare) => (
+            <button
+              key={fare}
+              type="button"
+              onClick={() => setSelectedFare((cur) => (cur === fare ? null : fare))}
+              className={[
+                'h-7 px-3 rounded border text-[15px] leading-5 font-medium bg-white',
+                'shadow-[0px_0px_1px_rgba(41,47,55,0.3),0px_1px_4px_rgba(79,94,113,0.12)]',
+                selectedFare === fare ? 'border-[#7C1AEE] text-[#7C1AEE]' : 'border-[#697691] text-[#697691]',
+              ].join(' ')}
+            >
+              {fare === 'Student' ? 'Student' : 'Senior Citizen'}
+            </button>
+          ))}
+          {!!formError && <span className="ml-4 text-sm text-[#C8102E]">{formError}</span>}
+        </div>
+
+        {activeDropdown && <div className="fixed inset-0 z-30" onClick={closeDropdown} />}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
       {/* Same site header as every other page: sign-in, account menu, My Trips. */}
-      <MenuBar onNavigate={onNavigate} />
+      <MenuBar onNavigate={onNavigate} showProductLinks={false} />
 
       {/* Hero banner */}
       <div

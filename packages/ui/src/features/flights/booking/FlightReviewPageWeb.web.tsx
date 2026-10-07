@@ -1,195 +1,336 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Check, CheckCircle2, ChevronRight, Info, Loader2, Plus, X } from 'lucide-react';
-import type { FlightOffer } from '../useSearchFlightsMobile';
-import type { FlightBookingSelection } from '../flightBookingSession';
-import { useCreateBookingMobile, BOOKING_STATUS_FAILED, type CreateBookingResponse } from '../useCreateBookingMobile';
-import { useReleaseHoldMobile } from '../useReleaseHoldMobile';
-import { useTravellersMobile, type Traveler } from '../../profile/useTravellersMobile';
+import { ArrowRight, BriefcaseBusiness, Check, ChevronRight, Clock, Loader2, Luggage, MapPinPlus, Plane, Plus, X } from 'lucide-react';
+import type { FlightOffer, FlightOfferSegment } from '../useSearchFlightsMobile';
+import type { FlightBookingSelection, FlightCheckoutDetails } from '../flightBookingSession';
+import { useTravellerDetailMobile, useTravellersMobile, type Traveler } from '../../profile/useTravellersMobile';
 import { useCustomerProfileMobile } from '../../profile/useCustomerProfileMobile';
-import { useCreateRazorpayOrderMobile, useVerifyRazorpayPaymentMobile } from '../../payments/useRazorpayPaymentMobile';
-import { RazorpayCheckoutError, openRazorpayCheckout } from '../../payments/razorpayCheckout.web';
-import {
-  CABIN_CLASS_LABELS,
-  formatPrice,
-  formatTime24,
-  formatTotalDuration,
-  stopsLabel,
-} from '../logic/flightResults';
+import { formatPrice, formatTime24, formatTotalDuration } from '../logic/flightResults';
 import {
   GSTIN_PATTERN,
-  PAX_API_TYPES,
   PAX_LABELS,
   PAX_TYPES,
   checkTravelerAge,
   formatTravelerDob,
   paxCountText,
   savedPaxType,
+  PAX_API_TYPES,
   type PaxType,
 } from '../logic/travellers';
-import {
-  ADD_ON_LABELS,
-  buildBookingLegs,
-  buildBookingTravelers,
-  legBaseFare,
-  type AddOnCategory,
-  type AddOnSelection,
-} from '../logic/booking';
+import type { AddOnSelection } from '../logic/booking';
 import type { FareRulesLeg } from '../logic/fareRules';
+import { baggageText } from '../logic/addOns';
 import { AirlineLogoWeb } from '../results/AirlineLogoWeb.web';
 import { FareRulesPanelWeb } from '../results/FareRulesPanelWeb.web';
 import { useAirportLookup } from '../results/useAirportLookup';
 import { TravellerFormWeb } from './TravellerFormWeb.web';
 import { AddOnsSectionWeb, type AddOnLegRoute, type AddOnTraveller } from './AddOnsSectionWeb.web';
+import {
+  BookingPageWeb,
+  CheckboxWeb,
+  FareSummaryWeb,
+  FieldWeb,
+  Separator,
+  SectionHeading,
+  SubHeading,
+  buildFareBreakdown,
+  fieldInputClass,
+} from './BookingLayoutWeb.web';
 import { useEscapeKey } from '../useEscapeKey.web';
 
-const inputClass =
-  'w-full px-3 py-2 rounded-lg border border-[#D5DAE3] text-sm text-[#182339] bg-white focus:outline-none focus:border-[#7C1AEE]';
+export { BookingConfirmedWeb, type BookingConfirmation } from './BookingConfirmedWeb.web';
 
-// "Sat, 28 Nov"
-function formatDay(iso: string): string {
-  const date = new Date(iso);
-  if (isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }).replace(/^(\w+)/, '$1,');
+const VISA_NOTE = 'Please ensure your visa is valid. passport has 6+ months validity, and name matches your passport.';
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// "Mon, 30.1" — the itinerary card's date format.
+function shortDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  return `${WEEKDAYS[d.getDay()]}, ${d.getDate()}.${d.getMonth() + 1}`;
 }
 
-export interface BookingConfirmation {
-  bookingRefNo: string;
-  airlinePnr: string | null;
-  amount: number;
-  currencyCode: string;
+// "18/12/2045"
+function slashDate(iso: string | null | undefined): string {
+  const m = iso?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
 }
 
-type PayState = 'idle' | 'holding' | 'paying' | 'verifying';
+export function paxSummaryText(counts: { adult: number; child: number; infant: number }): string {
+  return `For ${[
+    paxCountText('adult', counts.adult),
+    counts.child > 0 && paxCountText('child', counts.child),
+    counts.infant > 0 && paxCountText('infant', counts.infant),
+  ]
+    .filter(Boolean)
+    .join(', ')}`;
+}
 
-const PAY_STATE_TEXT: Record<Exclude<PayState, 'idle'>, string> = {
-  holding: 'Holding your seats…',
-  paying: 'Waiting for payment…',
-  verifying: 'Confirming your payment…',
-};
+// --- Itinerary card ("One-way Itinerary1": 351 wide) ---
 
-const Section: React.FC<{ title: string; subtitle?: string; children: React.ReactNode; action?: React.ReactNode }> = ({
-  title,
-  subtitle,
-  children,
-  action,
+const Endpoint: React.FC<{ iso: string; code: string; city: string; airport: string; position: 'top' | 'bottom' }> = ({
+  iso,
+  code,
+  city,
+  airport,
+  position,
 }) => (
-  <section className="bg-white rounded-xl border border-[#E4E7EC] p-5">
-    <div className="flex items-start justify-between gap-4 mb-3">
-      <div>
-        <h3 className="text-base font-semibold text-[#182339]">{title}</h3>
-        {subtitle && <p className="text-xs text-[#697691]">{subtitle}</p>}
-      </div>
-      {action}
+  <div className={`flex items-start gap-1 px-4 ${position === 'top' ? 'pt-3' : 'pb-3'}`}>
+    <div className="w-16 shrink-0 flex flex-col items-end">
+      <span className="text-[15px] leading-5 font-medium text-[#182339]">{formatTime24(iso)}</span>
+      <span className="text-[13px] leading-4 text-[#3E4B64] whitespace-nowrap">{shortDate(iso)}</span>
     </div>
-    {children}
-  </section>
+    <div className={`w-6 h-9 shrink-0 flex flex-col items-center ${position === 'top' ? 'pt-[6px]' : ''}`}>
+      {position === 'bottom' && <span className="w-0.5 h-[6px] bg-[#C2CADA]" />}
+      <span className={`w-2 h-2 rounded-full shrink-0 ${position === 'top' ? 'bg-[#3E4B64]' : 'bg-[#4F5E71]'}`} />
+      {position === 'top' && <span className="flex-1 w-0.5 bg-[#C2CADA]" />}
+    </div>
+    <div className="flex-1 min-w-0">
+      <div className="text-[15px] leading-5 font-medium text-[#182339] truncate">
+        {city} · {code}
+      </div>
+      <div className="text-[13px] leading-4 text-[#3E4B64] truncate">{airport}</div>
+    </div>
+  </div>
 );
 
-const LegCard: React.FC<{ leg: FlightOffer; label?: string; cityFor: (c: string) => string; cabin: string }> = ({
-  leg,
-  label,
-  cityFor,
-  cabin,
-}) => {
-  const first = leg.segments[0];
-  const last = leg.segments[leg.segments.length - 1];
+const FlyingRow: React.FC<{ segment: FlightOfferSegment; fallbackAirline: string }> = ({ segment, fallbackAirline }) => (
+  <div className="h-11 flex items-center gap-1 pl-4 pr-2">
+    <span className="w-16 shrink-0 text-right text-[12px] leading-4 font-medium text-[#182339]">
+      {formatTotalDuration(segment.departureDateTime, segment.arrivalDateTime)}
+    </span>
+    <span className="relative w-6 h-11 shrink-0 flex items-center justify-center">
+      <span className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-0.5 bg-[#C2CADA]" />
+      <span className="relative w-4 h-4 bg-white flex items-center justify-center">
+        <Plane size={14} className="text-[#182339] rotate-90" />
+      </span>
+    </span>
+    <span className="h-6 flex items-center gap-1 pr-2 rounded-xl bg-[#ECEEF3]">
+      <span className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center">
+        <AirlineLogoWeb airlineCode={segment.airlineCode} size={24} />
+      </span>
+      <span className="text-[12px] leading-4 font-medium text-[#182339] whitespace-nowrap">{segment.airlineName || fallbackAirline}</span>
+    </span>
+  </div>
+);
+
+const ItineraryCard: React.FC<{
+  leg: FlightOffer;
+  cityFor: (code: string) => string;
+  nameFor: (code: string) => string;
+}> = ({ leg, cityFor, nameFor }) => {
+  const [expanded, setExpanded] = useState(false);
+  const segments = leg.segments;
+  const first = segments[0];
+  const last = segments[segments.length - 1];
+  const layovers = segments.slice(0, -1).map((s, i) => ({
+    city: cityFor(s.destination),
+    duration: formatTotalDuration(s.arrivalDateTime, segments[i + 1].departureDateTime),
+  }));
+  const endpoint = (iso: string, code: string, position: 'top' | 'bottom') => (
+    <Endpoint iso={iso} code={code} city={cityFor(code)} airport={nameFor(code)} position={position} />
+  );
+
   return (
-    <div className="rounded-xl border border-[#E4E7EC] p-4">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 mb-3">
-        <div className="text-sm font-semibold text-[#182339]">
-          {label && <span className="text-[#7C1AEE] uppercase text-xs mr-2">{label}</span>}
-          {cityFor(first.origin)} → {cityFor(last.destination)}
-        </div>
-        <div className="text-xs text-[#697691]">
-          {formatDay(first.departureDateTime)} · {stopsLabel(leg.segments.length - 1)} ·{' '}
-          {formatTotalDuration(first.departureDateTime, last.arrivalDateTime)} · {cabin}
-        </div>
+    <div className="w-[351px] shrink-0 flex flex-col gap-3">
+      <div className="flex items-start gap-3 px-2">
+        <span className="flex-1 min-w-0 flex items-center gap-2 text-[16px] leading-5 font-bold text-[#3E4B64] truncate">
+          {cityFor(first.origin)} <ArrowRight size={16} /> {cityFor(last.destination)}
+        </span>
+        <span className="flex items-center gap-1 text-[15px] leading-5 font-medium text-[#3E4B64] whitespace-nowrap">
+          <Clock size={20} />
+          {formatTotalDuration(first.departureDateTime, last.arrivalDateTime)}
+        </span>
       </div>
-      {leg.segments.map((segment, index) => (
-        <React.Fragment key={index}>
-          <div className="flex items-center gap-4 text-sm">
-            <AirlineLogoWeb airlineCode={segment.airlineCode} size={24} />
-            <div className="w-28 sm:w-36 text-xs text-[#4C5973]">
-              {segment.airlineName || leg.airlineName} · {segment.airlineCode} {segment.flightNumber}
-            </div>
-            <div className="w-24">
-              <div className="font-semibold text-[#182339]">{formatTime24(segment.departureDateTime)}</div>
-              <div className="text-xs text-[#697691]">{segment.origin}</div>
-            </div>
-            <div className="flex-1 text-center text-xs text-[#697691]">
-              {formatTotalDuration(segment.departureDateTime, segment.arrivalDateTime)}
-              <div className="border-t border-dashed border-[#99A6C0] my-1" />
-            </div>
-            <div className="w-24 text-right">
-              <div className="font-semibold text-[#182339]">{formatTime24(segment.arrivalDateTime)}</div>
-              <div className="text-xs text-[#697691]">{segment.destination}</div>
+      <div className="bg-white rounded-t-lg shadow-[0px_0px_1px_rgba(41,47,55,0.3),0px_0px_2px_rgba(79,94,113,0.12),0px_2px_6px_rgba(79,94,113,0.08)]">
+        {expanded ? (
+          segments.map((segment, index) => (
+            <React.Fragment key={index}>
+              {endpoint(segment.departureDateTime, segment.origin, 'top')}
+              <FlyingRow segment={segment} fallbackAirline={leg.airlineName} />
+              {endpoint(segment.arrivalDateTime, segment.destination, 'bottom')}
+              {index < segments.length - 1 && (
+                <div className="mx-4 mb-3 px-3 py-1.5 rounded-lg bg-[#E8EEFF] text-[13px] leading-4 text-[#182339]">
+                  Layover at {layovers[index].city} ({layovers[index].duration})
+                </div>
+              )}
+            </React.Fragment>
+          ))
+        ) : (
+          <>
+            {endpoint(first.departureDateTime, first.origin, 'top')}
+            <FlyingRow segment={{ ...first, arrivalDateTime: last.arrivalDateTime }} fallbackAirline={leg.airlineName} />
+            {endpoint(last.arrivalDateTime, last.destination, 'bottom')}
+          </>
+        )}
+        {layovers.length > 0 && !expanded && (
+          <div className="pb-3 border border-[#ECEEF3]">
+            <div className="h-px bg-[#E8EDF1]" />
+            <div className="flex items-center gap-3 px-4 pt-3">
+              <span className="w-6 h-6 rounded-full bg-[#E8EEFF] flex items-center justify-center shrink-0">
+                <MapPinPlus size={16} className="text-[#182339]" />
+              </span>
+              <span className="pt-0.5 text-[13px] leading-4 text-[#182339]">
+                {layovers.map((l) => `Layover at ${l.city} (${l.duration})`).join(' · ')}
+              </span>
             </div>
           </div>
-          {index < leg.segments.length - 1 && (
-            <div className="flex items-center gap-1 my-2 ml-10 text-xs text-[#697691]">
-              <Info size={12} />
-              {formatTotalDuration(segment.arrivalDateTime, leg.segments[index + 1].departureDateTime)} layover at{' '}
-              {cityFor(segment.destination)}
-            </div>
-          )}
-        </React.Fragment>
-      ))}
+        )}
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="w-full h-8 flex items-center justify-center rounded-lg text-[15px] leading-5 font-medium text-[#7C1AEE]"
+        >
+          {expanded ? 'Hide Flight Details' : 'View Flight Details'}
+        </button>
+      </div>
     </div>
   );
 };
 
-// Web Dev "Desktop - 17": traveller details with the fare summary alongside,
-// and Pay Now on this page (no separate payment step on web). Pay runs the
-// same flow as mobile: hold with the supplier -> Razorpay order -> Checkout.js
-// -> verify; a hold that doesn't end in a payment is released.
+const BaggageInfo: React.FC<{ leg: FlightOffer }> = ({ leg }) => {
+  const fare = leg.fares.find((f) => f.fareId === leg.selectedFareId) ?? leg.fares[0];
+  return (
+    <div className="flex flex-col gap-2 text-[13px] leading-4">
+      <span className="text-[#697691]">Baggage</span>
+      <span className="flex items-center gap-2 text-[#182339]">
+        <Luggage size={16} />
+        Cabin: {fare?.handBaggage ? `${baggageText(fare.handBaggage)} per adult` : 'as per airline'}
+      </span>
+      <span className="flex items-center gap-2 text-[#182339]">
+        <BriefcaseBusiness size={16} />
+        Check-in: {fare?.checkInBaggage ? `${baggageText(fare.checkInBaggage)} per adult` : 'as per airline'}
+      </span>
+    </div>
+  );
+};
+
+// --- Saved traveller ("Checkbox with text" + Edit, 286 wide) ---
+
+const TravellerOption: React.FC<{
+  traveller: Traveler;
+  selected: boolean;
+  note?: string;
+  onToggle: () => void;
+  onEdit?: () => void;
+}> = ({ traveller, selected, note, onToggle, onEdit }) => {
+  const { data: detail } = useTravellerDetailMobile(traveller.id);
+  const passport = detail?.passport;
+  return (
+    <div className="w-[286px] flex items-start gap-3">
+      <div className="w-[222px] flex items-start gap-2">
+        <CheckboxWeb checked={selected} onChange={onToggle} label={`Select ${traveller.firstName} ${traveller.lastName}`} />
+        <button type="button" onClick={onToggle} className="flex-1 min-w-0 flex flex-col text-left">
+          <span className="py-0.5 text-[15px] leading-5 font-medium text-[#182339] break-words">
+            {traveller.firstName} {traveller.lastName}
+          </span>
+          <span className="text-[13px] leading-4 text-[#3E4B64]">
+            {passport ? (
+              <>
+                Passport No.: {passport.maskedPassportNumber},
+                <br />
+                Expiry Date: {slashDate(passport.expiryDate)}
+              </>
+            ) : (
+              [traveller.gender, formatTravelerDob(traveller.dateOfBirth)].filter(Boolean).join(', ')
+            )}
+          </span>
+          {note && <span className="text-[12px] leading-4 text-[#CE6400]">{note}</span>}
+        </button>
+      </div>
+      {onEdit && (
+        <button type="button" onClick={onEdit} className="h-8 px-2 rounded-lg text-[15px] leading-5 font-medium text-[#3E4B64]">
+          Edit
+        </button>
+      )}
+    </div>
+  );
+};
+
+export const SelectedTravellersWeb: React.FC<{
+  groups: { type: PaxType; required: number; travellers: Traveler[] }[];
+  isSelected: (t: Traveler) => boolean;
+  noteFor?: (t: Traveler) => string | undefined;
+  onToggle?: (t: Traveler) => void;
+  onEdit?: (t: Traveler) => void;
+}> = ({ groups, isSelected, noteFor, onToggle, onEdit }) => (
+  <div className="flex flex-col">
+    {groups.map(({ type, required, travellers }) => (
+      <div key={type} className="flex flex-col">
+        <div className="h-9 flex items-center gap-9 text-[15px] leading-5 text-[#697691]">
+          <span>{PAX_LABELS[type].block}</span>
+          <span>
+            {travellers.filter(isSelected).length}/{required} Selected
+          </span>
+        </div>
+        {travellers.length === 0 ? (
+          <p className="pb-3 text-[13px] leading-4 text-[#697691]">No saved {PAX_LABELS[type].plural} yet. Add one below.</p>
+        ) : (
+          <div className="flex flex-wrap gap-x-2 gap-y-4 pb-4">
+            {travellers.map((t) => (
+              <TravellerOption
+                key={t.id}
+                traveller={t}
+                selected={isSelected(t)}
+                note={noteFor?.(t)}
+                onToggle={() => onToggle?.(t)}
+                onEdit={onEdit ? () => onEdit(t) : undefined}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    ))}
+  </div>
+);
+
+// Phone codes offered next to the mobile number; bookings go out with the
+// national number only, as on mobile.
+const PHONE_CODES = ['+91'];
+
+function nationalNumber(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  return digits.length > 10 && digits.startsWith('91') ? digits.slice(2) : digits;
+}
+
+// Web Dev "Desktop - 17": flight details, fare policy, travellers (saved
+// list + the inline "Adult N" form), contact details, what's included and
+// GST, with the fare summary alongside. Continue hands everything to the
+// Payment page (Desktop-19), where the seats are held and paid for.
 export const FlightReviewPageWeb: React.FC<{
   selection: FlightBookingSelection;
   onBackToResults: () => void;
-  onBooked: (confirmation: BookingConfirmation) => void;
-}> = ({ selection, onBackToResults, onBooked }) => {
-  const { legs, legLabels, passengerCounts, summary } = selection;
+  onContinue: (checkout: FlightCheckoutDetails) => void;
+}> = ({ selection, onBackToResults, onContinue }) => {
+  const { legs, legLabels, passengerCounts, checkout: saved } = selection;
   const codes = useMemo(() => legs.flatMap((l) => l.segments.flatMap((s) => [s.origin, s.destination])), [legs]);
-  const { cityFor } = useAirportLookup(codes);
+  const { cityFor, nameFor } = useAirportLookup(codes);
   const { data: travellers, isLoading: travellersLoading } = useTravellersMobile();
   const { data: profile } = useCustomerProfileMobile();
-  const createBooking = useCreateBookingMobile();
-  const releaseHold = useReleaseHoldMobile();
-  const createOrder = useCreateRazorpayOrderMobile();
-  const verifyPayment = useVerifyRazorpayPaymentMobile();
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  // A traveller just added through the form, selected once the list reloads.
+  // Coming back from Payment keeps what was entered.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(saved?.travellers.map((t) => t.id) ?? []));
   const [pendingSelectId, setPendingSelectId] = useState<string | null>(null);
   const [hint, setHint] = useState('');
   const [form, setForm] = useState<{ heading: string; traveller: Traveler | null } | null>(null);
-  const [email, setEmail] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [addOns, setAddOns] = useState<AddOnSelection[]>([]);
-  const [useGst, setUseGst] = useState(false);
-  const [gstNumber, setGstNumber] = useState('');
-  const [gstName, setGstName] = useState('');
-  const [gstAddress, setGstAddress] = useState('');
+  const [email, setEmail] = useState(saved?.email ?? '');
+  const [phoneCode, setPhoneCode] = useState('+91');
+  const [mobile, setMobile] = useState(saved?.mobile ?? '');
+  const [addOns, setAddOns] = useState<AddOnSelection[]>(saved?.addOns ?? []);
+  const [useGst, setUseGst] = useState(!!saved?.gst);
+  const [gstNumber, setGstNumber] = useState(saved?.gst?.number ?? '');
+  const [gstName, setGstName] = useState(saved?.gst?.holderName ?? '');
+  const [gstAddress, setGstAddress] = useState(saved?.gst?.address ?? '');
   const [showRules, setShowRules] = useState(false);
-  const [payState, setPayState] = useState<PayState>('idle');
   const [error, setError] = useState('');
-  const [priceChange, setPriceChange] = useState<{ from: number; to: number; resolve: (ok: boolean) => void } | null>(null);
 
   useEscapeKey(() => setShowRules(false), showRules);
 
   // Contact details start from the profile.
   useEffect(() => {
     if (profile?.email && !email) setEmail(profile.email);
-    if (profile?.phone && !mobile) setMobile(profile.phone);
+    if (profile?.phone && !mobile) setMobile(nationalNumber(profile.phone));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile]);
-
-  const currencyCode = legs[0]?.currencyCode ?? 'INR';
-  const flightTotal = legs.reduce((sum, leg) => sum + leg.totalAmount, 0);
-  const baseFare = legs.reduce((sum, leg) => sum + legBaseFare(leg), 0);
-  const baseKnown = legs.every((leg) => legBaseFare(leg) > 0);
-  const addOnTotal = addOns.reduce((sum, s) => sum + s.amount, 0);
-  const totalAmount = flightTotal + addOnTotal;
-  const money = (amount: number) => formatPrice(amount, currencyCode);
 
   const required: Record<PaxType, number> = {
     adult: passengerCounts.adult,
@@ -216,6 +357,9 @@ export const FlightReviewPageWeb: React.FC<{
   const selectedTravellers = PAX_TYPES.flatMap((type) => byType[type].filter((t) => selectedIds.has(t.id)));
   const selectedCount = (type: PaxType) => byType[type].filter((t) => selectedIds.has(t.id)).length;
 
+  const breakdown = buildFareBreakdown(legs, addOns, paxSummaryText(passengerCounts));
+  const money = (amount: number) => formatPrice(amount, breakdown.currencyCode);
+
   const addOnTravellers: AddOnTraveller[] = selectedTravellers.map((t) => ({
     id: t.id,
     firstName: t.firstName,
@@ -226,18 +370,22 @@ export const FlightReviewPageWeb: React.FC<{
 
   const legRoutes: AddOnLegRoute[] = legs.map((leg, index) => {
     const first = leg.segments[0];
-    // A whole-trip offer is labelled by its turnaround point, not DEL • DEL.
+    // A whole-trip offer is labelled by its turnaround point, not DEL → DEL.
     const firstTrip = leg.segments.filter((s) => (s.tripIndex ?? 0) === (first?.tripIndex ?? 0));
     const last = firstTrip.length < leg.segments.length ? firstTrip[firstTrip.length - 1] : leg.segments[leg.segments.length - 1];
     const fare = leg.fares.find((f) => f.fareId === leg.selectedFareId) ?? leg.fares[0];
     return {
       offerId: leg.offerId,
       fareId: leg.selectedFareId ?? null,
-      label: legLabels?.[index] ?? `Flight ${index + 1}`,
+      label: `Flight ${index + 1}`,
       origin: first?.origin ?? '',
       destination: last?.destination ?? '',
       handBaggage: fare?.handBaggage ?? null,
       checkInBaggage: fare?.checkInBaggage ?? null,
+      airlineCode: leg.airlineCode,
+      airlineName: leg.airlineName,
+      flightNumbers: firstTrip.map((s) => `${s.airlineCode} ${s.flightNumber}`),
+      departureDateTime: first?.departureDateTime,
     };
   });
 
@@ -283,340 +431,251 @@ export const FlightReviewPageWeb: React.FC<{
     });
   };
 
+  // The next traveller slot to fill, for the form heading ("Adult 2").
+  const nextSlot = (): string => {
+    const type = visibleTypes.find((t) => selectedCount(t) < required[t]) ?? 'adult';
+    return `${PAX_LABELS[type].block} ${Math.min(selectedCount(type) + 1, Math.max(required[type], 1))}`;
+  };
+
+  const emailValid = /^\S+@\S+\.\S+$/.test(email.trim());
+  const mobileValid = /^\d{10}$/.test(mobile.replace(/[\s-]/g, ''));
+
   const problem = (): string => {
     const missing = visibleTypes.filter((type) => selectedCount(type) !== required[type]);
     if (missing.length > 0) {
       return `Please select ${missing.map((type) => paxCountText(type, required[type])).join(', ')} for this booking.`;
     }
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) return 'Please enter a valid email for the booking.';
-    if (!/^\+?\d{10,13}$/.test(mobile.replace(/[\s-]/g, ''))) return 'Please enter a valid mobile number for the booking.';
+    if (!emailValid) return 'Please enter a valid email for the booking.';
+    if (!mobileValid) return 'Please enter a valid 10-digit mobile number for the booking.';
     if (useGst && (!GSTIN_PATTERN.test(gstNumber.trim().toUpperCase()) || !gstName.trim() || !gstAddress.trim())) {
       return 'Please enter a valid 15-character GSTIN, company name and company address.';
     }
     return '';
   };
 
-  const releaseSilently = async (held: CreateBookingResponse | null) => {
-    if (!held?.bookingRefNo || !held.airlinePnr) return;
-    try {
-      await releaseHold.mutateAsync({ bookingRefNo: held.bookingRefNo, airlinePnr: held.airlinePnr });
-    } catch {
-      // A failed release must never hide the payment error itself.
-    }
-  };
-
-  const handlePay = async () => {
+  const handleContinue = () => {
     const issue = problem();
     setError(issue);
     if (issue) return;
-
-    let held: CreateBookingResponse | null = null;
-    try {
-      // Hold first, so nobody is charged for a seat that couldn't be held.
-      setPayState('holding');
-      const booking = await createBooking.mutateAsync({
-        legs: buildBookingLegs(legs, addOns, selectedTravellers),
-        travelers: buildBookingTravelers(selectedTravellers, paxTypeOf),
-        passengerMobile: mobile.replace(/[\s-]/g, ''),
-        passengerEmail: email.trim(),
-        ...(useGst && {
-          gstNumber: gstNumber.trim().toUpperCase(),
-          gstHolderName: gstName.trim(),
-          gstAddress: gstAddress.trim(),
-        }),
-      });
-      if (booking.statusId === BOOKING_STATUS_FAILED) {
-        throw new Error(booking.failureRemark || 'Could not hold your flight. Please try again.');
-      }
-      held = booking;
-
-      // The supplier re-prices at booking time; charge what it will charge,
-      // once the customer has accepted any change.
-      const chargeAmount = booking.confirmedTotalAmount ?? totalAmount;
-      if (Math.round(chargeAmount) !== Math.round(totalAmount)) {
-        const accepted = await new Promise<boolean>((resolve) =>
-          setPriceChange({ from: totalAmount, to: chargeAmount, resolve })
-        );
-        setPriceChange(null);
-        if (!accepted) throw new Error('Booking cancelled — the fare changed.');
-      }
-
-      setPayState('paying');
-      const order = await createOrder.mutateAsync({
-        bookingReference: booking.bookingRefNo,
-        amount: chargeAmount,
-        currency: currencyCode,
-        sourceClient: 'Web',
-      });
-      const result = await openRazorpayCheckout({
-        key: order.keyId,
-        orderId: order.orderId,
-        amount: order.amount,
-        currency: order.currency,
-        description: 'Flight booking payment',
-        prefill: { email: email.trim(), contact: mobile.replace(/[\s-]/g, '') },
-      });
-
-      setPayState('verifying');
-      const verified = await verifyPayment.mutateAsync({
-        razorpayOrderId: result.razorpay_order_id,
-        razorpayPaymentId: result.razorpay_payment_id,
-        razorpaySignature: result.razorpay_signature,
-      });
-      if (verified.status !== 'Succeeded') throw new Error('Payment could not be verified. Please try again.');
-
-      onBooked({
-        bookingRefNo: booking.bookingRefNo,
-        airlinePnr: booking.airlinePnr,
-        amount: chargeAmount,
-        currencyCode,
-      });
-    } catch (err) {
-      setPayState('idle');
-      // Razorpay's own failure text ("Please use another method") reads oddly
-      // here once its checkout has closed, so checkout outcomes get our wording.
-      setError(
-        err instanceof RazorpayCheckoutError
-          ? err.dismissed
-            ? 'Payment cancelled. Your booking was not completed — you can pay again.'
-            : "The payment didn't go through. Please try again or use another payment method."
-          : (err as Error)?.message || 'Payment was not completed.'
-      );
-      await releaseSilently(held);
-    }
+    onContinue({
+      travellers: selectedTravellers,
+      paxTypes: Object.fromEntries(selectedTravellers.map((t) => [t.id, paxTypeOf(t)])),
+      email: email.trim(),
+      mobile: mobile.replace(/[\s-]/g, ''),
+      addOns,
+      gst: useGst
+        ? { number: gstNumber.trim().toUpperCase(), holderName: gstName.trim(), address: gstAddress.trim() }
+        : undefined,
+    });
   };
 
-  const busy = payState !== 'idle';
-  const addOnGroups = (['seat', 'meal', 'baggage'] as AddOnCategory[])
-    .map((category) => ({ category, amount: addOns.filter((s) => s.category === category).reduce((sum, s) => sum + s.amount, 0) }))
-    .filter((g) => g.amount > 0);
-
   return (
-    <div className="max-w-[1280px] mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5 items-start">
-      <aside className="bg-white rounded-xl border border-[#E4E7EC] p-5 lg:sticky lg:top-4 space-y-2 text-sm">
-        <h3 className="text-base font-semibold text-[#182339] mb-2">Fare summary</h3>
-        {baseKnown ? (
-          <>
-            <div className="flex justify-between text-[#4C5973]">
-              <span>Base fare</span>
-              <span className="text-[#182339]">{money(baseFare)}</span>
-            </div>
-            <div className="flex justify-between text-[#4C5973]">
-              <span>Taxes &amp; fees</span>
-              <span className="text-[#182339]">{money(flightTotal - baseFare)}</span>
-            </div>
-          </>
-        ) : (
-          <div className="flex justify-between text-[#4C5973]">
-            <span>Flight fare (incl. taxes)</span>
-            <span className="text-[#182339]">{money(flightTotal)}</span>
-          </div>
-        )}
-        {addOnGroups.map((g) => (
-          <div key={g.category} className="flex justify-between text-[#4C5973]">
-            <span>{ADD_ON_LABELS[g.category]}</span>
-            <span className="text-[#182339]">{money(g.amount)}</span>
-          </div>
-        ))}
-        <div className="flex justify-between pt-3 mt-2 border-t border-[#E4E7EC] font-semibold text-[#182339]">
-          <span>Total amount</span>
-          <span className="text-[#7C1AEE] text-base">{money(totalAmount)}</span>
-        </div>
-        <p className="text-[11px] text-[#697691]">
-          For {paxCountText('adult', passengerCounts.adult)}
-          {passengerCounts.child > 0 && `, ${paxCountText('child', passengerCounts.child)}`}
-          {passengerCounts.infant > 0 && `, ${paxCountText('infant', passengerCounts.infant)}`}. The airline confirms the
-          final fare when your seats are held.
-        </p>
-      </aside>
-
-      <div className="space-y-4 min-w-0">
-        <Section
+    <BookingPageWeb sidebar={<FareSummaryWeb breakdown={breakdown} />}>
+      <div className="flex flex-col gap-4">
+        <SectionHeading
           title="Flight details"
-          subtitle="Please ensure your visa is valid, passport has 6+ months validity, and the name matches your passport."
+          subtitle={VISA_NOTE}
           action={
-            <button type="button" onClick={onBackToResults} className="text-sm font-medium text-[#7C1AEE] hover:underline whitespace-nowrap">
+            <button type="button" onClick={onBackToResults} className="pb-0.5 text-[15px] leading-5 font-medium text-[#7C1AEE] whitespace-nowrap">
               Change flight
             </button>
           }
-        >
-          <div className="space-y-3">
-            {legs.map((leg, index) => (
-              <LegCard
-                key={`${leg.offerId}-${index}`}
-                leg={leg}
-                label={legs.length > 1 ? legLabels?.[index] ?? `Flight ${index + 1}` : undefined}
-                cityFor={cityFor}
-                cabin={CABIN_CLASS_LABELS[summary.cabinClass]}
-              />
-            ))}
-          </div>
-        </Section>
+        />
 
-        <button
-          type="button"
-          onClick={() => setShowRules(true)}
-          className="w-full flex items-center justify-between bg-[#F1F3F7] rounded-xl px-5 py-3 text-left"
-        >
-          <span>
-            <span className="block text-sm font-semibold text-[#182339]">Fare policy</span>
-            <span className="block text-xs text-[#4C5973]">View cancellation and rescheduling charges</span>
-          </span>
-          <ChevronRight size={18} className="text-[#4C5973]" />
-        </button>
+        <div className="flex flex-col gap-4 max-w-[988px]">
+          {legs.map((leg, index) => (
+            <div key={`${leg.offerId}-${index}`} className="flex flex-col gap-2">
+              {legs.length > 1 && (
+                <span className="px-2 text-[11px] leading-4 font-semibold uppercase text-[#7C1AEE]">
+                  {legLabels?.[index] ?? `Flight ${index + 1}`}
+                </span>
+              )}
+              <div className="flex items-center gap-[35px]">
+                <ItineraryCard leg={leg} cityFor={cityFor} nameFor={nameFor} />
+                <BaggageInfo leg={leg} />
+              </div>
+            </div>
+          ))}
 
-        <Section title="Traveller details" subtitle="Choose from your saved travellers or add a new one.">
+          <button
+            type="button"
+            onClick={() => setShowRules(true)}
+            className="w-full flex items-start gap-3 p-3 rounded-xl bg-[#ECEEF3] text-left"
+          >
+            <span className="flex-1 flex flex-col gap-1">
+              <span className="text-[15px] leading-5 font-bold text-[#182339]">Fare policy</span>
+              <span className="text-[15px] leading-5 text-[#182339]">View cancellation and rescheduling charges</span>
+            </span>
+            <span className="w-11 h-11 flex items-center justify-center rounded-xl">
+              <ChevronRight size={20} className="text-[#182339]" />
+            </span>
+          </button>
+        </div>
+
+        <div className="max-w-[988px] flex flex-col gap-4">
+          <SectionHeading title="Traveller details" subtitle="Choose from the saved list or add a new passenger" />
           {travellersLoading ? (
             <Loader2 className="animate-spin text-[#7C1AEE]" />
           ) : (
-            <div className="space-y-4">
-              {visibleTypes.map((type) => (
-                <div key={type}>
-                  <div className="flex items-center gap-2 text-sm mb-2">
-                    <span className="font-semibold text-[#182339]">{PAX_LABELS[type].block}</span>
-                    <span className="text-xs text-[#697691]">
-                      {selectedCount(type)}/{required[type]} selected
-                    </span>
-                  </div>
-                  {byType[type].length === 0 ? (
-                    <p className="text-xs text-[#697691]">No saved {PAX_LABELS[type].plural} yet. Add one below.</p>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                      {byType[type].map((t) => {
-                        const selected = selectedIds.has(t.id);
-                        const note = ageChecks.get(t.id)?.note;
-                        return (
-                          <div
-                            key={t.id}
-                            className={`flex items-start gap-2 rounded-lg border p-3 ${selected ? 'border-[#7C1AEE] bg-[#F5F0FF]' : 'border-[#D5DAE3]'}`}
-                          >
-                            <button
-                              type="button"
-                              onClick={() => toggle(t)}
-                              aria-pressed={selected}
-                              aria-label={`Select ${t.firstName} ${t.lastName}`}
-                              className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center shrink-0 ${
-                                selected ? 'bg-[#7C1AEE] border-[#7C1AEE]' : 'border-[#99A6C0] bg-white'
-                              }`}
-                            >
-                              {selected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
-                            </button>
-                            <button type="button" onClick={() => toggle(t)} className="flex-1 min-w-0 text-left">
-                              <div className="text-sm font-medium text-[#182339] break-words">
-                                {t.firstName} {t.lastName}
-                              </div>
-                              <div className="text-[11px] text-[#697691]">
-                                {[t.gender, formatTravelerDob(t.dateOfBirth)].filter(Boolean).join(', ')}
-                              </div>
-                              {note && <div className="text-[11px] text-[#B45309]">{note}</div>}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setForm({ heading: `Edit ${t.firstName}`, traveller: t })}
-                              className="text-xs font-medium text-[#7C1AEE] hover:underline"
-                            >
-                              Edit
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              ))}
-              {hint && <p className="text-sm text-[#B45309]">{hint}</p>}
-
-              {form ? (
-                <TravellerFormWeb
-                  key={form.traveller?.id ?? 'new'}
-                  heading={form.heading}
-                  traveller={form.traveller}
-                  onCancel={() => setForm(null)}
-                  onSaved={(id) => {
-                    setForm(null);
-                    // A new traveller is selected straight away when there's room.
-                    if (id && !form.traveller) setPendingSelectId(id);
-                  }}
-                />
-              ) : (
+            <div className="flex flex-col">
+              <SelectedTravellersWeb
+                groups={visibleTypes.map((type) => ({ type, required: required[type], travellers: byType[type] }))}
+                isSelected={(t) => selectedIds.has(t.id)}
+                noteFor={(t) => ageChecks.get(t.id)?.note}
+                onToggle={toggle}
+                onEdit={(t) => setForm({ heading: `Edit ${t.firstName} ${t.lastName}`, traveller: t })}
+              />
+              {hint && <p className="pb-3 text-[13px] leading-4 text-[#CE6400]">{hint}</p>}
+              {!form && (
                 <button
                   type="button"
-                  onClick={() => setForm({ heading: 'New traveller', traveller: null })}
-                  className="flex items-center gap-1 text-sm font-medium text-[#7C1AEE] hover:underline"
+                  onClick={() => setForm({ heading: nextSlot(), traveller: null })}
+                  className="w-full h-11 flex items-center justify-center gap-2 rounded-2xl text-[15px] leading-5 font-medium text-[#7C1AEE]"
                 >
-                  Add new traveller <Plus size={16} />
+                  Add new travellers <Plus size={20} />
                 </button>
               )}
+              <Separator />
             </div>
           )}
-        </Section>
+        </div>
 
-        <Section title="Contact details" subtitle="Your booking confirmation and e-ticket are sent here.">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <label className="block">
-              <span className="block text-xs font-medium text-[#4C5973] mb-1">Email address</span>
-              <input type="email" className={inputClass} value={email} onChange={(e) => setEmail(e.target.value)} />
-            </label>
-            <label className="block">
-              <span className="block text-xs font-medium text-[#4C5973] mb-1">Mobile number</span>
-              <input type="tel" className={inputClass} value={mobile} onChange={(e) => setMobile(e.target.value)} />
-            </label>
-          </div>
-        </Section>
+        {form && (
+          <TravellerFormWeb
+            key={form.traveller?.id ?? 'new'}
+            heading={form.heading}
+            subtitle={VISA_NOTE}
+            traveller={form.traveller}
+            onCancel={() => setForm(null)}
+            onSaved={(id) => {
+              setForm(null);
+              // A new traveller is selected straight away when there's room.
+              if (id && !form.traveller) setPendingSelectId(id);
+            }}
+          />
+        )}
 
-        <AddOnsSectionWeb
-          legRoutes={legRoutes}
-          travellers={addOnTravellers}
-          currencyCode={currencyCode}
-          selections={addOns}
-          onChange={setAddOns}
-        />
-
-        <section className="bg-white rounded-xl border border-[#E4E7EC] p-5">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={useGst} onChange={(e) => setUseGst(e.target.checked)} className="accent-[#7C1AEE] w-4 h-4" />
-            <span className="text-sm font-semibold text-[#182339]">GST number</span>
-            <span className="text-xs text-[#697691]">Add GST to claim a tax credit</span>
-          </label>
-          {useGst && (
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-              <input className={inputClass} placeholder="GSTIN" maxLength={15} value={gstNumber} onChange={(e) => setGstNumber(e.target.value.toUpperCase())} />
-              <input className={inputClass} placeholder="Company name" maxLength={35} value={gstName} onChange={(e) => setGstName(e.target.value)} />
-              <input className={inputClass} placeholder="Company address" value={gstAddress} onChange={(e) => setGstAddress(e.target.value)} />
+        <div className="flex flex-col gap-3">
+          <SubHeading>Contact Details</SubHeading>
+          <p className="-mt-2 text-[13px] leading-4 text-[#697691]">Your booking confirmation and e-ticket are sent here.</p>
+          <div className="flex items-end gap-4">
+            <FieldWeb label="Email address" className="w-[343px]">
+              <span className="relative">
+                <input
+                  type="email"
+                  className={`${fieldInputClass} pr-10`}
+                  placeholder="Text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                {emailValid && <Check size={20} className="absolute right-3 top-2.5 text-[#007F20]" />}
+              </span>
+            </FieldWeb>
+            <div className="w-[343px] flex items-end gap-2">
+              <FieldWeb label="Phone number" className="w-[123px] shrink-0">
+                <select className={fieldInputClass} value={phoneCode} onChange={(e) => setPhoneCode(e.target.value)}>
+                  {PHONE_CODES.map((code) => (
+                    <option key={code}>{code}</option>
+                  ))}
+                </select>
+              </FieldWeb>
+              <span className="relative flex-1">
+                <input
+                  type="tel"
+                  aria-label="Mobile number"
+                  className={`${fieldInputClass} pr-10`}
+                  placeholder="1234"
+                  maxLength={10}
+                  value={mobile}
+                  onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
+                />
+                {mobileValid && <Check size={20} className="absolute right-3 top-2.5 text-[#007F20]" />}
+              </span>
             </div>
-          )}
-        </section>
-
-        <div className="bg-white rounded-xl border border-[#E4E7EC] p-5 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="text-xs text-[#697691]">Total</div>
-            <div className="text-xl font-bold text-[#7C1AEE]">{money(totalAmount)}</div>
           </div>
-          <div className="flex flex-wrap items-center justify-end gap-4 min-w-0">
-            {error && <p className="text-sm text-[#C8102E] max-w-[420px]">{error}</p>}
-            {busy && <span className="text-sm text-[#4C5973] whitespace-nowrap">{PAY_STATE_TEXT[payState as Exclude<PayState, 'idle'>]}</span>}
+          <Separator />
+        </div>
+
+        <div className="px-3 flex flex-col gap-6">
+          <AddOnsSectionWeb
+            legRoutes={legRoutes}
+            travellers={addOnTravellers}
+            currencyCode={breakdown.currencyCode}
+            selections={addOns}
+            onChange={setAddOns}
+          />
+
+          <div className="flex items-start gap-2 py-3 pl-3 pr-3 rounded-lg bg-[#ECEEF3]">
+            <CheckboxWeb checked={useGst} onChange={() => setUseGst((v) => !v)} label="Add GST number" />
+            <div className="flex-1 flex flex-col gap-3">
+              <button type="button" onClick={() => setUseGst((v) => !v)} className="flex flex-col gap-1 text-left">
+                <span className="text-[15px] leading-5 font-bold text-[#182339]">GST Number</span>
+                <span className="text-[15px] leading-5 text-[#182339]">Add GST to claim tax credit</span>
+              </button>
+              {useGst && (
+                <div className="flex flex-wrap items-center gap-4">
+                  <FieldWeb label="GST Number" className="w-[275px]">
+                    <input
+                      className={`${fieldInputClass} bg-transparent`}
+                      placeholder="AXTDF"
+                      maxLength={15}
+                      value={gstNumber}
+                      onChange={(e) => setGstNumber(e.target.value.toUpperCase())}
+                    />
+                  </FieldWeb>
+                  <FieldWeb label="Company Name" className="w-[275px]">
+                    <input
+                      className={`${fieldInputClass} bg-transparent`}
+                      placeholder="Text"
+                      maxLength={35}
+                      value={gstName}
+                      onChange={(e) => setGstName(e.target.value)}
+                    />
+                  </FieldWeb>
+                  <FieldWeb label="GST Address" className="w-[275px]">
+                    <input
+                      className={`${fieldInputClass} bg-transparent`}
+                      placeholder="Text"
+                      value={gstAddress}
+                      onChange={(e) => setGstAddress(e.target.value)}
+                    />
+                  </FieldWeb>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="w-[149px] flex flex-col">
+              <span className="text-[15px] leading-5 text-black">Total</span>
+              <span className="text-[18px] leading-6 font-bold text-[#6A16CB]">{money(breakdown.total)}</span>
+            </div>
             <button
               type="button"
-              onClick={handlePay}
-              disabled={busy}
-              className="flex items-center gap-2 px-10 py-3 rounded-lg bg-[#7C1AEE] text-white font-semibold hover:opacity-90 disabled:opacity-60 whitespace-nowrap"
+              onClick={handleContinue}
+              className="w-[225px] h-11 flex items-center justify-center rounded-xl bg-[#7C1AEE] text-[15px] leading-5 font-medium text-white hover:opacity-90"
             >
-              {busy && <Loader2 size={16} className="animate-spin" />}
-              Pay Now
+              Continue
             </button>
+            {error && <p className="max-w-[460px] text-[13px] leading-4 text-[#C5001F]">{error}</p>}
           </div>
         </div>
       </div>
 
       {showRules && (
         <div className="fixed inset-0 z-40 flex justify-end bg-black/40" onClick={() => setShowRules(false)}>
-          <div className="w-full max-w-[880px] h-full bg-white flex flex-col" onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Fare rules">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#E4E7EC]">
+          <div
+            className="w-full max-w-[813px] h-full bg-white flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-label="Fare rules"
+          >
+            <div className="flex items-center justify-between px-6 py-4 border-b border-[#CCD3E0]">
               <div>
-                <h3 className="text-base font-semibold text-[#182339]">Fare rules</h3>
-                <p className="text-xs text-[#697691]">All charges are per passenger</p>
+                <h3 className="text-[20px] leading-[30px] font-extrabold text-[#182339]">Fare rules</h3>
+                <p className="text-[13px] leading-4 text-[#697691]">All charges are per passenger</p>
               </div>
-              <button type="button" onClick={() => setShowRules(false)} aria-label="Close" className="p-2 rounded hover:bg-[#F1F3F7]">
+              <button type="button" onClick={() => setShowRules(false)} aria-label="Close" className="w-9 h-9 flex items-center justify-center rounded">
                 <X size={20} />
               </button>
             </div>
@@ -626,62 +685,6 @@ export const FlightReviewPageWeb: React.FC<{
           </div>
         </div>
       )}
-
-      {priceChange && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl p-6 max-w-sm w-full" role="alertdialog" aria-label="Price updated">
-            <h3 className="text-lg font-semibold text-[#182339] mb-2">Price updated</h3>
-            <p className="text-sm text-[#4C5973] mb-5">
-              The airline has updated the fare for this booking from {money(priceChange.from)} to{' '}
-              <strong className="text-[#182339]">{money(priceChange.to)}</strong>.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button type="button" onClick={() => priceChange.resolve(false)} className="px-4 py-2 rounded-lg border border-[#D5DAE3] text-sm">
-                Cancel
-              </button>
-              <button type="button" onClick={() => priceChange.resolve(true)} className="px-5 py-2 rounded-lg bg-[#7C1AEE] text-white text-sm font-medium">
-                Continue
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </BookingPageWeb>
   );
 };
-
-// After payment: the booking reference and where to find the trip.
-export const BookingConfirmedWeb: React.FC<{
-  confirmation: BookingConfirmation;
-  onViewTrips: () => void;
-  onNewSearch: () => void;
-}> = ({ confirmation, onViewTrips, onNewSearch }) => (
-  <div className="max-w-[640px] mx-auto px-6 py-16">
-    <div className="bg-white rounded-2xl border border-[#E4E7EC] p-8 text-center">
-      <CheckCircle2 size={48} className="text-[#1E9E5A] mx-auto mb-3" />
-      <h1 className="text-2xl font-semibold text-[#182339] mb-2">Payment successful</h1>
-      <p className="text-sm text-[#4C5973] mb-6">
-        We received {formatPrice(confirmation.amount, confirmation.currencyCode)}. Your booking is confirmed and the e-ticket
-        will be emailed to you once the airline issues it.
-      </p>
-      <div className="inline-grid grid-cols-2 gap-x-6 gap-y-1 text-sm text-left mb-8">
-        <span className="text-[#697691]">Booking reference</span>
-        <span className="font-semibold text-[#182339]">{confirmation.bookingRefNo}</span>
-        {confirmation.airlinePnr && (
-          <>
-            <span className="text-[#697691]">Airline PNR</span>
-            <span className="font-semibold text-[#182339]">{confirmation.airlinePnr}</span>
-          </>
-        )}
-      </div>
-      <div className="flex justify-center gap-3">
-        <button type="button" onClick={onNewSearch} className="px-5 py-2.5 rounded-lg border border-[#D5DAE3] text-sm font-medium text-[#182339]">
-          Book another flight
-        </button>
-        <button type="button" onClick={onViewTrips} className="px-6 py-2.5 rounded-lg bg-[#7C1AEE] text-white text-sm font-medium">
-          View My Trips
-        </button>
-      </div>
-    </div>
-  </div>
-);

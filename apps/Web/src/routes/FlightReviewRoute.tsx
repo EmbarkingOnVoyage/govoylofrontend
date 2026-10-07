@@ -2,6 +2,7 @@ import React from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import {
   BookingConfirmedWeb,
+  FlightPaymentPageWeb,
   FlightReviewPageWeb,
   clearBookingSession,
   encodeFlightSearch,
@@ -10,11 +11,11 @@ import {
   type FlightBookingSelection,
 } from "@workspace/ui";
 
-// /flights/review: traveller details + payment for the flights picked on the
-// results page (kept in the "flights" booking session, so a refresh keeps them).
+// /flights/review: traveller details for the flights picked on the results
+// page (kept in the "flights" booking session, so a refresh keeps them).
 export const FlightReviewRoute: React.FC = () => {
   const navigate = useNavigate();
-  const [selection] = useBookingSession<FlightBookingSelection>("flights");
+  const [selection, setSelection] = useBookingSession<FlightBookingSelection>("flights");
 
   if (!selection) return <Navigate to="/" replace />;
 
@@ -22,9 +23,32 @@ export const FlightReviewRoute: React.FC = () => {
     <FlightReviewPageWeb
       selection={selection}
       onBackToResults={() => navigate(`/flights/results?${encodeFlightSearch(selection.summary)}`)}
+      onContinue={(checkout) => {
+        setSelection({ ...selection, checkout });
+        navigate("/flights/payment");
+        window.scrollTo(0, 0);
+      }}
+    />
+  );
+};
+
+// /flights/payment: review and pay; needs the traveller details step first.
+export const FlightPaymentRoute: React.FC = () => {
+  const navigate = useNavigate();
+  const [selection] = useBookingSession<FlightBookingSelection>("flights");
+
+  if (!selection) return <Navigate to="/" replace />;
+  if (!selection.checkout) return <Navigate to="/flights/review" replace />;
+
+  return (
+    <FlightPaymentPageWeb
+      selection={selection}
+      checkout={selection.checkout}
+      onEditTravellers={() => navigate("/flights/review")}
       onBooked={(confirmation) => {
         clearBookingSession("flights");
         navigate("/flights/booked", { replace: true, state: confirmation });
+        window.scrollTo(0, 0);
       }}
     />
   );
@@ -40,8 +64,8 @@ export const BookingConfirmedRoute: React.FC = () => {
   return (
     <BookingConfirmedWeb
       confirmation={confirmation}
-      onViewTrips={() => navigate("/my-trips")}
-      onNewSearch={() => navigate("/")}
+      onViewBooking={() => navigate("/my-trips")}
+      onBackToHome={() => navigate("/")}
     />
   );
 };

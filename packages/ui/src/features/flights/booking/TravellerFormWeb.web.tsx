@@ -2,16 +2,10 @@ import React, { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useSaveTravellerMobile, useTravellerDetailMobile, type Traveler } from '../../profile/useTravellersMobile';
 import { COUNTRY_OPTIONS, GENDER_OPTIONS } from '../../../data/selectOptions';
+import { FieldWeb, Separator, SubHeading, fieldInputClass } from './BookingLayoutWeb.web';
 
-const inputClass =
-  'w-full px-3 py-2 rounded-lg border border-[#D5DAE3] text-sm text-[#182339] bg-white focus:outline-none focus:border-[#7C1AEE]';
-
-const Field: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
-  <label className="block">
-    <span className="block text-xs font-medium text-[#4C5973] mb-1">{label}</span>
-    {children}
-  </label>
-);
+const inputClass = fieldInputClass;
+const Field = FieldWeb;
 
 // The date part of an ISO date, for <input type="date">.
 function dateInputValue(iso: string | null | undefined): string {
@@ -23,10 +17,11 @@ function dateInputValue(iso: string | null | undefined): string {
 // numbers only ever come back masked, so the number is re-entered to change it.
 export const TravellerFormWeb: React.FC<{
   heading: string;
+  subtitle: string;
   traveller?: Traveler | null;
   onSaved: (travellerId: string | undefined) => void;
   onCancel: () => void;
-}> = ({ heading, traveller, onSaved, onCancel }) => {
+}> = ({ heading, subtitle, traveller, onSaved, onCancel }) => {
   const { data: detail } = useTravellerDetailMobile(traveller?.id ?? null);
   const save = useSaveTravellerMobile();
   const [firstName, setFirstName] = useState(traveller?.firstName ?? '');
@@ -77,86 +72,91 @@ export const TravellerFormWeb: React.FC<{
   };
 
   return (
-    <div className="rounded-xl border border-[#C9B5F5] bg-white p-5 space-y-5">
-      <div>
-        <h4 className="text-base font-semibold text-[#182339]">{heading}</h4>
-        <p className="text-xs text-[#697691]">
-          Please ensure your visa is valid, passport has 6+ months validity, and the name matches your passport.
-        </p>
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-[3px]">
+          <h2 className="text-[18px] leading-6 font-bold text-black">{heading}</h2>
+          <p className="text-[15px] leading-5 font-medium text-black">{subtitle}</p>
+        </div>
+        <Separator />
       </div>
 
-      <div>
-        <h5 className="text-sm font-semibold text-[#182339] mb-2">General information</h5>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <Field label="First name">
-            <input className={inputClass} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
-          </Field>
-          <Field label="Last name">
-            <input className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} />
-          </Field>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
-          <Field label="Gender">
-            <select className={inputClass} value={gender} onChange={(e) => setGender(e.target.value)}>
-              <option value="">Select</option>
-              {GENDER_OPTIONS.map((g) => (
-                <option key={g}>{g}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Date of birth">
-            <input type="date" max={today} className={inputClass} value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
-          </Field>
-          <Field label="Nationality">
-            <select className={inputClass} value={nationality} onChange={(e) => setNationality(e.target.value)}>
-              {COUNTRY_OPTIONS.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </Field>
+      <div className="w-[703px] max-w-full flex flex-col gap-3">
+        <SubHeading>General information</SubHeading>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <Field label="First name" className="w-[343px]">
+              <input className={inputClass} placeholder="Text" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+            </Field>
+            <Field label="Last name" className="w-[343px]">
+              <input className={inputClass} placeholder="Text" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+            </Field>
+          </div>
+          <div className="flex items-center gap-4">
+            <Field label="Gender" className="w-[124px]">
+              <select className={inputClass} value={gender} onChange={(e) => setGender(e.target.value)}>
+                <option value="">Select</option>
+                {GENDER_OPTIONS.map((g) => (
+                  <option key={g}>{g}</option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Date of birth" className="w-[204px]">
+              <input type="date" max={today} className={inputClass} value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
+            </Field>
+            <Field label="Nationality" className="w-[343px]">
+              <select className={inputClass} value={nationality} onChange={(e) => setNationality(e.target.value)}>
+                {COUNTRY_OPTIONS.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
         </div>
       </div>
+      <Separator />
 
-      <div>
-        <h5 className="text-sm font-semibold text-[#182339] mb-1">Documents</h5>
-        <p className="text-xs text-[#697691] mb-2">
+      <div className="w-[709px] max-w-full flex flex-col gap-3">
+        <SubHeading>Documents Details</SubHeading>
+        <p className="-mt-2 text-[13px] leading-4 text-[#697691]">
           Needed for international flights.
           {existingPassport && ` Passport on file: ${existingPassport.maskedPassportNumber} — enter the full number only to change it.`}
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <Field label="Passport number">
-            <input className={inputClass} value={passportNumber} onChange={(e) => setPassportNumber(e.target.value)} />
+        <div className="flex items-center gap-4">
+          <Field label="Passport number" className="w-[343px]">
+            <input className={inputClass} placeholder="Text" value={passportNumber} onChange={(e) => setPassportNumber(e.target.value)} />
           </Field>
-          <Field label="Expiry date">
+          <Field label="Expiry date" className="w-[343px]">
             <input type="date" min={today} className={inputClass} value={passportExpiry} onChange={(e) => setPassportExpiry(e.target.value)} />
           </Field>
-          <Field label="Issuing country">
-            <select className={inputClass} value={passportCountry} onChange={(e) => setPassportCountry(e.target.value)}>
-              <option value="">Select</option>
-              {COUNTRY_OPTIONS.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </Field>
         </div>
+        <Field label="Issuing country" className="w-[343px]">
+          <select className={inputClass} value={passportCountry} onChange={(e) => setPassportCountry(e.target.value)}>
+            <option value="">Select</option>
+            {COUNTRY_OPTIONS.map((c) => (
+              <option key={c}>{c}</option>
+            ))}
+          </select>
+        </Field>
       </div>
 
-      {error && <p className="text-sm text-[#C8102E]">{error}</p>}
+      {error && <p className="text-[13px] leading-4 text-[#C5001F]">{error}</p>}
 
-      <div className="flex justify-end gap-3">
-        <button type="button" onClick={onCancel} className="px-5 py-2 rounded-lg border border-[#D5DAE3] text-sm text-[#182339]">
+      <div className="w-[703px] max-w-full flex justify-end gap-3">
+        <button type="button" onClick={onCancel} className="h-10 px-5 rounded-lg border border-[#ADB8CD] text-[15px] leading-5 font-medium text-[#3E4B64]">
           Cancel
         </button>
         <button
           type="button"
           onClick={handleSave}
           disabled={save.isPending}
-          className="flex items-center gap-2 px-6 py-2 rounded-lg bg-[#7C1AEE] text-white text-sm font-medium disabled:opacity-60"
+          className="h-10 flex items-center gap-2 px-6 rounded-lg bg-[#7C1AEE] text-[15px] leading-5 font-medium text-white disabled:opacity-60"
         >
           {save.isPending && <Loader2 size={14} className="animate-spin" />}
-          Save
+          Save traveller
         </button>
       </div>
+      <Separator />
     </div>
   );
 };
