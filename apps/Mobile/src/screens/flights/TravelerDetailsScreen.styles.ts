@@ -442,6 +442,7 @@ export const styles = StyleSheet.create({
   },
   paymentSection: {
     marginTop: 16,
+    marginRight: 17,
     paddingTop: 16,
     borderTopWidth: 1,
     borderTopColor: '#CCD3E0',
@@ -454,12 +455,12 @@ export const styles = StyleSheet.create({
   paymentAmountLabel: {
     fontSize: 15,
     lineHeight: 20,
-    color: '#182339',
+    color: '#000000',
   },
   paymentAmountValue: {
-    fontSize: 20,
-    lineHeight: 28,
-    fontWeight: '700',
+    fontSize: 18.5,
+    lineHeight: 24,
+    fontWeight: '600',
     color: '#6A16CB',
   },
   paymentErrorText: {
@@ -468,9 +469,10 @@ export const styles = StyleSheet.create({
     marginBottom: 12,
   },
   payButton: {
-    width: 196,
+    width: 195.5,
     height: 44,
     borderRadius: 12,
+    marginRight: -17,
     backgroundColor: '#7C1AEE',
     alignItems: 'center',
     justifyContent: 'center',
@@ -554,8 +556,8 @@ export const styles = StyleSheet.create({
     marginRight: 8,
   },
   gstCard: {
-    marginTop: 16,
-    marginBottom: 12,
+    marginTop: 15,
+    marginBottom: 0,
   },
   infoCardText: {
     flex: 1,
