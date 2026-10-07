@@ -33,7 +33,7 @@ export const LandingScreen: React.FC<ILandingScreenProps> = ({ onNavigate, onGue
         style={styles.gradientOverlay}
       >
         <SafeAreaView style={styles.safeAreaRoot}>
-          <StatusBar barStyle="light-content" />
+          <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
           <View style={styles.container}>
             
             {/* Top Section: Badges and Core Headings */}

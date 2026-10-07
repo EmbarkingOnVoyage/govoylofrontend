@@ -478,7 +478,8 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                         </TouchableOpacity>
                       </View>
                     </View>
-                    <View style={{ marginTop: 12 }}>
+                    <View style={styles.divider} />
+                    <View>
                       <Text style={styles.odLabel}>Departure</Text>
                       <View style={styles.multiCityDateRow}>
                         <TouchableOpacity

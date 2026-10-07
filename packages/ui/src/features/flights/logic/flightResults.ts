@@ -37,7 +37,8 @@ export function formatTime24(iso: string): string {
 export function formatDateShort(iso: string): string {
   const date = new Date(iso);
   if (isNaN(date.getTime())) return '';
-  return date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+  // "25 Mar" (Figma results header), independent of the device locale.
+  return `${date.getDate()} ${date.toLocaleDateString('en-US', { month: 'short' })}`;
 }
 
 // "Mon, 30.1" — the Flight details popup's own date format (Figma), distinct

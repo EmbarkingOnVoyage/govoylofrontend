@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, SafeAreaView, ScrollView, ActivityIndicator, Modal, Image } from 'react-native';
-import { ArrowLeft, ArrowLeftRight, ArrowRight, Pencil, Plane, Info, ChevronDown, ListFilter, Check, Minus, Plus, X, MapPin } from 'lucide-react-native';
+import { ArrowLeft, ArrowLeftRight, ArrowRight, Pencil, Plane, Info, ChevronDown, ListFilter, Check, Minus, Plus, X, MapPin, UserRound } from 'lucide-react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SvgXml } from 'react-native-svg';
 import Slider from '@react-native-community/slider';
@@ -26,7 +26,6 @@ import {
   formatTotalDuration,
   dayOffset,
   stopsLabel,
-  SUPPLIER_DISPLAY_NAMES,
   formatMinutesDuration,
   CABIN_TIER_ORDER,
   CABIN_TIER_LABELS,
@@ -108,19 +107,6 @@ function toFormInitialValues(summary: FlightSearchSummary): FlightSearchFormInit
   };
 }
 
-// Both suppliers' offers are merged into one result list with no other visual
-// distinction, so this is purely to make it obvious during TripJack testing
-// which supplier a given card actually came from.
-const SupplierBadge: React.FC<{ supplierCode: string }> = ({ supplierCode }) => {
-  if (!supplierCode) return null;
-  const label = SUPPLIER_DISPLAY_NAMES[supplierCode] ?? supplierCode;
-  return (
-    <View style={styles.supplierBadge}>
-      <Text style={styles.supplierBadgeText}>{label}</Text>
-    </View>
-  );
-};
-
 // Horizontal strip of nearby departure dates with their fares (Figma "date
 // slider" component) so the user can shop dates without leaving the results
 // screen. Fetches the fare-calendar for the selected date's month only — a
@@ -161,12 +147,27 @@ const DateFareStrip: React.FC<{
     return list;
   }, [selectedDate]);
 
+  const cheapestInStrip = useMemo(() => {
+    const amounts = days.map((d) => fareByDate.get(dateKey(d))?.amount).filter((a): a is number => a != null);
+    return amounts.length > 0 ? Math.min(...amounts) : null;
+  }, [days, fareByDate]);
+
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dateStrip} contentContainerStyle={styles.dateStripContent}>
+      <View style={styles.dateStripMonth}>
+        <Text style={styles.dateStripMonthText}>
+          {selected.toLocaleDateString('en-US', { month: 'short' })}
+        </Text>
+      </View>
       {days.map((day) => {
         const key = dateKey(day);
         const isSelected = key === dateKey(selected);
         const fare = fareByDate.get(key);
+        const priceTone = !fare
+          ? styles.dateCardPriceEmpty
+          : fare.amount === cheapestInStrip
+          ? styles.dateCardPriceCheapest
+          : styles.dateCardPriceHigher;
 
         return (
           <TouchableOpacity
@@ -178,7 +179,7 @@ const DateFareStrip: React.FC<{
             <Text style={[styles.dateCardLabel, isSelected && styles.dateCardLabelSelected]}>
               {formatStripDate(day)}
             </Text>
-            <Text style={[styles.dateCardPrice, isSelected && styles.dateCardPriceSelected]}>
+            <Text style={[styles.dateCardPrice, priceTone]}>
               {fare ? formatPrice(fare.amount, fare.currencyCode) : '—'}
             </Text>
           </TouchableOpacity>
@@ -811,6 +812,37 @@ export const AirlineLogo: React.FC<{
 
 type FeaturedVariant = 'bestValue' | 'cheapest' | 'fastest';
 
+// Departure time/code, duration over a solid (non-stop) or dashed (with stops)
+// line, and arrival time/code with a red "+N" for next-day arrivals.
+const JourneyTimes: React.FC<{
+  departure: string;
+  arrival: string;
+  origin: string;
+  destination: string;
+  stopCount: number;
+  arrivalDayOffset: number;
+  spread?: boolean;
+}> = ({ departure, arrival, origin, destination, stopCount, arrivalDayOffset, spread }) => (
+  <View style={[styles.journeyTimes, spread && styles.journeyTimesSpread]}>
+    <View style={styles.timeBlock}>
+      <Text style={styles.timeText}>{formatTime24(departure)}</Text>
+      <Text style={styles.codeText}>{origin}</Text>
+    </View>
+    <View style={styles.durationBlock}>
+      <Text style={styles.durationText}>{formatTotalDuration(departure, arrival)}</Text>
+      <View style={[styles.durationLine, stopCount > 0 && styles.durationLineDashed]} />
+      <Text style={styles.stopsText}>{stopsLabel(stopCount)}</Text>
+    </View>
+    <View style={styles.timeBlock}>
+      <Text style={styles.timeText}>
+        {formatTime24(arrival)}
+        {arrivalDayOffset > 0 && <Text style={styles.dayOffsetText}>+{arrivalDayOffset}</Text>}
+      </Text>
+      <Text style={styles.codeText}>{destination}</Text>
+    </View>
+  </View>
+);
+
 // Colors and labels taken from the "Serach card" component in Figma (Phone Dev
 // page): each featured variant has a matching 1px card border and a rotated-text
 // side strip in the same color; non-featured cards use a plain gray border with
@@ -850,40 +882,35 @@ const FlightOfferCard: React.FC<{ offer: FlightOffer; variant?: FeaturedVariant;
 
   return (
     <TouchableOpacity activeOpacity={0.8} style={[styles.card, { borderColor }]} onPress={onPress}>
-      {config && (
-        <View style={[styles.strip, { backgroundColor: config.color }]}>
-          <Text style={styles.stripText}>{config.label}</Text>
-        </View>
-      )}
+      <View style={styles.stripColumn}>
+        {config && (
+          <View style={[styles.strip, { backgroundColor: config.color }]}>
+            <Text style={styles.stripText}>{config.label}</Text>
+          </View>
+        )}
+      </View>
+      <View style={styles.cardLogo}>
+        <AirlineLogo airlineCode={offer.airlineCode} size={24} />
+      </View>
       <View style={styles.cardBody}>
         <View style={styles.cardTopRow}>
           <View style={styles.airlineNameRow}>
-            <AirlineLogo airlineCode={offer.airlineCode} size={24} />
             <Text style={styles.airlineName}>{offer.airlineName}</Text>
             <Text style={styles.flightNumbersText}>{flightNumbers}</Text>
-            <SupplierBadge supplierCode={offer.supplierCode} />
           </View>
-          <Text style={styles.priceText}>{formatPrice(offer.totalAmount, offer.currencyCode)}</Text>
         </View>
 
         <View style={styles.journeyRow}>
-          <View style={styles.timeBlock}>
-            <Text style={styles.timeText}>{formatTime(first.departureDateTime)}</Text>
-            <Text style={styles.codeText}>{first.origin}</Text>
-          </View>
-          <View style={styles.durationBlock}>
-            <Text style={styles.durationText}>
-              {formatTotalDuration(first.departureDateTime, last.arrivalDateTime)}
-            </Text>
-            <View style={styles.durationLine} />
-            <Text style={styles.stopsText}>{stopsLabel(stopCount)}</Text>
-          </View>
-          <View style={[styles.timeBlock, styles.timeBlockEnd]}>
-            <Text style={styles.timeText}>
-              {formatTime(last.arrivalDateTime)}
-              {arrivalDayOffset > 0 && <Text style={styles.dayOffsetText}>+{arrivalDayOffset}</Text>}
-            </Text>
-            <Text style={styles.codeText}>{last.destination}</Text>
+          <JourneyTimes
+            departure={first.departureDateTime}
+            arrival={last.arrivalDateTime}
+            origin={first.origin}
+            destination={last.destination}
+            stopCount={stopCount}
+            arrivalDayOffset={arrivalDayOffset}
+          />
+          <View style={styles.priceBlock}>
+            <Text style={styles.priceText}>{formatPrice(offer.totalAmount, offer.currencyCode)}</Text>
           </View>
         </View>
 
@@ -901,8 +928,8 @@ const FlightOfferCard: React.FC<{ offer: FlightOffer; variant?: FeaturedVariant;
             <View />
           )}
           <TouchableOpacity style={styles.moreLink} onPress={onPress}>
-            <Text style={styles.moreLinkText}>More</Text>
-            <ChevronDown size={14} color="#7C1AEE" strokeWidth={2} />
+            <Text style={styles.moreLinkText}>Book</Text>
+            <ChevronDown size={16} color="#7C1AEE" strokeWidth={2} />
           </TouchableOpacity>
         </View>
       </View>
@@ -925,31 +952,19 @@ const CombinedLegRow: React.FC<{ offer: FlightOffer; label: string }> = ({ offer
         <View style={styles.airlineNameRow}>
           <AirlineLogo airlineCode={offer.airlineCode} size={20} />
           <Text style={styles.combinedLegAirlineName}>{offer.airlineName}</Text>
-          <SupplierBadge supplierCode={offer.supplierCode} />
         </View>
         <Text style={styles.combinedLegLabel}>{label}</Text>
       </View>
 
-      <View style={styles.journeyRow}>
-        <View style={styles.timeBlock}>
-          <Text style={styles.timeText}>{formatTime(first.departureDateTime)}</Text>
-          <Text style={styles.codeText}>{first.origin}</Text>
-        </View>
-        <View style={styles.durationBlock}>
-          <Text style={styles.durationText}>
-            {formatTotalDuration(first.departureDateTime, last.arrivalDateTime)}
-          </Text>
-          <View style={styles.durationLine} />
-          <Text style={styles.stopsText}>{stopsLabel(stopCount)}</Text>
-        </View>
-        <View style={[styles.timeBlock, styles.timeBlockEnd]}>
-          <Text style={styles.timeText}>
-            {formatTime(last.arrivalDateTime)}
-            {arrivalDayOffset > 0 && <Text style={styles.dayOffsetText}>+{arrivalDayOffset}</Text>}
-          </Text>
-          <Text style={styles.codeText}>{last.destination}</Text>
-        </View>
-      </View>
+      <JourneyTimes
+        departure={first.departureDateTime}
+        arrival={last.arrivalDateTime}
+        origin={first.origin}
+        destination={last.destination}
+        stopCount={stopCount}
+        arrivalDayOffset={arrivalDayOffset}
+        spread
+      />
     </View>
   );
 };
@@ -969,11 +984,13 @@ const CombinedFlightOfferCard: React.FC<{
 
   return (
     <TouchableOpacity activeOpacity={0.8} style={[styles.card, { borderColor }]} onPress={onPress}>
-      {config && (
-        <View style={[styles.strip, { backgroundColor: config.color }]}>
-          <Text style={styles.stripText}>{config.label}</Text>
-        </View>
-      )}
+      <View style={styles.stripColumn}>
+        {config && (
+          <View style={[styles.strip, styles.stripFull, { backgroundColor: config.color }]}>
+            <Text style={styles.stripText}>{config.label}</Text>
+          </View>
+        )}
+      </View>
       <View style={styles.cardBody}>
         {pair.returnOffer ? (
           <>
@@ -992,6 +1009,7 @@ const CombinedFlightOfferCard: React.FC<{
         )}
         <View style={styles.combinedPriceRow}>
           <Text style={styles.priceText}>{formatPrice(pair.totalAmount, pair.currencyCode)}</Text>
+          <Text style={styles.combinedBookText}>Book</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -1026,26 +1044,15 @@ const MultiCityTripRow: React.FC<{ segments: FlightOfferSegment[]; tripLabel: st
         {airlines ? ` | ${airlines}` : ''}
       </Text>
 
-      <View style={styles.journeyRow}>
-        <View style={styles.timeBlock}>
-          <Text style={styles.timeText}>{formatTime(first.departureDateTime)}</Text>
-          <Text style={styles.codeText}>{first.origin}</Text>
-        </View>
-        <View style={styles.durationBlock}>
-          <Text style={styles.durationText}>
-            {formatTotalDuration(first.departureDateTime, last.arrivalDateTime)}
-          </Text>
-          <View style={styles.durationLine} />
-          <Text style={styles.stopsText}>{stopsLabel(stopCount)}</Text>
-        </View>
-        <View style={[styles.timeBlock, styles.timeBlockEnd]}>
-          <Text style={styles.timeText}>
-            {formatTime(last.arrivalDateTime)}
-            {arrivalDayOffset > 0 && <Text style={styles.dayOffsetText}>+{arrivalDayOffset}</Text>}
-          </Text>
-          <Text style={styles.codeText}>{last.destination}</Text>
-        </View>
-      </View>
+      <JourneyTimes
+        departure={first.departureDateTime}
+        arrival={last.arrivalDateTime}
+        origin={first.origin}
+        destination={last.destination}
+        stopCount={stopCount}
+        arrivalDayOffset={arrivalDayOffset}
+        spread
+      />
 
       {firstLayover && (
         <View style={styles.layoverRow}>
@@ -1077,11 +1084,13 @@ const MultiCityCombinedOfferCard: React.FC<{
 
   return (
     <TouchableOpacity activeOpacity={0.8} style={[styles.card, { borderColor }]} onPress={onPress}>
-      {config && (
-        <View style={[styles.strip, { backgroundColor: config.color }]}>
-          <Text style={styles.stripText}>{config.label}</Text>
-        </View>
-      )}
+      <View style={styles.stripColumn}>
+        {config && (
+          <View style={[styles.strip, styles.stripFull, { backgroundColor: config.color }]}>
+            <Text style={styles.stripText}>{config.label}</Text>
+          </View>
+        )}
+      </View>
       <View style={styles.cardBody}>
         {legGroups.map((segments, index) => (
           <React.Fragment key={index}>
@@ -1091,6 +1100,7 @@ const MultiCityCombinedOfferCard: React.FC<{
         ))}
         <View style={styles.combinedPriceRow}>
           <Text style={styles.priceText}>{formatPrice(offer.totalAmount, offer.currencyCode)}</Text>
+          <Text style={styles.combinedBookText}>Book</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -1880,14 +1890,20 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
               ) : (
                 <View style={styles.routeRow}>
                   <Text style={styles.routeText}>{activeSummary.originCode}</Text>
-                  <ArrowLeftRight size={14} color="#182339" style={styles.routeIcon} />
+                  {isRoundTrip ? (
+                    <ArrowLeftRight size={16} color="#182339" style={styles.routeIcon} />
+                  ) : (
+                    <ArrowRight size={16} color="#182339" style={styles.routeIcon} />
+                  )}
                   <Text style={styles.routeText}>{activeSummary.destinationCode}</Text>
                 </View>
               )}
-              <Text style={styles.routeSubtitle}>
-                {formatDateRange(activeSummary)} · {activeSummary.passengerCount} ·{' '}
-                {CABIN_CLASS_LABELS[activeSummary.cabinClass]}
-              </Text>
+              <View style={styles.routeSubtitleRow}>
+                <Text style={styles.routeSubtitle}>{formatDateRange(activeSummary)} • </Text>
+                <UserRound size={13} color="#3E4B64" strokeWidth={1.5} />
+                <Text style={styles.routeSubtitle}> {activeSummary.passengerCount} • </Text>
+                <Text style={styles.routeSubtitleStrong}>{CABIN_CLASS_LABELS[activeSummary.cabinClass]}</Text>
+              </View>
             </View>
           ) : (
             <Text style={styles.headerTitle}>{activeOffers.length} flights found</Text>

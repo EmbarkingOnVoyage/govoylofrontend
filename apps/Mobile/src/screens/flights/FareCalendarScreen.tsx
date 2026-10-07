@@ -207,7 +207,7 @@ const MonthBlock: React.FC<MonthBlockProps> = ({
                   </Text>
                   {!!holiday && <View style={[styles.holidayDot, isSelected && styles.holidayDotSelected]} />}
                 </View>
-                {!!priceDay && (
+                {!!priceDay && !isPast && (
                   <Text
                     numberOfLines={1}
                     style={[

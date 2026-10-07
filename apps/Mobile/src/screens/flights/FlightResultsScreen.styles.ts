@@ -327,9 +327,8 @@ export const styles = StyleSheet.create({
   },
   routeSubtitle: {
     fontSize: 13,
-    fontWeight: '500',
-    color: '#182339',
-    marginTop: 2,
+    lineHeight: 16,
+    color: '#3E4B64',
   },
   headerTitle: {
     color: '#182339',
@@ -347,9 +346,9 @@ export const styles = StyleSheet.create({
     flexGrow: 0,
   },
   dateStripContent: {
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    gap: 4,
   },
   dateStripLoader: {
     marginRight: 16,
@@ -389,34 +388,33 @@ export const styles = StyleSheet.create({
     color: '#7C1AEE',
   },
   dateCard: {
-    minWidth: 92,
+    width: 86,
+    height: 36,
     borderWidth: 1,
-    borderColor: '#DFE3EC',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    borderColor: '#D4DAE4',
+    borderRadius: 4,
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
   },
   dateCardSelected: {
-    borderColor: '#7C1AEE',
-    backgroundColor: '#F3E8FF',
+    borderColor: '#114BFF',
   },
   dateCardLabel: {
     fontSize: 11,
-    fontWeight: '600',
-    color: '#3E4B64',
+    lineHeight: 14,
+    color: '#182339',
   },
   dateCardLabelSelected: {
     color: '#182339',
   },
   dateCardPrice: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FF8011',
-    marginTop: 2,
+    fontSize: 13,
+    lineHeight: 16,
+    color: '#697691',
   },
   dateCardPriceSelected: {
-    color: '#7C1AEE',
+    color: '#697691',
   },
   listContent: {
     padding: 16,
@@ -451,9 +449,11 @@ export const styles = StyleSheet.create({
     borderRadius: 4,
     marginBottom: 12,
     overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
   },
   strip: {
-    width: 17,
+    flex: 1,
+    marginTop: 46,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -468,13 +468,17 @@ export const styles = StyleSheet.create({
   },
   cardBody: {
     flex: 1,
-    padding: 14,
+    paddingLeft: 15,
+    paddingRight: 8,
+    paddingTop: 7,
+    paddingBottom: 8,
   },
   cardTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 10,
+    minHeight: 18,
+    marginBottom: 12,
   },
   airlineNameRow: {
     flexDirection: 'row',
@@ -492,28 +496,13 @@ export const styles = StyleSheet.create({
   },
   airlineName: {
     fontSize: 13,
-    lineHeight: 20,
-    fontWeight: '700',
+    lineHeight: 18,
     color: '#182339',
   },
   flightNumbersText: {
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '400',
+    fontSize: 13,
+    lineHeight: 18,
     color: '#697691',
-  },
-  supplierBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    backgroundColor: '#ECEEF3',
-  },
-  supplierBadgeText: {
-    fontSize: 10,
-    lineHeight: 13,
-    fontWeight: '600',
-    color: '#5A6685',
-    textTransform: 'uppercase',
   },
   journeyRow: {
     flexDirection: 'row',
@@ -528,49 +517,48 @@ export const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 13,
-    lineHeight: 20,
+    lineHeight: 18,
     fontWeight: '700',
     color: '#182339',
   },
   dayOffsetText: {
-    fontSize: 9,
-    fontWeight: '400',
-    color: '#EF4444',
-    top: -6,
+    fontSize: 8,
+    fontWeight: '500',
+    color: '#C5001F',
   },
   codeText: {
     fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '400',
+    lineHeight: 18,
     color: '#697691',
-    marginTop: 2,
+    marginTop: 3,
   },
   durationBlock: {
     alignItems: 'center',
+    marginHorizontal: 20,
   },
   durationText: {
     fontSize: 13,
-    lineHeight: 15,
-    fontWeight: '400',
+    lineHeight: 18,
     color: '#697691',
   },
   durationLine: {
     width: 60,
-    height: 1,
-    backgroundColor: '#ADB8CD',
-    marginVertical: 4,
+    height: 0,
+    borderTopWidth: 1,
+    borderColor: '#697691',
+    marginVertical: 2,
   },
   stopsText: {
     fontSize: 13,
-    lineHeight: 15,
-    fontWeight: '400',
+    lineHeight: 18,
     color: '#697691',
   },
   dashedDivider: {
     borderTopWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#ADB8CD',
-    marginVertical: 10,
+    borderColor: '#CCD3E0',
+    marginTop: 12,
+    marginBottom: 6,
   },
   bottomRow: {
     flexDirection: 'row',
@@ -592,17 +580,17 @@ export const styles = StyleSheet.create({
   moreLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 2,
+    gap: 8,
+    paddingRight: 8,
   },
   moreLinkText: {
     fontSize: 13,
-    lineHeight: 16,
-    fontWeight: '500',
+    lineHeight: 18,
     color: '#7C1AEE',
   },
   priceText: {
     fontSize: 13,
-    lineHeight: 20,
+    lineHeight: 18,
     fontWeight: '700',
     color: '#FF8011',
   },
@@ -1000,8 +988,14 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
   },
   combinedPriceRow: {
-    alignItems: 'flex-end',
+    height: 28,
     marginTop: 10,
+    marginLeft: -15,
+    marginRight: -8,
+    marginBottom: -8,
+    backgroundColor: '#F2E6FE',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Flight-details modal's Onward/Return tabs — shown only when reviewing a
   // paired round-trip selection.
@@ -1028,6 +1022,78 @@ export const styles = StyleSheet.create({
     color: '#697691',
   },
   detailsLegTabTextActive: {
+    color: '#7C1AEE',
+  },
+  stripColumn: {
+    width: 17,
+  },
+  // Combined/multi-city cards have no corner logo, so their strip runs the
+  // card's full height.
+  stripFull: {
+    marginTop: 0,
+  },
+  cardLogo: {
+    position: 'absolute',
+    top: 3,
+    left: 3,
+  },
+  journeyTimes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  journeyTimesSpread: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  durationLineDashed: {
+    borderStyle: 'dashed',
+  },
+  priceBlock: {
+    alignItems: 'flex-end',
+    alignSelf: 'flex-start',
+    paddingTop: 10,
+  },
+  routeSubtitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 2,
+  },
+  routeSubtitleStrong: {
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '500',
+    color: '#182339',
+  },
+  dateStripMonth: {
+    width: 20,
+    height: 36,
+    borderRadius: 2,
+    backgroundColor: '#3C0D74',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  dateStripMonthText: {
+    width: 36,
+    textAlign: 'center',
+    fontSize: 11,
+    lineHeight: 14,
+    color: '#FFFFFF',
+    transform: [{ rotate: '90deg' }],
+  },
+  dateCardPriceCheapest: {
+    color: '#007F20',
+  },
+  dateCardPriceHigher: {
+    color: '#C5001F',
+  },
+  dateCardPriceEmpty: {
+    color: '#697691',
+  },
+  combinedBookText: {
+    position: 'absolute',
+    right: 24,
+    fontSize: 13,
+    lineHeight: 18,
     color: '#7C1AEE',
   },
 });

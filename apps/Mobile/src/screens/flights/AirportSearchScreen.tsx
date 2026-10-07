@@ -174,7 +174,7 @@ export const AirportSearchScreen: React.FC<AirportSearchScreenProps> = ({
                 <Text style={styles.cityName}>
                   {group.city}, {group.country}
                 </Text>
-                <Text style={styles.cityRegion}>{[group.state, group.country].filter(Boolean).join(', ')}</Text>
+                {!!group.state && <Text style={styles.cityRegion}>{group.state}, {group.country}</Text>}
               </View>
             </View>
             {group.airports.map((airport) => (

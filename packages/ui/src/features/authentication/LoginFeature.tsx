@@ -57,7 +57,7 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
     <View style={s.screen}>
       <View style={s.container}>
         <View style={s.titleBlock}>
-          <Text style={s.title}>Welcome to your travel co-pilot</Text>
+          <Text style={s.title}>Welcome to your{"\n"}travel co-pilot</Text>
           <Text style={s.subtitle}>
             Log in or sign up to start the planning without the hassle
           </Text>
@@ -114,7 +114,7 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
           style={s.guestLink}
           onPress={() => onNavigate("ON_CONTINUE_AS_GUEST")}
         >
-          <Text style={s.guestLinkText}>Continue as guest →</Text>
+          <Text style={s.guestLinkText}>Continue as guest  ⟶</Text>
         </TouchableOpacity>
 
         <Text style={s.footerText}>

@@ -144,7 +144,7 @@ export const mobile: ILoginMobileStyles = {
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#ECEEF3',
+    backgroundColor: '#CCD3E0',
   },
   dividerText: {
     paddingHorizontal: 16,

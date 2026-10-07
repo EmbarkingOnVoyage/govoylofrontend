@@ -8,7 +8,7 @@ const CABIN_CLASS_OPTIONS: { label: string; value: CabinClass }[] = [
   { label: 'Economy', value: 'Economy' },
   { label: 'Premium Economy', value: 'PremiumEconomy' },
   { label: 'Business Class', value: 'Business' },
-  { label: 'First', value: 'First' },
+  { label: 'First Class', value: 'First' },
 ];
 
 interface TravellersClassScreenProps {

@@ -168,7 +168,8 @@ export const styles = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: '#99A6C0',
-    marginVertical: 14,
+    marginTop: 6,
+    marginBottom: 8,
   },
   dateRow: {
     flexDirection: 'row',
@@ -222,7 +223,7 @@ export const styles = StyleSheet.create({
     lineHeight: 20,
   },
   input: {
-    height: 44,
+    height: 24,
     justifyContent: 'center',
   },
   // Matches Figma's "ListChoice" component — its own bordered white box,
