@@ -6,6 +6,13 @@
 @source "../../../packages/**/*.tsx";
 @source "../../../packages/**/*.ts";
 
+/* Web Dev design system: Inter everywhere, page background #F8F9FB. */
+html,
+body {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: #182339;
+}
+
 /* Animated gradient ring around the selected Flights/Hotels/Flights+Hotels
    tab on the flight search hero (packages/ui/src/features/flights/
    FlightSearchFormWeb.web.tsx).

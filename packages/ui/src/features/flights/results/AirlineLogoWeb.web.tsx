@@ -2,16 +2,28 @@ import React, { useState } from 'react';
 import { Plane } from 'lucide-react';
 import { AIRLINE_LOGO_XML } from '../../../assets/airlines/airlineLogos';
 
-// Same order as the mobile AirlineLogo: the bundled brand mark, then the
-// logo CDN keyed by IATA code, then a plain plane badge.
+// Figma shows square airline marks, so the web tries the logo CDN's square
+// mark first, then the bundled brand wordmark, then a plain plane badge.
 export const AirlineLogoWeb: React.FC<{ airlineCode: string; size?: number; className?: string }> = ({
   airlineCode,
   size = 28,
   className = '',
 }) => {
-  const [failed, setFailed] = useState(false);
+  const [cdnFailed, setCdnFailed] = useState(false);
   const localXml = AIRLINE_LOGO_XML[airlineCode];
   const box = { width: size, height: size };
+
+  if (airlineCode && !cdnFailed) {
+    return (
+      <img
+        src={`https://pics.avs.io/200/200/${airlineCode}.png`}
+        alt=""
+        className={`rounded-[1.6px] bg-white object-contain shrink-0 ${className}`}
+        style={box}
+        onError={() => setCdnFailed(true)}
+      />
+    );
+  }
 
   if (localXml) {
     return (
@@ -25,21 +37,9 @@ export const AirlineLogoWeb: React.FC<{ airlineCode: string; size?: number; clas
     );
   }
 
-  if (failed || !airlineCode) {
-    return (
-      <span className={`inline-flex items-center justify-center rounded bg-[#3B3F99] shrink-0 ${className}`} style={box}>
-        <Plane size={size * 0.6} color="#FFFFFF" strokeWidth={2} />
-      </span>
-    );
-  }
-
   return (
-    <img
-      src={`https://pics.avs.io/200/200/${airlineCode}.png`}
-      alt=""
-      className={`rounded bg-white object-contain shrink-0 ${className}`}
-      style={box}
-      onError={() => setFailed(true)}
-    />
+    <span className={`inline-flex items-center justify-center rounded-[1.6px] bg-[#3A469D] shrink-0 ${className}`} style={box}>
+      <Plane size={size * 0.6} color="#FFFFFF" strokeWidth={2} />
+    </span>
   );
 };

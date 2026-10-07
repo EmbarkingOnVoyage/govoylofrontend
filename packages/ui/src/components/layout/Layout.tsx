@@ -82,7 +82,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
           </main>
         </>
       ) : variant === 'wide' ? (
-        <main className="min-h-[calc(100vh-73px)] bg-[#F4F4F6]">{children}</main>
+        <main className="min-h-[calc(100vh-64px)] bg-[#F8F9FB]">{children}</main>
       ) : (
         /* Minimalist Centered Workspace Mode Layout (Used for Login & OTP screens) */
         <main className="flex items-center justify-center min-h-[calc(100vh-73px)] p-6 bg-[#F4F4F6]">

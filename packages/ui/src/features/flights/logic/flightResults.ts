@@ -495,6 +495,30 @@ export interface CombinedFilterState {
   time: TimeSelection;
   priceMax: number | null;
   durationMax: number | null;
+  // Web results sidebar extras (Web Dev Desktop-15); absent = no filter.
+  priceMin?: number | null;
+  layoverMin?: number | null;
+  layoverMax?: number | null;
+  departAirports?: Set<string>;
+  arriveAirports?: Set<string>;
+  // Bags the traveller wants: 1+ cabin bag needs a cabin allowance, 1+
+  // checked bag needs a checked-baggage allowance.
+  cabinBags?: number;
+  checkedBags?: number;
+}
+
+// Total connection time between the offer's flights, in minutes (0 = non-stop).
+export function getLayoverMinutes(offer: FlightOffer): number {
+  let total = 0;
+  for (let i = 1; i < offer.segments.length; i++) {
+    const gap = new Date(offer.segments[i].departureDateTime).getTime() - new Date(offer.segments[i - 1].arrivalDateTime).getTime();
+    if (!isNaN(gap) && gap > 0) total += Math.round(gap / 60000);
+  }
+  return total;
+}
+
+function hasCabinBaggage(offer: FlightOffer): boolean {
+  return (offer.fares ?? []).some((fare) => /[1-9]/.test(fare.handBaggage ?? ''));
 }
 
 // Some fare on the offer includes checked baggage (e.g. "15 KG", "1 pcs").
@@ -526,7 +550,17 @@ export function applyCombinedFilters(
       (o) => state.layoverCities.size === 0 || getLayoverCities(o, cityForCode).some((city) => state.layoverCities.has(city))
     )
     .filter((o) => state.priceMax === null || o.totalAmount <= state.priceMax)
-    .filter((o) => state.durationMax === null || getTotalDurationMinutes(o) <= state.durationMax);
+    .filter((o) => state.durationMax === null || getTotalDurationMinutes(o) <= state.durationMax)
+    .filter((o) => state.priceMin == null || o.totalAmount >= state.priceMin)
+    .filter((o) => {
+      if (o.segments.length < 2 || (state.layoverMin == null && state.layoverMax == null)) return true;
+      const layover = getLayoverMinutes(o);
+      return (state.layoverMin == null || layover >= state.layoverMin) && (state.layoverMax == null || layover <= state.layoverMax);
+    })
+    .filter((o) => !state.departAirports?.size || state.departAirports.has(o.segments[0].origin))
+    .filter((o) => !state.arriveAirports?.size || state.arriveAirports.has(o.segments[o.segments.length - 1].destination))
+    .filter((o) => !state.cabinBags || hasCabinBaggage(o))
+    .filter((o) => !state.checkedBags || hasCheckInBaggage(o));
 }
 
 // A whole-trip offer (one supplier price for outbound + return) split into one

@@ -1,9 +1,13 @@
 import React, { useMemo } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   FlightResultsPageWeb,
+  FlightSearchFormWeb,
+  MenuBar,
   decodeFlightSearch,
   encodeFlightSearch,
+  flightSearchQueryKey,
   useFlightSearchQuery,
   writeBookingSession,
   type FlightBookingSelection,
@@ -12,10 +16,11 @@ import {
 
 // /flights/results?<search>: the search lives in the URL (see
 // flightSearchParams), so a refresh or a shared link re-runs it. A search
-// started from the form arrives with its result already cached.
-export const FlightResultsRoute: React.FC = () => {
+// started from a form arrives with its result already cached.
+export const FlightResultsRoute: React.FC<{ onNavigate: (rule: string) => void }> = ({ onNavigate }) => {
   const { search } = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const summary = useMemo(() => decodeFlightSearch(search), [search]);
   const { data, isPending, error, refetch } = useFlightSearchQuery(summary?.request ?? null);
 
@@ -37,13 +42,27 @@ export const FlightResultsRoute: React.FC = () => {
 
   return (
     <FlightResultsPageWeb
+      header={
+        <MenuBar onNavigate={onNavigate}>
+          <FlightSearchFormWeb
+            variant="bar"
+            // Remount when the URL's search changes so the bar shows it.
+            key={search}
+            initialSummary={summary}
+            onNavigate={onNavigate}
+            onResults={(response, next) => {
+              queryClient.setQueryData(flightSearchQueryKey(next.request), response);
+              navigate(`/flights/results?${encodeFlightSearch(next)}`);
+            }}
+          />
+        </MenuBar>
+      }
       summary={summary}
       offers={data?.offers ?? []}
       isLoading={isPending}
       error={error}
       onRetry={() => refetch()}
       onSelectDate={handleSelectDate}
-      onModifySearch={() => navigate(`/?${encodeFlightSearch(summary)}`)}
       onChoose={handleChoose}
     />
   );

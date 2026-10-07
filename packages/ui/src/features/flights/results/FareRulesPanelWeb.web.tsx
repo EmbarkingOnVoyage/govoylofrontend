@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowLeft, CalendarDays, Clock, Info, Loader2 } from 'lucide-react';
+import { CalendarDays, Clock, Info, Loader2, Undo2 } from 'lucide-react';
 import { useFareRulesMobile } from '../useFareRulesMobile';
 import {
   buildRows,
@@ -12,38 +12,41 @@ import {
 } from '../logic/fareRules';
 
 const TONE_COLOR: Record<RuleRow['tone'], string> = {
-  green: '#15803D',
-  orange: '#D97706',
-  red: '#C8102E',
+  green: '#007F20',
+  orange: '#CE6400',
+  red: '#C5001F',
 };
 
-function formatTime24(iso: string): string {
-  const date = new Date(iso);
-  if (isNaN(date.getTime())) return '';
-  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+// "Fri, 25 Sep · 09:25"
+function legDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${WEEKDAYS[d.getDay()]}, ${String(d.getDate()).padStart(2, '0')} ${MONTHS[d.getMonth()]} · ${hh}:${mm}`;
 }
 
-function formatWeekdayDate(iso: string): string {
-  const date = new Date(iso);
-  if (isNaN(date.getTime())) return '';
-  const weekday = date.toLocaleDateString('en-GB', { weekday: 'short' });
-  return `${weekday}, ${date.getDate()} ${date.toLocaleDateString('en-GB', { month: 'short' })}`;
-}
-
-const Chip: React.FC<{ text: string; red?: boolean }> = ({ text, red }) => (
-  <span
-    className={`px-2 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${
-      red ? 'bg-[#FDECEE] text-[#C8102E]' : 'bg-[#F1F3F7] text-[#4C5973]'
+const Notice: React.FC<{ tone: 'blue' | 'orange'; title?: string; children: React.ReactNode }> = ({ tone, title, children }) => (
+  <div
+    className={`w-full flex gap-2 p-3 rounded-xl border ${
+      tone === 'blue' ? 'bg-[#E8EEFF] border-[rgba(0,112,200,0.1)]' : 'bg-[#FFF3E8] border-[rgba(179,98,0,0.1)]'
     }`}
   >
-    {text}
-  </span>
+    {tone === 'blue' ? <Info size={20} className="text-[#2563EB] shrink-0" /> : <Clock size={20} className="text-[#CE6400] shrink-0" />}
+    <div className="flex flex-col gap-1">
+      {title && <div className="text-[15px] leading-5 font-bold text-[#182339]">{title}</div>}
+      <div className="text-[13px] leading-[18px] text-[#182339]">{children}</div>
+    </div>
+  </div>
 );
 
-// Fare rules for one or more legs (Web Dev Figma "Fare rules" popup):
-// Cancellation and Date change side by side, each a banded timeline from the
-// supplier's policies, or the airline's text rules when there are no amounts.
-// Shared logic with the mobile FareRulesModal (logic/fareRules.ts).
+// Fare rules (Web Dev "Fare rules" popup): a card per leg/trip, then
+// Cancellation and Date change side by side — each a banded timeline from
+// the supplier's policies, or the airline's text rules when there are no
+// amounts — with the transaction-fee and check-in notes underneath.
 export const FareRulesPanelWeb: React.FC<{ legs: FareRulesLeg[] }> = ({ legs }) => {
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const offerIds = useMemo(() => legs.map((l) => l.offerId), [legs]);
@@ -64,7 +67,7 @@ export const FareRulesPanelWeb: React.FC<{ legs: FareRulesLeg[] }> = ({ legs }) 
     );
   }
   if (isError) {
-    return <p className="py-6 text-sm text-[#4C5973]">Couldn't load fare rules right now. Please try again.</p>;
+    return <p className="py-6 text-[13px] text-[#3E4B64]">Couldn't load fare rules right now. Please try again.</p>;
   }
 
   const renderColumn = (tab: FareRuleTab) => {
@@ -75,107 +78,99 @@ export const FareRulesPanelWeb: React.FC<{ legs: FareRulesLeg[] }> = ({ legs }) 
     const isCancel = tab === 'Cancellation';
 
     let body: React.ReactNode;
-    if (hasAmounts) {
+    if (rows.length > 0) {
       body = (
-        <div className="rounded-xl border border-[#E4E7EC] p-4">
-          <div className="text-[11px] font-semibold text-[#697691] mb-3">
-            {isCancel ? 'IF YOU CANCEL…' : 'IF YOU CHANGE THE DATE…'}
+        <div className="w-full flex flex-col p-3.5 bg-white border border-[#98A5BF] rounded-[14px]">
+          <div className="text-[11px] leading-4 font-bold uppercase text-[#697691]">
+            {isCancel ? 'If you cancel…' : 'If you change the date…'}
           </div>
-          {rows.map((row, index) => (
-            <div key={`${row.title}-${index}`} className="flex gap-3">
-              <div className="flex flex-col items-center pt-1">
-                <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: TONE_COLOR[row.tone] }} />
-                {index < rows.length - 1 && <span className="flex-1 w-px bg-[#D5DAE3] my-1" />}
+          {rows.map((row, index) => {
+            const last = index === rows.length - 1;
+            return (
+              <div key={`${row.title}-${index}`} className={`flex items-start gap-2.5 ${index === 0 ? 'pt-3' : ''}`}>
+                <div className="w-3.5 flex flex-col items-center pt-[3px] self-stretch">
+                  <span className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: TONE_COLOR[row.tone] }} />
+                  {!last && <span className="flex-1 w-0.5 my-1 bg-[#98A5BF]" />}
+                </div>
+                <div className={`flex-1 min-w-0 ${last ? '' : 'pb-3.5'}`}>
+                  <div className="text-[14px] leading-5 font-bold text-[#182339]">{row.title}</div>
+                  <div className="pt-0.5 text-[13px] leading-4 text-[#697691]">{row.window}</div>
+                  {row.note && <div className="pt-1 text-[12px] leading-4 text-[#3E4B64]">{row.note}</div>}
+                </div>
+                <div className="text-right shrink-0">
+                  {row.amount != null ? (
+                    <>
+                      <div className="text-[16px] leading-[22px] font-bold text-[#182339]">{money(row.amount)}</div>
+                      <div className="pt-px text-[13px] leading-4 text-[#697691]">{isCancel ? 'airline fee' : '+ fare difference'}</div>
+                    </>
+                  ) : row.chip ? (
+                    <span
+                      className={`inline-block px-2.5 py-1 rounded-[20px] text-[12px] leading-4 font-bold ${
+                        row.tone === 'red' ? 'bg-[#FFE8EC] text-[#C5001F]' : 'bg-[#ECEEF3] text-[#3E4B64]'
+                      }`}
+                    >
+                      {row.chip}
+                    </span>
+                  ) : null}
+                </div>
               </div>
-              <div className="flex-1 pb-4">
-                <div className="text-sm font-semibold text-[#182339]">{row.title}</div>
-                <div className="text-xs text-[#697691]">{row.window}</div>
-              </div>
-              <div className="text-right">
-                {row.amount != null ? (
-                  <>
-                    <div className="text-sm font-bold text-[#182339]">{money(row.amount)}</div>
-                    <div className="text-[11px] text-[#697691]">{isCancel ? 'airline fee' : '+ fare difference'}</div>
-                  </>
-                ) : row.chip ? (
-                  <Chip text={row.chip} red={row.tone === 'red'} />
-                ) : null}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       );
-    } else if (rows.length > 0 || textRules.length > 0) {
-      const Icon = isCancel ? ArrowLeft : CalendarDays;
-      const policyRows = rows.filter((r) => r.tone !== 'red');
+    } else if (textRules.length > 0) {
+      const Icon = isCancel ? Undo2 : CalendarDays;
       body = (
-        <div className="rounded-xl border border-[#E4E7EC] p-4 space-y-3">
+        <div className="w-full flex flex-col gap-3 p-3.5 bg-white border border-[#98A5BF] rounded-[14px]">
           <div className="flex items-center gap-2">
-            <span
-              className="w-7 h-7 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: isCancel ? '#FEF3E7' : '#EEF3FF' }}
-            >
-              <Icon size={14} color={isCancel ? '#C2410C' : '#2563EB'} />
-            </span>
-            <span className="text-sm font-semibold text-[#182339]">{isCancel ? 'Cancellation' : 'Date change'}</span>
+            <Icon size={16} className={isCancel ? 'text-[#CE6400]' : 'text-[#2563EB]'} />
+            <span className="text-[14px] leading-5 font-bold text-[#182339]">Airline policy</span>
           </div>
-          {policyRows.map((row, index) => (
-            <div key={index}>
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <div className="text-sm font-semibold text-[#182339]">{row.title}</div>
-                  <div className="text-xs text-[#697691]">{row.window}</div>
-                </div>
-                <Chip text="Airline policy" />
-              </div>
-              {row.note && <p className="text-xs text-[#4C5973] mt-1">{row.note}</p>}
+          {textRules.map((rule, index) => (
+            <div key={`${rule.segmentId}-${index}`}>
+              {rule.fareRuleName && <div className="text-[13px] leading-4 font-bold text-[#182339]">{rule.fareRuleName}</div>}
+              <p className="text-[13px] leading-4 text-[#697691] whitespace-pre-line">{rule.fareRuleDesc.replace(/__nls__/g, '\n')}</p>
             </div>
           ))}
-          {policyRows.length === 0 &&
-            textRules.map((rule, index) => (
-              <div key={`${rule.segmentId}-${index}`}>
-                {rule.fareRuleName && <div className="text-sm font-semibold text-[#182339]">{rule.fareRuleName}</div>}
-                <p className="text-xs text-[#4C5973] whitespace-pre-line">{rule.fareRuleDesc}</p>
-              </div>
-            ))}
-          {transactionFee > 0 && (
-            <div className="flex justify-between text-sm pt-2 border-t border-[#E4E7EC]">
-              <span className="text-[#4C5973]">Transaction fee</span>
-              <span className="font-semibold text-[#182339]">+ {money(transactionFee)}</span>
-            </div>
-          )}
         </div>
       );
     } else {
       body = (
-        <p className="text-sm text-[#4C5973]">
+        <p className="text-[13px] leading-4 text-[#3E4B64]">
           No specific {isCancel ? 'cancellation' : 'date change'} rule was provided for this fare.
         </p>
       );
     }
 
     return (
-      <div className="flex-1 min-w-0 space-y-3">
-        <div className="text-center text-sm font-medium py-1.5 rounded-md border border-[#C9B5F5] bg-[#F5F0FF] text-[#182339]">
-          {isCancel ? 'Cancellation' : 'Date change'}
+      <div className="flex-1 min-w-0 max-w-[343px] flex flex-col gap-3">
+        <div className="h-8 flex items-stretch bg-white border border-[#ADB8CD] rounded">
+          <div
+            className={`flex-1 flex items-center justify-center px-3 rounded text-[15px] leading-5 text-center ${
+              isCancel ? 'm-[2px] bg-[#F3E8FF] text-[#3E4B64]' : 'text-[#182339]'
+            }`}
+          >
+            {isCancel ? 'Cancellation' : 'Date change'}
+          </div>
         </div>
         {body}
-        {hasAmounts && transactionFee > 0 && (
-          <div className="flex gap-2 rounded-xl bg-[#EEF3FF] p-3 text-xs text-[#182339]">
-            <Info size={16} className="text-[#2563EB] shrink-0" />
-            <span>
-              <strong>+ {money(transactionFee)} transaction fee</strong> per passenger on top of the airline fee.
-            </span>
-          </div>
+        {transactionFee > 0 && (
+          <Notice tone="blue">
+            <strong>+ {money(transactionFee)} transaction fee</strong> per passenger on top of the airline fee. It applies even if
+            the airline cancels the flight.
+          </Notice>
         )}
+        <Notice tone="orange" title="Check-in closes 45 min before departure">
+          60 min for international flights. Fees are per passenger.
+        </Notice>
       </div>
     );
   };
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-[18px]">
       {tabs.length > 1 && (
-        <div className="flex gap-3 overflow-x-auto">
+        <div className="flex gap-2 pb-3">
           {tabs.map((tab, index) => {
             const isActive = tab.key === active?.key;
             return (
@@ -183,36 +178,21 @@ export const FareRulesPanelWeb: React.FC<{ legs: FareRulesLeg[] }> = ({ legs }) 
                 key={tab.key}
                 type="button"
                 onClick={() => setActiveTabIndex(index)}
-                className={`text-left px-3 py-2 rounded-lg border min-w-[130px] ${
-                  isActive ? 'border-[#7C1AEE] bg-[#F5F0FF]' : 'border-[#D5DAE3] bg-white'
-                }`}
+                className={`w-[167px] text-left px-3.5 py-3 rounded-xl border-2 bg-white ${isActive ? 'border-[#7C1AEE]' : 'border-[#98A5BF]'}`}
               >
-                <div className="text-[11px] font-semibold text-[#7C1AEE] uppercase">{tab.label}</div>
-                <div className="text-sm font-semibold text-[#182339]">
+                <div className={`text-[11px] leading-4 font-bold uppercase ${isActive ? 'text-[#7C1AEE]' : 'text-[#697691]'}`}>{tab.label}</div>
+                <div className="pt-1 text-[18px] leading-6 font-bold text-[#182339]">
                   {tab.origin} → {tab.destination}
                 </div>
-                {tab.departureDateTime && (
-                  <div className="text-[11px] text-[#697691]">
-                    {formatWeekdayDate(tab.departureDateTime)} · {formatTime24(tab.departureDateTime)}
-                  </div>
-                )}
+                {tab.departureDateTime && <div className="pt-0.5 text-[13px] leading-4 text-[#697691]">{legDate(tab.departureDateTime)}</div>}
               </button>
             );
           })}
         </div>
       )}
-
-      <div className="flex gap-4">
+      <div className="flex items-start gap-10">
         {renderColumn('Cancellation')}
         {renderColumn('DateChange')}
-      </div>
-
-      <div className="flex gap-2 rounded-xl bg-[#FEF6E7] p-3 text-xs text-[#182339]">
-        <Clock size={16} className="text-[#D97706] shrink-0" />
-        <span>
-          <strong className="block">Check-in closes 45 min before departure</strong>
-          60 min for international flights. Fees are per passenger.
-        </span>
       </div>
     </div>
   );

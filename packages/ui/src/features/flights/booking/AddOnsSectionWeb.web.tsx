@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronRight, Loader2, X } from 'lucide-react';
+import { ChevronRight, Loader2, Luggage, X } from 'lucide-react';
 import {
   SSR_STATUS_AVAILABLE,
   SSR_TYPE_BAGGAGE,
@@ -13,6 +13,9 @@ import {
 import { baggageText, buildSeatSections, describeBaggage, layoutSeatRow, mealKind, seatLabelParts, uniqueOptions } from '../logic/addOns';
 import type { AddOnCategory, AddOnSelection } from '../logic/booking';
 import { useEscapeKey } from '../useEscapeKey.web';
+import { formatTime24 } from '../logic/flightResults';
+import { AirlineLogoWeb } from '../results/AirlineLogoWeb.web';
+import { FieldWeb, fieldInputClass } from './BookingLayoutWeb.web';
 
 export interface AddOnTraveller {
   id: string;
@@ -31,6 +34,11 @@ export interface AddOnLegRoute {
   destination: string;
   handBaggage: string | null;
   checkInBaggage: string | null;
+  // For the flight card at the top of each popup.
+  airlineCode?: string;
+  airlineName?: string;
+  flightNumbers?: string[];
+  departureDateTime?: string;
 }
 
 function rupees(amount: number, currencyCode: string): string {
@@ -39,35 +47,48 @@ function rupees(amount: number, currencyCode: string): string {
     : 'Free';
 }
 
+// Popup shell from the Web Dev add-on popups: a right drawer with a single
+// title tab and close button, the flight card, the content, then Total + Save.
 const PanelShell: React.FC<{
   title: string;
-  subtitle: string;
+  width: number;
+  route: AddOnLegRoute;
   total: number;
   currencyCode: string;
   onSave: () => void;
   onClose: () => void;
   children: React.ReactNode;
-}> = ({ title, subtitle, total, currencyCode, onSave, onClose, children }) => {
+}> = ({ title, width, route, total, currencyCode, onSave, onClose, children }) => {
   useEscapeKey(onClose);
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-black/40" onClick={onClose}>
-      <div className="w-full max-w-[560px] h-full bg-white flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={title}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E4E7EC]">
-          <div>
-            <h3 className="text-base font-semibold text-[#182339]">{title}</h3>
-            <p className="text-xs text-[#697691]">{subtitle}</p>
-          </div>
-          <button type="button" onClick={onClose} aria-label="Close" className="p-2 rounded hover:bg-[#F1F3F7]">
-            <X size={20} />
+      <div
+        className="w-full h-full bg-white flex flex-col shadow-[-4px_0px_32px_rgba(24,35,57,0.14)]"
+        style={{ maxWidth: width }}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-label={title}
+      >
+        <div className="flex items-start justify-between px-4 border-b border-[#CCD3E0]">
+          <div className="h-11 flex items-center pl-4 pr-3 text-[16px] leading-6 font-medium text-[#182339]">{title}</div>
+          <button type="button" onClick={onClose} aria-label="Close" className="mt-1 w-9 h-9 flex items-center justify-center rounded-full hover:bg-[#ECEEF3]">
+            <X size={18} className="text-[#3E4B64]" />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">{children}</div>
-        <div className="flex items-center justify-between px-6 py-4 border-t border-[#E4E7EC]">
-          <div>
-            <div className="text-xs text-[#697691]">Total</div>
-            <div className="text-lg font-bold text-[#7C1AEE]">{total > 0 ? rupees(total, currencyCode) : '₹0'}</div>
+        <div className="flex-1 overflow-y-auto px-3 py-4 flex flex-col gap-3">
+          <FlightCard route={route} />
+          {children}
+        </div>
+        <div className="flex items-center justify-between gap-4 px-3 py-4">
+          <div className="flex flex-col">
+            <span className="text-[16px] leading-5 text-[#182339]">Total</span>
+            <span className="text-[20px] leading-7 font-bold text-[#6A16CB]">{total > 0 ? rupees(total, currencyCode) : '₹0'}</span>
           </div>
-          <button type="button" onClick={onSave} className="px-10 py-2.5 rounded-lg bg-[#7C1AEE] text-white font-medium hover:opacity-90">
+          <button
+            type="button"
+            onClick={onSave}
+            className="w-[333px] max-w-[60%] h-11 rounded-[10px] bg-[#7C1AEE] text-[16px] leading-5 font-medium text-white hover:opacity-90"
+          >
             Save
           </button>
         </div>
@@ -76,12 +97,60 @@ const PanelShell: React.FC<{
   );
 };
 
-const OptionCard: React.FC<{ selected: boolean; onClick: () => void; children: React.ReactNode }> = ({ selected, onClick, children }) => (
+// "DEL → BOM · IndiGo · 6E 882 · 23:15 Wed, 23 Sep" card at the top of each popup.
+const FlightCard: React.FC<{ route: AddOnLegRoute }> = ({ route }) => {
+  const when = route.departureDateTime ? new Date(route.departureDateTime) : null;
+  const valid = !!when && !isNaN(when.getTime());
+  return (
+    <div className="w-fit min-w-[340px] flex items-center gap-3 px-4 py-3.5 bg-white border border-[#98A5BF] rounded-xl">
+      {route.airlineCode && (
+        <span className="w-11 h-11 shrink-0 rounded-md overflow-hidden flex items-center justify-center">
+          <AirlineLogoWeb airlineCode={route.airlineCode} size={44} />
+        </span>
+      )}
+      <div className="flex-1 min-w-0 flex flex-col">
+        <span className="text-[22px] leading-7 font-bold text-[#182339] whitespace-nowrap">
+          {route.origin} → {route.destination}
+        </span>
+        {route.airlineName && (
+          <span className="text-[14px] leading-5 text-[#697691] whitespace-nowrap">
+            {route.airlineName}
+            {route.flightNumbers?.length ? ` · ${route.flightNumbers.join(', ')}` : ''}
+          </span>
+        )}
+      </div>
+      {valid && when && (
+        <div className="flex flex-col items-end pl-4">
+          <span className="text-[20px] leading-7 font-bold text-[#182339]">{formatTime24(route.departureDateTime as string)}</span>
+          <span className="text-[14px] leading-5 text-[#697691] whitespace-nowrap">
+            {when.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }).replace(/^(\w+)/, '$1,')}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// "Baggage selection" option: 96x88, 1px border, 4px radius.
+const OptionCard: React.FC<{ selected: boolean; none?: boolean; onClick: () => void; children: React.ReactNode; className?: string }> = ({
+  selected,
+  none,
+  onClick,
+  children,
+  className = 'w-24 h-[88px]',
+}) => (
   <button
     type="button"
     onClick={onClick}
-    className={`min-w-[96px] px-3 py-2 rounded-lg border text-left text-xs ${
-      selected ? 'border-[#7C1AEE] bg-[#F5F0FF]' : 'border-[#D5DAE3] bg-white hover:border-[#7C1AEE]'
+    aria-pressed={selected}
+    className={`${className} shrink-0 flex flex-col justify-between p-2 rounded border text-left ${
+      none
+        ? selected
+          ? 'bg-[#ECEEF3] border-[#697691]'
+          : 'bg-white border-[#697691]'
+        : selected
+          ? 'bg-white border-[#7C1AEE] ring-1 ring-[#7C1AEE]'
+          : 'bg-white border-[#697691] hover:border-[#7C1AEE]'
     }`}
   >
     {children}
@@ -99,12 +168,17 @@ const PanelStatus: React.FC<{ isLoading: boolean; error: boolean; empty: boolean
       <Loader2 className="animate-spin text-[#7C1AEE]" />
     </div>
   ) : error ? (
-    <p className="text-sm text-[#4C5973]">Couldn't load the options right now. Please try again.</p>
+    <p className="text-[13px] leading-4 text-[#3E4B64]">Couldn't load the options right now. Please try again.</p>
   ) : empty ? (
-    <p className="text-sm text-[#4C5973]">{emptyText}</p>
+    <p className="text-[13px] leading-4 text-[#3E4B64]">{emptyText}</p>
   ) : null;
 
 type Picks = Record<string, AncillaryOption>;
+
+const samePick = (a: AncillaryOption | undefined, b: AncillaryOption) =>
+  !!a && (a.ssrKey === b.ssrKey || (a.ssrTypeDesc === b.ssrTypeDesc && a.totalAmount === b.totalAmount));
+
+const TravellerDivider = () => <div className="w-[334px] h-px bg-[#CCD3E0]" />;
 
 // Baggage or meals: one option (or none) per traveller.
 const PerTravellerPanel: React.FC<{
@@ -130,10 +204,21 @@ const PerTravellerPanel: React.FC<{
       return next;
     });
 
+  // Meals: the Veg / Non-veg chips pick the cheapest of each kind; every
+  // meal is also in the "Other meal" list.
+  const cheapest = (wanted: 'veg' | 'nonveg') =>
+    cards.filter((o) => mealKind(o) === wanted).sort((a, b) => a.totalAmount - b.totalAmount)[0];
+  const vegMeal = kind === 'meal' ? cheapest('veg') : undefined;
+  const nonVegMeal = kind === 'meal' ? cheapest('nonveg') : undefined;
+  const complimentary = cards.some((o) => o.ssrType === SSR_TYPE_COMPLIMENTARY_MEALS);
+
+  const ready = !isLoading && !error && cards.length > 0;
+
   return (
     <PanelShell
-      title={kind === 'baggage' ? 'Extra baggage' : 'Meals'}
-      subtitle={`${route.origin} → ${route.destination}${kind === 'baggage' && route.checkInBaggage ? ` · Included: ${baggageText(route.checkInBaggage)}` : ''}`}
+      title={kind === 'baggage' ? 'Checked baggage' : 'Meal'}
+      width={kind === 'baggage' ? 682 : 521}
+      route={route}
       total={total}
       currencyCode={currencyCode}
       onSave={() => onSave(picks)}
@@ -145,45 +230,100 @@ const PerTravellerPanel: React.FC<{
         empty={cards.length === 0}
         emptyText={kind === 'baggage' ? 'No extra baggage is sold for this flight.' : 'No meals are offered on this flight.'}
       />
-      {!isLoading &&
-        !error &&
-        cards.length > 0 &&
-        travellers.map((t) => (
-          <div key={t.id}>
-            <div className="text-sm font-semibold text-[#182339] mb-2">
-              {t.firstName} {t.lastName}
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <OptionCard selected={!picks[t.id]} onClick={() => set(t.id, null)}>
-                <div className="font-medium text-[#182339]">None added</div>
-              </OptionCard>
-              {cards.map((option) => {
-                const label =
-                  kind === 'baggage'
-                    ? (() => {
-                        const { pieces, weight } = describeBaggage(option);
-                        return pieces ? `${pieces} pc · ${weight}` : `Extra ${weight}`;
-                      })()
-                    : option.ssrTypeDesc;
-                const tag = kind === 'meal' ? mealKind(option) : null;
-                return (
-                  <OptionCard
-                    key={option.ssrKey}
-                    selected={picks[t.id]?.ssrKey === option.ssrKey || (picks[t.id] && picks[t.id].ssrTypeDesc === option.ssrTypeDesc && picks[t.id].totalAmount === option.totalAmount) || false}
-                    onClick={() => set(t.id, option)}
-                  >
-                    <div className="font-medium text-[#182339] max-w-[180px]">{label}</div>
-                    {tag && (
-                      <div className={`text-[10px] font-semibold ${tag === 'veg' ? 'text-[#15803D]' : 'text-[#C8102E]'}`}>
-                        {tag === 'veg' ? 'VEG' : 'NON-VEG'}
-                      </div>
-                    )}
-                    <div className="text-[#7C1AEE] font-semibold">{rupees(option.totalAmount, currencyCode)}</div>
+      {ready &&
+        travellers.map((t, index) => (
+          <React.Fragment key={t.id}>
+            {index > 0 && <TravellerDivider />}
+            {kind === 'baggage' ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-col">
+                  <span className="text-[15px] leading-5 font-bold text-[#3E4B64]">
+                    {t.firstName} {t.lastName}
+                  </span>
+                  <span className="text-[13px] leading-4 text-[#697691]">
+                    Included: {route.checkInBaggage ? `1 X ${baggageText(route.checkInBaggage).replace(' ', '')}` : 'as per airline'}
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-4 px-1">
+                  <OptionCard none selected={!picks[t.id]} onClick={() => set(t.id, null)}>
+                    <span className="my-auto text-[13px] leading-4 font-bold text-[#3E4B64]">
+                      None
+                      <br />
+                      Added
+                    </span>
                   </OptionCard>
-                );
-              })}
-            </div>
-          </div>
+                  {cards.map((option) => {
+                    const { pieces, weight } = describeBaggage(option);
+                    return (
+                      <OptionCard key={option.ssrKey} selected={samePick(picks[t.id], option)} onClick={() => set(t.id, option)}>
+                        <span className="flex flex-col min-w-0">
+                          {pieces ? (
+                            <span className="flex items-center gap-1 text-[16px] leading-6 font-medium text-black">
+                              <Luggage size={16} /> x{pieces}
+                            </span>
+                          ) : (
+                            <span className="text-[13px] leading-4 font-bold text-[#3E4B64]">Extra weight</span>
+                          )}
+                          <span className="text-[15px] leading-5 font-medium text-black truncate">{weight}</span>
+                        </span>
+                        <span className="text-[16px] leading-[22px] font-bold text-[#6A16CB]">{rupees(option.totalAmount, currencyCode)}</span>
+                      </OptionCard>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <span className="text-[15px] leading-5 font-bold text-[#3E4B64]">
+                  {t.firstName} {t.lastName}
+                  {complimentary && <span className="text-[#007F20]"> - Included</span>}
+                </span>
+                <div className="flex items-stretch gap-4">
+                  <OptionCard none className="w-[83px] h-[68px]" selected={!picks[t.id]} onClick={() => set(t.id, null)}>
+                    <span className="my-auto text-[15px] leading-5 font-bold text-black">
+                      None
+                      <br />
+                      Added
+                    </span>
+                  </OptionCard>
+                  {[
+                    { label: 'Veg', option: vegMeal, width: 'w-[63px]' },
+                    { label: 'Non-veg', option: nonVegMeal, width: 'w-[102px]' },
+                  ].map(({ label, option, width }) =>
+                    option ? (
+                      <OptionCard
+                        key={label}
+                        className={`${width} h-[68px] items-center`}
+                        selected={samePick(picks[t.id], option)}
+                        onClick={() => set(t.id, option)}
+                      >
+                        <span className="my-auto flex flex-col items-center">
+                          <span className="text-[15px] leading-5 font-bold text-black">{label}</span>
+                          {option.totalAmount > 0 && (
+                            <span className="text-[12px] leading-4 font-bold text-[#6A16CB]">{rupees(option.totalAmount, currencyCode)}</span>
+                          )}
+                        </span>
+                      </OptionCard>
+                    ) : null
+                  )}
+                </div>
+                <FieldWeb label="Other meal" className="w-[335px]">
+                  <select
+                    className={fieldInputClass}
+                    value={picks[t.id] ? cards.find((o) => samePick(picks[t.id], o))?.ssrKey ?? '' : ''}
+                    onChange={(e) => set(t.id, cards.find((o) => o.ssrKey === e.target.value) ?? null)}
+                  >
+                    <option value="">Select</option>
+                    {cards.map((o) => (
+                      <option key={o.ssrKey} value={o.ssrKey}>
+                        {o.ssrTypeDesc} · {rupees(o.totalAmount, currencyCode)}
+                      </option>
+                    ))}
+                  </select>
+                </FieldWeb>
+              </div>
+            )}
+          </React.Fragment>
         ))}
     </PanelShell>
   );
@@ -194,6 +334,16 @@ export interface SeatPick {
   travelerId: string;
   seat: AncillaryOption;
 }
+
+// 30px seat chips: available (purple), extra legroom (blue, starred),
+// unavailable (grey cross), selected (solid purple).
+const SEAT_BASE = 'relative w-[30px] h-[30px] shrink-0 rounded-md border flex items-center justify-center text-[14px] leading-5';
+const SEAT_AVAILABLE = 'bg-[#F3E8FF] border-[#C9A8F5] text-[#7C1AEE]';
+const SEAT_LEGROOM = 'bg-[#E8EEFF] border-[#9DB5FF] text-[#114BFF]';
+const SEAT_UNAVAILABLE = 'bg-[#ECEEF3] border-[#CCD3E0] text-[#98A5BF]';
+const SEAT_SELECTED = 'bg-[#7C1AEE] border-[#7C1AEE] text-white font-bold';
+
+const LegroomStar = () => <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[12px] leading-3 text-[#114BFF]">*</span>;
 
 const SeatPanel: React.FC<{
   route: AddOnLegRoute;
@@ -238,8 +388,9 @@ const SeatPanel: React.FC<{
 
   return (
     <PanelShell
-      title="Seat selection"
-      subtitle={`${segment?.origin ?? route.origin} → ${segment?.destination ?? route.destination}`}
+      title="Seat"
+      width={521}
+      route={segment ? { ...route, origin: segment.origin ?? route.origin, destination: segment.destination ?? route.destination } : route}
       total={total}
       currencyCode={currencyCode}
       onSave={() =>
@@ -258,46 +409,88 @@ const SeatPanel: React.FC<{
           {segments.length > 1 && (
             <div className="flex gap-2">
               {segments.map((s, i) => (
-                <OptionCard key={i} selected={i === segmentIndex} onClick={() => setSegmentIndex(i)}>
-                  <div className="font-medium text-[#182339]">
-                    {s.origin} → {s.destination}
-                  </div>
-                </OptionCard>
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setSegmentIndex(i)}
+                  className={`h-8 px-3 rounded border text-[13px] leading-4 font-medium ${
+                    i === segmentIndex ? 'bg-[#F3E8FF] border-[#7C1AEE] text-[#7C1AEE]' : 'bg-white border-[#ADB8CD] text-[#182339]'
+                  }`}
+                >
+                  {s.origin} → {s.destination}
+                </button>
               ))}
             </div>
           )}
-          <div className="flex flex-wrap gap-2">
+          <div className="flex overflow-x-auto border-b border-[#CCD3E0]">
             {travellers.map((t) => {
               const seat = picks[key(segmentIndex, t.id)];
+              const active = t.id === activeId;
               return (
-                <OptionCard key={t.id} selected={t.id === activeId} onClick={() => setActiveId(t.id)}>
-                  <div className="font-medium text-[#182339]">{t.firstName}</div>
-                  <div className="text-[#697691]">{seat ? seat.ssrTypeDesc : 'No seat'}</div>
-                </OptionCard>
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setActiveId(t.id)}
+                  className={`shrink-0 min-w-[80px] flex flex-col items-start px-4 pt-1 pb-1.5 border-b-2 ${active ? 'border-[#7C1AEE]' : 'border-transparent'}`}
+                >
+                  <span className={`text-[15px] leading-5 font-medium ${active ? 'text-[#7C1AEE]' : 'text-[#182339]'}`}>{t.firstName}</span>
+                  {seat ? (
+                    <span className="text-[12px] leading-4 font-bold text-[#114BFF]">{seat.ssrTypeDesc}</span>
+                  ) : (
+                    <span className="text-[12px] leading-4 text-[#697691]">Random</span>
+                  )}
+                </button>
               );
             })}
           </div>
-          <div className="flex flex-wrap gap-3 text-[11px] text-[#4C5973]">
-            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded border border-[#C9B5F5] bg-white" /> Available</span>
-            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded border border-[#7FB3FF] bg-[#EEF5FF]" /> Extra legroom</span>
-            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-[#E4E7EC]" /> Unavailable</span>
-            <span className="flex items-center gap-1"><span className="w-4 h-4 rounded bg-[#7C1AEE]" /> Selected</span>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-1 py-1 rounded bg-[#FFF3E8] text-[15px] leading-5 text-[#182339]">
+            <span className="flex items-center gap-2">
+              <span className={`${SEAT_BASE} ${SEAT_AVAILABLE}`}>A</span>Available
+            </span>
+            <span className="flex items-center gap-2">
+              <span className={`${SEAT_BASE} ${SEAT_LEGROOM}`}>
+                A<LegroomStar />
+              </span>
+              Extra legroom
+            </span>
+            <span className="flex items-center gap-2">
+              <span className={`${SEAT_BASE} ${SEAT_UNAVAILABLE}`}>
+                <X size={14} />
+              </span>
+              Unavailable
+            </span>
+            <span className="flex items-center gap-2">
+              <span className={`${SEAT_BASE} ${SEAT_SELECTED}`}>A</span>selected
+            </span>
           </div>
-          <div className="mx-auto w-fit space-y-4">
+          <div className="mx-auto w-fit flex flex-col gap-4 px-3 py-2 border-x-2 border-[#ADB8CD]">
             {sections.map((section, si) => (
-              <div key={si}>
-                <div className="text-center text-[11px] text-[#697691] mb-2">{section.heading}</div>
-                <div className="space-y-1.5">
+              <div key={si} className="flex flex-col gap-3">
+                <div className="flex items-center gap-2 text-[13px] leading-4 text-[#3E4B64] whitespace-nowrap">
+                  <span className="flex-1 h-px bg-[#CCD3E0]" />
+                  {section.heading}
+                  <span className="flex-1 h-px bg-[#CCD3E0]" />
+                </div>
+                <div className="flex flex-col gap-3">
                   {section.rows.map((row, ri) => (
-                    <div key={ri} className="flex items-center gap-1.5">
+                    <div key={ri} className="flex items-center gap-[15px]">
                       {layoutSeatRow(row.seats).map((cell, ci) => {
-                        if (cell.kind === 'rowNumber') return <span key={ci} className="w-7 text-center text-[11px] text-[#697691]">{row.rowNumber}</span>;
-                        if (cell.kind === 'gap') return <span key={ci} className="w-7" />;
+                        if (cell.kind === 'rowNumber')
+                          return (
+                            <span key={ci} className="w-[30px] text-center text-[13px] leading-4 text-[#182339]">
+                              {row.rowNumber}
+                            </span>
+                          );
+                        if (cell.kind === 'gap') return <span key={ci} className="w-[30px]" />;
                         const { seat } = cell;
                         const holder = holderBySeat.get(seat.ssrKey);
                         const available = seat.ssrStatus === SSR_STATUS_AVAILABLE;
                         if (!available && !holder) {
-                          return <span key={ci} className="w-8 h-8 rounded bg-[#E4E7EC]" title="Unavailable" />;
+                          return (
+                            <span key={ci} className={`${SEAT_BASE} ${SEAT_UNAVAILABLE}`} title="Unavailable">
+                              <X size={14} />
+                            </span>
+                          );
                         }
                         const mine = holder === activeId;
                         const taken = !!holder && !mine;
@@ -307,17 +500,18 @@ const SeatPanel: React.FC<{
                             type="button"
                             title={`${seat.ssrTypeDesc} · ${rupees(seat.totalAmount, currencyCode)}`}
                             onClick={() => pressSeat(seat)}
-                            className={`w-8 h-8 rounded text-[11px] font-semibold border ${
+                            className={`${SEAT_BASE} ${
                               mine
-                                ? 'bg-[#7C1AEE] border-[#7C1AEE] text-white'
+                                ? SEAT_SELECTED
                                 : taken
-                                  ? 'bg-[#B794F4] border-[#B794F4] text-white'
+                                  ? 'bg-[#B794F4] border-[#B794F4] text-white font-bold'
                                   : seat.isExtraLegroom
-                                    ? 'bg-[#EEF5FF] border-[#7FB3FF] text-[#1D4ED8]'
-                                    : 'bg-white border-[#C9B5F5] text-[#7C1AEE] hover:bg-[#F5F0FF]'
+                                    ? SEAT_LEGROOM
+                                    : SEAT_AVAILABLE
                             }`}
                           >
                             {taken ? travellers.find((t) => t.id === holder)?.firstName.charAt(0).toUpperCase() : seatLabelParts(seat).letter}
+                            {seat.isExtraLegroom && !mine && !taken && <LegroomStar />}
                           </button>
                         );
                       })}
@@ -411,100 +605,142 @@ export const AddOnsSectionWeb: React.FC<{
     return [];
   });
 
-  const summary = (category: AddOnCategory) => {
+  const added = (category: AddOnCategory) => {
     const list = legSelections(category);
     if (list.length === 0) return null;
-    return `${list.length} added · ${rupees(list.reduce((sum, s) => sum + s.amount, 0), currencyCode)}`;
+    return { count: list.length, amount: list.reduce((sum, s) => sum + s.amount, 0) };
   };
+
+  // "Baggage selection" card: 108x84, 1px #697691, 4px radius.
+  const IncludedCard: React.FC<{ title: string; value: string; small?: boolean; price: string; priceColor?: string }> = ({
+    title,
+    value,
+    small,
+    price,
+    priceColor = '#007F20',
+  }) => (
+    <div className="w-[108px] h-[84px] shrink-0 flex flex-col justify-between p-2 bg-white border border-[#697691] rounded">
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[13px] leading-4 font-bold text-[#3E4B64] truncate">{title}</span>
+        <span className={`font-medium text-[#697691] ${small ? 'text-[10px] leading-[14px]' : 'text-[13px] leading-4 truncate'}`}>{value}</span>
+      </div>
+      <span className="text-[16px] leading-[22px] font-bold" style={{ color: priceColor }}>
+        {price}
+      </span>
+    </div>
+  );
 
   const Category: React.FC<{
     title: string;
     subtitle: string;
     included: { label: string; value: string }[];
+    small?: boolean;
     cta: string;
     category: AddOnCategory;
     disabled: boolean;
-  }> = ({ title, subtitle, included, cta, category, disabled }) => (
-    <div>
-      <div className="text-sm font-semibold text-[#182339]">{title}</div>
-      <div className="text-xs text-[#697691] mb-2">{subtitle}</div>
-      <div className="flex flex-wrap gap-2">
-        {included.map((item) => (
-          <div key={item.label} className="w-[120px] px-3 py-2 rounded-lg border border-[#D5DAE3] bg-white">
-            <div className="text-xs font-medium text-[#182339]">{item.label}</div>
-            <div className="text-[11px] text-[#697691]">{item.value}</div>
-            <div className="text-xs font-semibold text-[#15803D]">Free</div>
-          </div>
-        ))}
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => setOpen(category)}
-          className="w-[150px] px-3 py-2 rounded-lg bg-[#7C1AEE] text-white text-left disabled:opacity-40 flex items-center justify-between"
-        >
-          <span className="text-xs font-medium">{summary(category) ?? cta}</span>
-          <ChevronRight size={16} />
-        </button>
+  }> = ({ title, subtitle, included, small, cta, category, disabled }) => {
+    const picked = added(category);
+    return (
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col">
+          <span className="text-[15px] leading-5 font-bold text-[#3E4B64]">{title}</span>
+          <span className="pt-0.5 text-[12px] leading-4 text-[#697691]">{subtitle}</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {included.map((item) => (
+            <IncludedCard key={item.label} title={item.label} value={item.value} small={small} price="Free" />
+          ))}
+          {picked && (
+            <IncludedCard
+              title="Added"
+              value={`${picked.count} selected`}
+              small={small}
+              price={rupees(picked.amount, currencyCode)}
+              priceColor="#7C1AEE"
+            />
+          )}
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => setOpen(category)}
+            title={disabled ? 'Select travellers first' : undefined}
+            className="w-[108px] h-[84px] shrink-0 flex items-center justify-center p-2 bg-[#7C1AEE] border border-[#697691] rounded text-left disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span className="w-[92px] flex items-center justify-between">
+              <span className="text-[13px] leading-4 font-bold text-[#ECEEF3]">{picked ? 'Change' : cta}</span>
+              <ChevronRight size={24} className="text-white shrink-0" />
+            </span>
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   if (!route) return null;
   const noTravellers = travellers.length === 0;
+  const dashed = <div className="border-t border-dashed border-[#CCD3E0]" />;
 
   return (
-    <section className="bg-white rounded-xl border border-[#E4E7EC] p-5 space-y-4">
-      <div>
-        <h3 className="text-base font-semibold text-[#182339]">What's included</h3>
-        <p className="text-xs text-[#697691]">
-          Check your included benefits and add the extras you need. Add-on prices are estimates and may change at checkout.
+    <section className="flex flex-col gap-1">
+      <div className="flex flex-col gap-0.5">
+        <h2 className="text-[18px] leading-6 font-bold text-black">Whats included</h2>
+        <p className="text-[13px] leading-4 text-[#697691]">
+          Check your included benefits and add the extras you need for a more comfortable trip.
           {noTravellers && ' Select travellers first to add extras.'}
         </p>
       </div>
       {legRoutes.length > 1 && (
-        <div className="flex gap-2 border-b border-[#E4E7EC]">
+        <div className="flex bg-white border-b border-[#98A5BF] overflow-x-auto">
           {legRoutes.map((r, i) => (
             <button
               key={i}
               type="button"
               onClick={() => setActiveLeg(i)}
-              className={`px-3 py-2 text-left border-b-2 -mb-px ${i === activeLeg ? 'border-[#7C1AEE]' : 'border-transparent'}`}
+              className={`shrink-0 flex flex-col items-start gap-px px-4 pt-2.5 pb-2 border-b-2 ${
+                i === activeLeg ? 'border-[#7C1AEE]' : 'border-transparent'
+              }`}
             >
-              <div className={`text-xs font-semibold ${i === activeLeg ? 'text-[#7C1AEE]' : 'text-[#4C5973]'}`}>{r.label}</div>
-              <div className="text-[11px] text-[#697691]">
-                {r.origin} • {r.destination}
-              </div>
+              <span className={`text-[13px] leading-4 font-medium ${i === activeLeg ? 'text-[#7C1AEE]' : 'text-[#182339]'}`}>{r.label}</span>
+              <span className="text-[11px] leading-4 text-[#697691] whitespace-nowrap">
+                {r.origin} → {r.destination}
+              </span>
             </button>
           ))}
         </div>
       )}
-      <Category
-        title="Baggage"
-        subtitle="Adding baggage now is cheaper than at the airport."
-        included={[
-          { label: 'Carry-on bag', value: route.handBaggage ? baggageText(route.handBaggage) : 'Airline dependent' },
-          { label: 'Checked bag', value: route.checkInBaggage ? baggageText(route.checkInBaggage) : 'Airline dependent' },
-        ]}
-        cta="Add extra baggage"
-        category="baggage"
-        disabled={seatTravellers.length === 0}
-      />
-      <Category
-        title="Seat"
-        subtitle="Select your seat now and travel your way."
-        included={[{ label: 'Random', value: 'Assigned at check-in' }]}
-        cta="Pick a seat"
-        category="seat"
-        disabled={seatTravellers.length === 0}
-      />
-      <Category
-        title="Meal"
-        subtitle="Pick your preferred meal before takeoff."
-        included={[{ label: 'Meal', value: 'As per airline' }]}
-        cta="Explore available meals"
-        category="meal"
-        disabled={noTravellers}
-      />
+      <div className="flex flex-col gap-3 pt-2">
+        <Category
+          title="Baggage"
+          subtitle="Adding baggage now is cheaper than at the airport!"
+          included={[
+            { label: 'Carry on bag', value: route.handBaggage ? baggageText(route.handBaggage) : 'As per airline' },
+            { label: 'Checked bag', value: route.checkInBaggage ? baggageText(route.checkInBaggage) : 'As per airline' },
+          ]}
+          cta="Add extra Baggage"
+          category="baggage"
+          disabled={seatTravellers.length === 0}
+        />
+        {dashed}
+        <Category
+          title="Seat"
+          subtitle="Select your seat now and travel your way!"
+          included={[{ label: 'Random', value: 'Assigned at checked-in' }]}
+          small
+          cta="Pick exact seat on map"
+          category="seat"
+          disabled={seatTravellers.length === 0}
+        />
+        {dashed}
+        <Category
+          title="Meal"
+          subtitle="Pick your preferred meal before takeoff!"
+          included={[{ label: 'Meal', value: 'Buy on board' }]}
+          small
+          cta="Explore available meals"
+          category="meal"
+          disabled={noTravellers}
+        />
+      </div>
 
       {open === 'baggage' && (
         <PerTravellerPanel
