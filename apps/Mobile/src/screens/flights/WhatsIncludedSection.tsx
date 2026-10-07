@@ -239,7 +239,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
             >
               <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{route.label}</Text>
               <Text style={[styles.tabRoute, isActive && styles.tabRouteActive]}>
-                {route.origin} • {route.destination}
+                {route.origin} → {route.destination}
               </Text>
             </TouchableOpacity>
           );
@@ -247,7 +247,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
       </ScrollView>
 
       <Text style={styles.categoryTitle}>Baggage</Text>
-      <Text style={styles.categorySubtitle}>Adding baggage now is cheaper than at the airport.</Text>
+      <Text style={styles.categorySubtitle}>Adding baggage now is cheaper than at the airport!</Text>
       <View style={styles.cardRow}>
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Carry on bag</Text>
@@ -268,12 +268,12 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           <Text style={styles.ctaCardText}>
             {anySelected('baggage') ? 'Baggage added' : 'Add extra Baggage'}
           </Text>
-          <ChevronRight size={16} color="#FFFFFF" strokeWidth={2} />
+          <ChevronRight size={22} color="#FFFFFF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
       <Text style={styles.categoryTitle}>Seat</Text>
-      <Text style={styles.categorySubtitle}>Select your seat now and travel your way</Text>
+      <Text style={styles.categorySubtitle}>Select your seat now and travel your way!</Text>
       <View style={styles.cardRow}>
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Random</Text>
@@ -286,17 +286,17 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           activeOpacity={0.8}
           disabled={seatTravelers.length === 0}
         >
-          <Text style={styles.ctaCardText}>{anySelected('seat') ? 'Seat selected' : 'Pick a seat'}</Text>
-          <ChevronRight size={16} color="#FFFFFF" strokeWidth={2} />
+          <Text style={styles.ctaCardText}>{anySelected('seat') ? 'Seat selected' : 'Pick exact seat on map'}</Text>
+          <ChevronRight size={22} color="#FFFFFF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
       <Text style={styles.categoryTitle}>Meal</Text>
-      <Text style={styles.categorySubtitle}>Pick your preferred meal before takeoff</Text>
+      <Text style={styles.categorySubtitle}>Pick your preferred meal before takeoff!</Text>
       <View style={styles.cardRow}>
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Meal</Text>
-          <Text style={styles.infoCardSublabel}>No meal on board</Text>
+          <Text style={styles.infoCardSublabel}>Buy on board</Text>
           <Text style={styles.infoCardPrice}>Free</Text>
         </View>
         <TouchableOpacity
@@ -306,7 +306,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           disabled={travelers.length === 0}
         >
           <Text style={styles.ctaCardText}>{anySelected('meal') ? 'Meal added' : 'Explore available meals'}</Text>
-          <ChevronRight size={16} color="#FFFFFF" strokeWidth={2} />
+          <ChevronRight size={22} color="#FFFFFF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
