@@ -48,7 +48,16 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
 
   const handleChangeText = (text: string, index: number) => {
     const cleanText = text.replace(/[^0-9]/g, "");
-    if (!cleanText) return;
+    // Android soft keyboards report a deleted digit as an empty change (their
+    // Backspace keypress isn't reliable), so clear the box here too.
+    if (!cleanText) {
+      if (text === "" && otp[index] !== "") {
+        const cleared = [...otp];
+        cleared[index] = "";
+        setOtp(cleared);
+      }
+      return;
+    }
 
     const newOtp = [...otp];
     newOtp[index] = cleanText.substring(cleanText.length - 1);
