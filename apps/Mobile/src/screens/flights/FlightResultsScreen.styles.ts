@@ -295,7 +295,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
   },
   routeIcon: {
-    marginHorizontal: 6,
+    marginHorizontal: 5,
   },
   // Multi-city's header can have several origin/destination pairs chained
   // together — smaller and allowed to wrap, unlike the single large
@@ -339,14 +339,13 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#CCD3E0',
   },
   dateStrip: {
     flexGrow: 0,
   },
   dateStripContent: {
-    paddingHorizontal: 16,
+    paddingLeft: 16,
+    paddingRight: 16,
     paddingVertical: 6,
     gap: 4,
   },
@@ -355,13 +354,12 @@ export const styles = StyleSheet.create({
   },
   filterBar: {
     flexGrow: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: '#CCD3E0',
   },
   filterBarContent: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
+    paddingTop: 3,
+    paddingBottom: 10,
+    gap: 4,
   },
   filterChip: {
     flexDirection: 'row',
@@ -372,7 +370,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#CCD3E0',
     borderRadius: 8,
-    paddingHorizontal: 8,
+    paddingHorizontal: 12.5,
   },
   filterChipActive: {
     borderColor: '#7C1AEE',
@@ -388,11 +386,11 @@ export const styles = StyleSheet.create({
     color: '#7C1AEE',
   },
   dateCard: {
-    width: 86,
-    height: 36,
+    width: 82,
+    height: 37,
     borderWidth: 1,
-    borderColor: '#D4DAE4',
-    borderRadius: 4,
+    borderColor: '#D7DCE7',
+    borderRadius: 3,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
@@ -403,13 +401,14 @@ export const styles = StyleSheet.create({
   dateCardLabel: {
     fontSize: 11,
     lineHeight: 14,
+    fontWeight: '600',
     color: '#182339',
   },
   dateCardLabelSelected: {
     color: '#182339',
   },
   dateCardPrice: {
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 16,
     color: '#697691',
   },
@@ -417,7 +416,8 @@ export const styles = StyleSheet.create({
     color: '#697691',
   },
   listContent: {
-    padding: 16,
+    paddingHorizontal: 15,
+    paddingTop: 0,
     paddingBottom: 32,
   },
   sectionTitle: {
@@ -447,7 +447,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     borderWidth: 1,
     borderRadius: 4,
-    marginBottom: 12,
+    marginBottom: 8,
     overflow: 'hidden',
     backgroundColor: '#FFFFFF',
   },
@@ -468,17 +468,16 @@ export const styles = StyleSheet.create({
   },
   cardBody: {
     flex: 1,
-    paddingLeft: 15,
-    paddingRight: 8,
-    paddingTop: 7,
-    paddingBottom: 8,
+    paddingLeft: 16.7,
+    paddingRight: 7.7,
+    paddingTop: 2.9,
+    paddingBottom: 5.7,
   },
   cardTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: 18,
-    marginBottom: 12,
+    height: 18,
+    marginBottom: 14.25,
   },
   airlineNameRow: {
     flexDirection: 'row',
@@ -497,28 +496,31 @@ export const styles = StyleSheet.create({
   airlineName: {
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
     color: '#182339',
   },
   flightNumbersText: {
-    fontSize: 13,
+    fontSize: 12,
     lineHeight: 18,
     color: '#697691',
   },
   journeyRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
   timeBlock: {
-    alignItems: 'flex-start',
+    width: 59.3,
+    marginTop: 4.35,
   },
   timeBlockEnd: {
-    alignItems: 'flex-end',
+    width: undefined,
+    marginLeft: 25.7,
   },
   timeText: {
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 18,
-    fontWeight: '700',
+    fontWeight: '500',
     color: '#182339',
   },
   dayOffsetText: {
@@ -530,15 +532,16 @@ export const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 18,
     color: '#697691',
-    marginTop: 3,
+    marginTop: 1.6,
   },
   durationBlock: {
+    width: 60,
     alignItems: 'center',
-    marginHorizontal: 20,
   },
   durationText: {
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
     color: '#697691',
   },
   durationLine: {
@@ -546,19 +549,21 @@ export const styles = StyleSheet.create({
     height: 0,
     borderTopWidth: 1,
     borderColor: '#697691',
-    marginVertical: 2,
+    marginTop: 2.85,
+    marginBottom: 2.3,
   },
   stopsText: {
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
     color: '#697691',
   },
   dashedDivider: {
     borderTopWidth: 1,
     borderStyle: 'dashed',
-    borderColor: '#CCD3E0',
-    marginTop: 12,
-    marginBottom: 6,
+    borderColor: '#E1E5ED',
+    marginTop: 9,
+    marginBottom: 4.3,
   },
   bottomRow: {
     flexDirection: 'row',
@@ -574,24 +579,23 @@ export const styles = StyleSheet.create({
   layoverText: {
     fontSize: 10,
     lineHeight: 16,
-    fontWeight: '400',
     color: '#697691',
   },
   moreLink: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingRight: 8,
+    gap: 8.5,
   },
   moreLinkText: {
     fontSize: 13,
     lineHeight: 18,
+    fontWeight: '500',
     color: '#7C1AEE',
   },
   priceText: {
-    fontSize: 13,
+    fontSize: 14,
     lineHeight: 18,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#FF8011',
   },
   detailsRouteCard: {
@@ -1039,19 +1043,23 @@ export const styles = StyleSheet.create({
   },
   journeyTimes: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
   },
   journeyTimesSpread: {
     flex: 1,
     justifyContent: 'space-between',
+  },
+  spreadBlock: {
+    width: undefined,
+    marginLeft: 0,
+    marginTop: 0,
   },
   durationLineDashed: {
     borderStyle: 'dashed',
   },
   priceBlock: {
     alignItems: 'flex-end',
-    alignSelf: 'flex-start',
-    paddingTop: 10,
+    marginTop: -1.25,
   },
   routeSubtitleRow: {
     flexDirection: 'row',
@@ -1061,22 +1069,23 @@ export const styles = StyleSheet.create({
   routeSubtitleStrong: {
     fontSize: 13,
     lineHeight: 16,
-    fontWeight: '500',
     color: '#182339',
   },
   dateStripMonth: {
     width: 20,
-    height: 36,
-    borderRadius: 2,
+    height: 37,
+    borderRadius: 1,
     backgroundColor: '#3C0D74',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 1,
   },
   dateStripMonthText: {
-    width: 36,
+    width: 37,
     textAlign: 'center',
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '500',
     color: '#FFFFFF',
     transform: [{ rotate: '90deg' }],
   },

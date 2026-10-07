@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, SafeAreaView, ScrollView, ActivityIndicator, Modal, Image } from 'react-native';
-import { ArrowLeft, ArrowLeftRight, ArrowRight, Pencil, Plane, Info, ChevronDown, ListFilter, Check, Minus, Plus, X, MapPin, UserRound } from 'lucide-react-native';
+import { ArrowLeft, ArrowLeftRight, ArrowRight, Pencil, Plane, Info, ChevronDown, ListFilter, Check, Minus, Plus, X, MapPin, UserRound, MoveRight } from 'lucide-react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SvgXml } from 'react-native-svg';
 import Slider from '@react-native-community/slider';
@@ -824,7 +824,7 @@ const JourneyTimes: React.FC<{
   spread?: boolean;
 }> = ({ departure, arrival, origin, destination, stopCount, arrivalDayOffset, spread }) => (
   <View style={[styles.journeyTimes, spread && styles.journeyTimesSpread]}>
-    <View style={styles.timeBlock}>
+    <View style={[styles.timeBlock, spread && styles.spreadBlock]}>
       <Text style={styles.timeText}>{formatTime24(departure)}</Text>
       <Text style={styles.codeText}>{origin}</Text>
     </View>
@@ -833,7 +833,7 @@ const JourneyTimes: React.FC<{
       <View style={[styles.durationLine, stopCount > 0 && styles.durationLineDashed]} />
       <Text style={styles.stopsText}>{stopsLabel(stopCount)}</Text>
     </View>
-    <View style={styles.timeBlock}>
+    <View style={[styles.timeBlock, styles.timeBlockEnd, spread && styles.spreadBlock]}>
       <Text style={styles.timeText}>
         {formatTime24(arrival)}
         {arrivalDayOffset > 0 && <Text style={styles.dayOffsetText}>+{arrivalDayOffset}</Text>}
@@ -922,7 +922,7 @@ const FlightOfferCard: React.FC<{ offer: FlightOffer; variant?: FeaturedVariant;
               <Text style={styles.layoverText}>
                 {firstLayover.duration} Layover at {firstLayover.city}
               </Text>
-              <Info size={12} color="#697691" strokeWidth={2} />
+              <Info size={13} color="#697691" strokeWidth={1.5} />
             </View>
           ) : (
             <View />
@@ -1893,7 +1893,7 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
                   {isRoundTrip ? (
                     <ArrowLeftRight size={16} color="#182339" style={styles.routeIcon} />
                   ) : (
-                    <ArrowRight size={16} color="#182339" style={styles.routeIcon} />
+                    <MoveRight size={20} color="#182339" strokeWidth={1.2} style={styles.routeIcon} />
                   )}
                   <Text style={styles.routeText}>{activeSummary.destinationCode}</Text>
                 </View>
