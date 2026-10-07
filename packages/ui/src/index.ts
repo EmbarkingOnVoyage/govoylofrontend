@@ -143,6 +143,7 @@ export {
 } from './features/booking/bookingSession';
 export { FlightSearchFormWeb } from './features/flights/FlightSearchFormWeb.web';
 export { DashboardLayout } from './components/layout/Layout';
+export { MenuBar } from './components/layout/MenuBar';
 export { AuthProvider, useAuth } from './features/authentication/AuthContext';
 export { AuthModal } from './features/authentication/AuthModal.web';
 export { authContextCache } from './features/authentication/authContextCache';

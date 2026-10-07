@@ -82,9 +82,7 @@ const AppWorkflowRouter: React.FC = () => {
         <Route
           path="/flights/results"
           element={
-            <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
-              <FlightResultsRoute />
-            </DashboardLayout>
+            <FlightResultsRoute onNavigate={onNavigateLoose} />
           }
         />
         <Route
