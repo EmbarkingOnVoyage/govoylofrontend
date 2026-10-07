@@ -6,18 +6,31 @@ export const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  grabber: {
+    alignSelf: 'center',
+    width: 32,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#ADB8CD',
+    marginTop: 8,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 12,
+    paddingHorizontal: 16,
+    paddingTop: 14,
     borderBottomWidth: 1,
     borderBottomColor: '#CCD3E0',
   },
   backButton: {
-    paddingVertical: 2,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    marginBottom: -1,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 15,
@@ -26,7 +39,7 @@ export const styles = StyleSheet.create({
     color: '#182339',
   },
   content: {
-    paddingBottom: 16,
+    paddingBottom: 0,
   },
   sectionLabel: {
     fontSize: 13,
@@ -34,14 +47,14 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#3E4B64',
     marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 12,
+    marginTop: 8.8,
+    marginBottom: 12.2,
   },
   sectionDivider: {
     height: 1,
     backgroundColor: '#CCD3E0',
-    marginTop: 12,
-    marginBottom: 12,
+    marginTop: 8,
+    marginBottom: 8.3,
   },
   stepperRow: {
     flexDirection: 'row',
@@ -50,6 +63,7 @@ export const styles = StyleSheet.create({
     height: 62,
     paddingLeft: 34,
     paddingRight: 25,
+    // Figma: steppers at x 262 / 326 on the 375 frame.
   },
   stepperLabel: {
     fontSize: 15,
@@ -65,7 +79,8 @@ export const styles = StyleSheet.create({
   stepperControls: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
+    justifyContent: 'space-between',
+    width: 88,
   },
   stepperButton: {
     width: 24,
@@ -81,6 +96,7 @@ export const styles = StyleSheet.create({
   stepperValue: {
     fontSize: 16,
     lineHeight: 24,
+    fontWeight: '500',
     color: '#182339',
     minWidth: 16,
     textAlign: 'center',
@@ -89,7 +105,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginHorizontal: 16,
+    marginHorizontal: 17,
   },
   classButton: {
     height: 28,
@@ -114,8 +130,9 @@ export const styles = StyleSheet.create({
     fontWeight: '500',
   },
   confirmButton: {
-    marginHorizontal: 16,
-    marginTop: 12,
+    marginLeft: 17,
+    marginRight: 15,
+    marginTop: 10,
     marginBottom: 16,
     height: 48,
     borderRadius: 24,

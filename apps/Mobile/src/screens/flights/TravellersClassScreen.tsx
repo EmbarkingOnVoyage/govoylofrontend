@@ -41,6 +41,7 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
   return (
     <View style={styles.screen}>
       <SafeAreaView>
+        <View style={styles.grabber} />
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
             <ArrowLeft size={24} color="#182339" strokeWidth={1.5} />
@@ -138,14 +139,13 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
             );
           })}
         </View>
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={() => onConfirm({ adultCount, childCount, infantCount, cabinClass })}
+        >
+          <Text style={styles.confirmButtonText}>Confirm</Text>
+        </TouchableOpacity>
       </ScrollView>
-
-      <TouchableOpacity
-        style={styles.confirmButton}
-        onPress={() => onConfirm({ adultCount, childCount, infantCount, cabinClass })}
-      >
-        <Text style={styles.confirmButtonText}>Confirm</Text>
-      </TouchableOpacity>
     </View>
   );
 };

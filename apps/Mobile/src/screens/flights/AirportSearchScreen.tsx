@@ -106,7 +106,7 @@ export const AirportSearchScreen: React.FC<AirportSearchScreenProps> = ({
         <View style={styles.grabber} />
         <View style={styles.card}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <ArrowLeft size={20} color="#182339" strokeWidth={1.5} />
+            <ArrowLeft size={20} color="#040B1F" strokeWidth={1.2} />
           </TouchableOpacity>
           <View>
             {renderRow('origin')}
@@ -114,10 +114,14 @@ export const AirportSearchScreen: React.FC<AirportSearchScreenProps> = ({
             {renderRow('destination')}
           </View>
           <TouchableOpacity style={styles.swapButton} onPress={switchField}>
-            <ArrowDownUp size={20} color="#182339" strokeWidth={1.5} />
+            <ArrowDownUp size={16} color="#182339" strokeWidth={1.5} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.clearButton} onPress={() => (query ? setQuery('') : onBack())}>
-            <X size={20} color="#182339" strokeWidth={1.5} />
+          {/* Figma puts the close button beside the row that already has a value. */}
+          <TouchableOpacity
+            style={[styles.clearButton, field === 'origin' && styles.clearButtonBottom]}
+            onPress={() => (query ? setQuery('') : onBack())}
+          >
+            <X size={16} color="#182339" strokeWidth={1.5} />
           </TouchableOpacity>
         </View>
       </SafeAreaView>
