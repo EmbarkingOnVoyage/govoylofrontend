@@ -112,7 +112,7 @@ export const FareSummaryWeb: React.FC<{ breakdown: FareBreakdown }> = ({ breakdo
 // Page frame: fare summary at x=32 (31px under the header), the 1055px main
 // column at x=353 (26px under the header).
 export const BookingPageWeb: React.FC<{ sidebar?: React.ReactNode; children: React.ReactNode }> = ({ sidebar, children }) => (
-  <div className="max-w-[1440px] mx-auto px-8 pt-[26px] pb-16 flex items-start gap-[26px]">
+  <div className="max-w-[1440px] mx-auto px-8 pt-[22px] pb-16 flex items-start gap-[26px]">
     {sidebar && <div className="mt-[5px] sticky top-4">{sidebar}</div>}
     <div className="flex-1 min-w-0 max-w-[1055px]">{children}</div>
   </div>

@@ -30,11 +30,11 @@ export const BookingConfirmedWeb: React.FC<{
 }> = ({ confirmation, onViewBooking, onBackToHome }) => (
   <div className="relative max-w-[1440px] mx-auto px-8 pb-16">
     {confirmation.breakdown && (
-      <div className="hidden xl:block absolute left-8 top-[31px]">
+      <div className="hidden xl:block absolute left-8 top-[27px]">
         <FareSummaryWeb breakdown={confirmation.breakdown} />
       </div>
     )}
-    <div className="mx-auto w-[354px] pt-[74px] flex flex-col items-center">
+    <div className="mx-auto w-[354px] pt-[70px] flex flex-col items-center">
       <div className="w-[120px] h-[120px] rounded-full bg-[#7C1AEE] flex items-center justify-center shadow-[0px_10px_30px_rgba(124,26,238,0.25)]">
         <Check size={44} color="#FFFFFF" strokeWidth={2.5} />
       </div>
