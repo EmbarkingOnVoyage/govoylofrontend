@@ -293,7 +293,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
 
       <Text style={styles.categoryTitle}>Meal</Text>
       <Text style={styles.categorySubtitle}>Pick your preferred meal before takeoff!</Text>
-      <View style={styles.cardRow}>
+      <View style={[styles.cardRow, styles.cardRowLast]}>
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Meal</Text>
           <Text style={styles.infoCardSublabel}>Buy on board</Text>

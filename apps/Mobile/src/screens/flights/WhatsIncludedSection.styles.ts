@@ -70,6 +70,10 @@ export const styles = StyleSheet.create({
     borderBottomColor: '#CCD3E0',
     borderStyle: 'dashed',
   },
+  cardRowLast: {
+    borderBottomWidth: 0,
+    marginBottom: 0,
+  },
   infoCard: {
     width: 110,
     height: 86,
