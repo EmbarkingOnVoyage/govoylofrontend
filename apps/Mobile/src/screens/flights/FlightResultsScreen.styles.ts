@@ -361,6 +361,10 @@ export const styles = StyleSheet.create({
     paddingBottom: 10,
     gap: 4,
   },
+  // Round-trip Individual view: the leg heading sits 4pt under the chips.
+  filterBarContentCompact: {
+    paddingBottom: 4,
+  },
   filterChip: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -890,33 +894,65 @@ export const styles = StyleSheet.create({
   roundTripTabRow: {
     flexDirection: 'row',
     marginHorizontal: 16,
-    marginBottom: 10,
-    backgroundColor: '#ECEEF3',
-    borderRadius: 8,
-    padding: 3,
+    marginTop: 8.5,
+    marginBottom: 8,
+    height: 32,
+    borderWidth: 1,
+    borderColor: '#ADB8CD',
+    borderRadius: 4,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
   },
   roundTripTab: {
     flex: 1,
-    height: 34,
-    borderRadius: 6,
+    alignSelf: 'stretch',
     alignItems: 'center',
     justifyContent: 'center',
   },
   roundTripTabActive: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#040B1F',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    flex: 1,
+    alignSelf: 'stretch',
+    borderRadius: 3,
+    backgroundColor: '#F3E8FF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  roundTripTabText: {
+  roundTripTabActiveBorder: {
+    flex: 1,
+    alignSelf: 'stretch',
+    margin: -1,
+    padding: 1,
+    borderRadius: 4,
+  },
+  legHeadingRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 7,
+    marginTop: 3,
+    marginBottom: 9,
+  },
+  legHeadingText: {
+    fontSize: 15,
+    lineHeight: 20,
+    fontWeight: '500',
+    color: '#3E4B64',
+  },
+  legHeadingDate: {
     fontSize: 13,
-    fontWeight: '600',
+    lineHeight: 16,
     color: '#697691',
   },
+  roundTripTabDivider: {
+    width: 1,
+    backgroundColor: '#ADB8CD',
+  },
+  roundTripTabText: {
+    fontSize: 15,
+    lineHeight: 20,
+    color: '#3E4B64',
+  },
   roundTripTabTextActive: {
-    color: '#7C1AEE',
+    color: '#3E4B64',
   },
   // "Individual Flights" step 2: the onward flight already picked, summarized
   // above the return list with a way back to step 1.
@@ -965,25 +1001,32 @@ export const styles = StyleSheet.create({
   // "Combine Flights" card: one onward CombinedLegRow + one return
   // CombinedLegRow stacked in a single FlightOfferCard-style shell.
   combinedLegRow: {
-    marginBottom: 4,
+    paddingBottom: 6,
   },
   combinedLegTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    height: 18,
+    marginLeft: -12.7,
+    marginRight: 2,
+    marginBottom: 18.6,
+  },
+  // Leg logo sits in the card's corner column like the single-flight card.
+  combinedLegLogo: {
+    marginLeft: -17,
+    marginRight: -2,
   },
   combinedLegAirlineName: {
     fontSize: 13,
-    fontWeight: '600',
+    lineHeight: 18,
+    fontWeight: '500',
     color: '#182339',
   },
   combinedLegLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#7C1AEE',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#3E4B64',
   },
   // Multi-city "Combine Flights" card's "Trip-N | <airlines>" row heading —
   // same weight/color as combinedLegAirlineName, just standing alone instead
@@ -993,11 +1036,11 @@ export const styles = StyleSheet.create({
   },
   combinedPriceRow: {
     height: 28,
-    marginTop: 10,
-    marginLeft: -15,
-    marginRight: -8,
-    marginBottom: -8,
-    backgroundColor: '#F2E6FE',
+    marginTop: 6,
+    marginLeft: -16.7,
+    marginRight: -7.7,
+    marginBottom: -5.7,
+    backgroundColor: '#F3E8FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1034,7 +1077,9 @@ export const styles = StyleSheet.create({
   // Combined/multi-city cards have no corner logo, so their strip runs the
   // card's full height.
   stripFull: {
-    marginTop: 0,
+    flex: 0,
+    height: 70,
+    marginTop: 'auto',
   },
   cardLogo: {
     position: 'absolute',
@@ -1048,6 +1093,7 @@ export const styles = StyleSheet.create({
   journeyTimesSpread: {
     flex: 1,
     justifyContent: 'space-between',
+    paddingRight: 19.5,
   },
   spreadBlock: {
     width: undefined,

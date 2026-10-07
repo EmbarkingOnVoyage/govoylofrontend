@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, FlatList, SafeAreaView, ScrollView, Activ
 import { ArrowLeft, ArrowLeftRight, ArrowRight, Pencil, Plane, Info, ChevronDown, ListFilter, Check, Minus, Plus, X, MapPin, UserRound, MoveRight } from 'lucide-react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SvgXml } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
 import Slider from '@react-native-community/slider';
 import {
   useFareCalendarMobile,
@@ -950,7 +951,9 @@ const CombinedLegRow: React.FC<{ offer: FlightOffer; label: string }> = ({ offer
     <View style={styles.combinedLegRow}>
       <View style={styles.combinedLegTopRow}>
         <View style={styles.airlineNameRow}>
-          <AirlineLogo airlineCode={offer.airlineCode} size={20} />
+          <View style={styles.combinedLegLogo}>
+            <AirlineLogo airlineCode={offer.airlineCode} size={24} />
+          </View>
           <Text style={styles.combinedLegAirlineName}>{offer.airlineName}</Text>
         </View>
         <Text style={styles.combinedLegLabel}>{label}</Text>
@@ -1378,6 +1381,7 @@ const FlightDetailsModal: React.FC<{
 // multi-tab screen, the rest are quick single-purpose shortcuts into the
 // same underlying filter state.
 const FilterBar: React.FC<{
+  compact?: boolean;
   onFilterPress: () => void;
   filterActive: boolean;
   nonStopOnly: boolean;
@@ -1403,12 +1407,13 @@ const FilterBar: React.FC<{
   layoverActive,
   onTimePress,
   timeActive,
+  compact,
 }) => (
   <ScrollView
     horizontal
     showsHorizontalScrollIndicator={false}
     style={styles.filterBar}
-    contentContainerStyle={styles.filterBarContent}
+    contentContainerStyle={[styles.filterBarContent, compact && styles.filterBarContentCompact]}
   >
     <TouchableOpacity
       style={[styles.filterChip, filterActive && styles.filterChipActive]}
@@ -1466,26 +1471,37 @@ type RoundTripView = 'individual' | 'combine';
 const RoundTripViewTabs: React.FC<{ active: RoundTripView; onChange: (view: RoundTripView) => void }> = ({
   active,
   onChange,
-}) => (
-  <View style={styles.roundTripTabRow}>
-    <TouchableOpacity
-      style={[styles.roundTripTab, active === 'individual' && styles.roundTripTabActive]}
-      onPress={() => onChange('individual')}
-    >
-      <Text style={[styles.roundTripTabText, active === 'individual' && styles.roundTripTabTextActive]}>
-        Individual Flights
-      </Text>
-    </TouchableOpacity>
-    <TouchableOpacity
-      style={[styles.roundTripTab, active === 'combine' && styles.roundTripTabActive]}
-      onPress={() => onChange('combine')}
-    >
-      <Text style={[styles.roundTripTabText, active === 'combine' && styles.roundTripTabTextActive]}>
-        Combine Flights
-      </Text>
-    </TouchableOpacity>
-  </View>
-);
+}) => {
+  const renderTab = (view: RoundTripView, label: string) => {
+    const isActive = active === view;
+    const text = <Text style={styles.roundTripTabText}>{label}</Text>;
+    return (
+      <TouchableOpacity key={view} style={styles.roundTripTab} onPress={() => onChange(view)} activeOpacity={0.8}>
+        {isActive ? (
+          // Figma: active half has a purple-to-amber gradient outline.
+          <LinearGradient
+            colors={['#7C1AEE', '#D68400']}
+            start={{ x: 1, y: 0 }}
+            end={{ x: 0.43, y: 3.3 }}
+            style={styles.roundTripTabActiveBorder}
+          >
+            <View style={styles.roundTripTabActive}>{text}</View>
+          </LinearGradient>
+        ) : (
+          text
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <View style={styles.roundTripTabRow}>
+      {renderTab('individual', 'Individual Flights')}
+      <View style={styles.roundTripTabDivider} />
+      {renderTab('combine', 'Combine Flights')}
+    </View>
+  );
+};
 
 // A compact summary of an already-picked leg, sitting above the next leg's
 // list, with a way back to re-pick it — round-trip's step 2 shows one of
@@ -1516,6 +1532,28 @@ const LegSelectionBar: React.FC<{ offer: FlightOffer; label: string; onChange: (
           {formatTime(first.departureDateTime)} - {formatTime(last.arrivalDateTime)}
         </Text>
       </View>
+    </View>
+  );
+};
+
+// Figma "round onward": "Onward flight from BOM - NYC | 25 Mar, Fri" above
+// the current leg's list in the round-trip Individual Flights flow.
+const RoundTripLegHeading: React.FC<{ isReturn: boolean; origin: string; destination: string; date: string }> = ({
+  isReturn,
+  origin,
+  destination,
+  date,
+}) => {
+  const d = new Date(date);
+  const dateLabel = isNaN(d.getTime())
+    ? ''
+    : `${d.getDate()} ${d.toLocaleDateString('en-US', { month: 'short' })}, ${d.toLocaleDateString('en-US', { weekday: 'short' })}`;
+  return (
+    <View style={styles.legHeadingRow}>
+      <Text style={styles.legHeadingText}>
+        {isReturn ? 'Return' : 'Onward'} flight from {origin} - {destination} |
+      </Text>
+      <Text style={styles.legHeadingDate}>{dateLabel}</Text>
     </View>
   );
 };
@@ -1914,7 +1952,7 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
           </TouchableOpacity>
         </View>
 
-        {activeSummary && (
+        {activeSummary && !isMultiLeg && (
           <View style={styles.dateStripRow}>
             <DateFareStrip
               originCode={activeSummary.originCode}
@@ -1932,6 +1970,7 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
         {isMultiLeg && <RoundTripViewTabs active={roundTripView} onChange={handleChangeRoundTripView} />}
 
         <FilterBar
+          compact={isMultiLeg && roundTripView === 'individual' && isRoundTrip}
           onFilterPress={() => setFilterScreenVisible(true)}
           filterActive={
             combinedFilters.stops.size > 0 ||
@@ -2179,6 +2218,14 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
                     onChange={() => handleChangeLegAt(index)}
                   />
                 ))}
+              {usingSequentialFlow && isRoundTrip && activeSummary && (
+                <RoundTripLegHeading
+                  isReturn={currentLegIndex === 1}
+                  origin={currentLegIndex === 1 ? activeSummary.destinationCode : activeSummary.originCode}
+                  destination={currentLegIndex === 1 ? activeSummary.originCode : activeSummary.destinationCode}
+                  date={currentLegIndex === 1 ? activeSummary.returnDate ?? activeSummary.departureDate : activeSummary.departureDate}
+                />
+              )}
               {best ? (
                 <>
                   <FlightOfferCard offer={best} variant="bestValue" onPress={() => handleOfferPress(best)} />
