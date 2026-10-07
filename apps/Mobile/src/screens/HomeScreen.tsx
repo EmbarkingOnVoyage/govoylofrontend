@@ -1,12 +1,13 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Sparkles } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ImageBackground, StyleSheet } from 'react-native';
+import { SvgXml } from 'react-native-svg';
+import { STAR_SVG } from '../components/figmaIcons';
 // global.d.ts types *.png as `string` for @workspace/ui's web-only re-exports;
 // Metro actually resolves a local RN import like this to an asset module id
 // (number), which is what Image.source expects — cast to match the runtime type.
-import flightsButtonCloudsSrc from '../assets/images/flights-button-clouds.png';
-const flightsButtonClouds = flightsButtonCloudsSrc as unknown as number;
+// Gradient + clouds rendered from the Figma Flights tile.
+import flightsTileSrc from '../assets/images/flights-tile-bg.png';
+const flightsTileBackground = flightsTileSrc as unknown as number;
 
 interface HomeScreenProps {
   onSelectFlightsAndHotels: () => void;
@@ -34,18 +35,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
 
       <TouchableOpacity onPress={onSelectFlights} activeOpacity={0.85}>
-        <LinearGradient
-          colors={['#973DFF', '#CF31FF']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+        <ImageBackground
+          source={flightsTileBackground}
+          resizeMode="stretch"
           style={styles.flightsButton}
+          imageStyle={styles.flightsButtonImage}
         >
-          <Image source={flightsButtonClouds} style={styles.flightsButtonClouds} resizeMode="cover" />
           <Text style={styles.flightsButtonText}>Flights</Text>
-          <Sparkles size={5} color="#D9D9D9" style={styles.star1} />
-          <Sparkles size={8} color="#D9D9D9" style={styles.star2} />
-          <Sparkles size={8} color="#D9D9D9" style={styles.star3} />
-        </LinearGradient>
+          <SvgXml xml={STAR_SVG} width={4.76} height={4.52} style={styles.star1} />
+          <SvgXml xml={STAR_SVG} width={7.61} height={7.24} style={styles.star2} />
+          <SvgXml xml={STAR_SVG} width={7.61} height={7.24} style={styles.star3} />
+        </ImageBackground>
       </TouchableOpacity>
     </View>
   </View>
@@ -82,6 +82,9 @@ const styles = StyleSheet.create({
   squareButtonText: {
     color: '#FFFFFF',
     fontSize: 20,
+    lineHeight: 18.5,
+    // Android top-aligns text whose line height is below its font size.
+    paddingTop: 8.5,
     fontWeight: '700',
     textAlign: 'center',
   },
@@ -99,14 +102,8 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 4,
   },
-  // Matches Figma's "Group 3" cloud decoration — positioned to bleed off the
-  // button's bottom edge, clipped by flightsButton's overflow: hidden.
-  flightsButtonClouds: {
-    position: 'absolute',
-    top: 49,
-    left: 99,
-    width: 226,
-    height: 99,
+  flightsButtonImage: {
+    borderRadius: 8,
   },
   flightsButtonText: {
     color: '#FFFFFF',
@@ -116,17 +113,17 @@ const styles = StyleSheet.create({
   star1: {
     position: 'absolute',
     top: 3,
-    right: 53,
+    right: 53.1,
   },
   star2: {
     position: 'absolute',
     top: 8,
-    right: 17,
+    right: 17.2,
   },
   star3: {
     position: 'absolute',
     top: 28,
-    right: 36,
+    right: 36.2,
   },
 
   cardsContainer: {
@@ -134,8 +131,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 18,
     paddingBottom: 16,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
+    borderTopLeftRadius: 6,
     gap: 16,
     width: '100%',
   },
