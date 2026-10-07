@@ -6,6 +6,7 @@ import { PersonalDetailsScreen } from '../screens/profile/PersonalDetailsScreen'
 import { CoTravellerScreen } from '../screens/profile/CoTravellerScreen';
 import { CoTravellerFormScreen } from '../screens/profile/CoTravellerFormScreen';
 import { PlaceholderScreen } from '../screens/profile/PlaceholderScreen';
+import { PreferencesScreen } from '../screens/profile/PreferencesScreen';
 import { LoginRequiredScreen } from '../screens/LoginRequiredScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { FlightSearchFormScreen } from '../screens/flights/FlightSearchFormScreen';
@@ -44,9 +45,7 @@ const TABS: { key: TabKey; label: string; Icon: typeof House }[] = [
 ];
 
 const PLACEHOLDER_TITLES: Partial<Record<ProfileStackScreen, string>> = {
-  CustomizationPreferences: 'Customization preferences',
   PaymentMethods: 'Payment methods',
-  PrivacyDataManagement: 'Privacy & data management',
   Bookings: 'Bookings',
   Saved: 'Saved',
   ShareFeedback: 'Share your feedback',
@@ -174,6 +173,10 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
             onDone={() => setProfileScreen('CoTraveller')}
           />
         );
+      case 'CustomizationPreferences':
+        return <PreferencesScreen title="Customization preferences" onBack={() => setProfileScreen('Hub')} />;
+      case 'PrivacyDataManagement':
+        return <PreferencesScreen title="Privacy and data management" onBack={() => setProfileScreen('Hub')} />;
       case 'Hub':
         return (
           <ProfileScreen

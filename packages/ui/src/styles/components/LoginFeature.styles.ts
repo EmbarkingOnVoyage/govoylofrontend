@@ -121,7 +121,7 @@ export const mobile: ILoginMobileStyles = {
     width: "100%",
     height: 44,
     backgroundColor: "#7C1AEE",
-    borderRadius: 8,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -131,7 +131,8 @@ export const mobile: ILoginMobileStyles = {
   primaryButtonText: {
     color: "#FFFFFF",
     fontSize: 15,
-    fontWeight: "600",
+    lineHeight: 20,
+    fontWeight: "500",
   },
   dividerRow: {
     flexDirection: 'row',
@@ -166,8 +167,8 @@ export const mobile: ILoginMobileStyles = {
     alignItems: "center",
   },
   socialIcon: {
-    width: 22,
-    height: 22,
+    width: 24,
+    height: 24,
     resizeMode: "contain",
   },
   guestLink: {
@@ -189,9 +190,7 @@ export const mobile: ILoginMobileStyles = {
     lineHeight: 18,
   },
   footerLink: {
-    textDecorationLine: 'underline',
-    color: '#4C5973',
-    fontWeight: '500',
+    color: '#7C1AEE',
   },
 };
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, SafeAreaView, StatusBar, ImageBackground } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient'; // Import the cross-platform gradient primitive
-import { Check, ArrowRight } from 'lucide-react-native';
+import { Check, ArrowRight, Sparkles } from 'lucide-react-native';
 import { CoreImages } from '@workspace/ui';
 import { styles } from './LandingScreen.styles';
 import { NavigationRule } from '@workspace/core';
@@ -39,13 +39,14 @@ export const LandingScreen: React.FC<ILandingScreenProps> = ({ onNavigate, onGue
             {/* Top Section: Badges and Core Headings */}
             <View style={styles.headerVisualBlock}>
               <View style={styles.badgeContainer}>
-                <Text style={styles.badgeText}>✨ AI TRAVEL COMPANION</Text>
+                <Sparkles size={16} color="#FFFFFF" strokeWidth={2} />
+                <Text style={styles.badgeText}>AI TRAVEL COMPANION</Text>
               </View>
               <Text style={styles.heroText}>
                 Travel with someone who always has your back
               </Text>
               <Text style={styles.subHeroText}>
-                From the first search to your safe return, we navigate the noise so you can just enjoy the trip.
+                From the first search to your safe return, we navigate the noise so you can just enjoy the trip
               </Text>
             </View>
 
@@ -53,19 +54,19 @@ export const LandingScreen: React.FC<ILandingScreenProps> = ({ onNavigate, onGue
             <View style={styles.perksContainer}>
               <View style={styles.perkRow}>
                 <View style={styles.checkmarkBadge}>
-                  <Check size={13} color="#FFFFFF" strokeWidth={3} />
+                  <Check size={14} color="#FFFFFF" strokeWidth={3} />
                 </View>
                 <Text style={styles.perkText}>3 perfect options. No more endless scrolling</Text>
               </View>
               <View style={styles.perkRow}>
                 <View style={styles.checkmarkBadge}>
-                  <Check size={13} color="#FFFFFF" strokeWidth={3} />
+                  <Check size={14} color="#FFFFFF" strokeWidth={3} />
                 </View>
                 <Text style={styles.perkText}>Zero platform markups or sneaky fees</Text>
               </View>
               <View style={styles.perkRow}>
                 <View style={styles.checkmarkBadge}>
-                  <Check size={13} color="#FFFFFF" strokeWidth={3} />
+                  <Check size={14} color="#FFFFFF" strokeWidth={3} />
                 </View>
                 <Text style={styles.perkText}>Instant trip rescue</Text>
               </View>
@@ -83,7 +84,7 @@ export const LandingScreen: React.FC<ILandingScreenProps> = ({ onNavigate, onGue
 
               <TouchableOpacity onPress={onGuestPress} style={styles.guestLink} activeOpacity={0.7}>
                 <Text style={styles.guestLinkText}>Continue as guest</Text>
-                <ArrowRight size={15} color="#A78BFA" strokeWidth={2.5} />
+                <ArrowRight size={16} color="#7C1AEE" strokeWidth={2} />
               </TouchableOpacity>
             </View>
 

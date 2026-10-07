@@ -47,7 +47,7 @@ export const SelectField: React.FC<SelectFieldProps> = ({
   activeOpacity={0.7}
 >
         <Text style={value ? styles.fieldText : styles.fieldPlaceholder}>{value || placeholder}</Text>
-        <ChevronDown size={18} color="#7C8CAD" strokeWidth={2} />
+        <ChevronDown size={20} color="#182339" strokeWidth={2} />
       </TouchableOpacity>
 
       <Modal visible={isOpen} animationType="slide" transparent onRequestClose={() => setIsOpen(false)}>

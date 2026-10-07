@@ -8,22 +8,25 @@ export const styles = StyleSheet.create({
   header: {
     height: 96,
     paddingHorizontal: 16,
-    paddingBottom: 16,
+    paddingBottom: 12,
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 12,
+    gap: 16,
   },
   backButton: {
-    padding: 4,
+    paddingVertical: 2,
   },
   headerTitle: {
     color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 28,
+    fontWeight: '500',
   },
   listContent: {
     flexGrow: 1,
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 20,
   },
   emptyState: {
     flex: 1,
@@ -35,10 +38,10 @@ export const styles = StyleSheet.create({
     color: '#4C5973',
   },
   row: {
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    paddingVertical: 14,
+    gap: 10,
   },
   avatar: {
     width: 44,
@@ -48,33 +51,35 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
+    color: '#3E4B64',
+    fontSize: 22,
+    fontWeight: '500',
   },
   rowInfo: {
     flex: 1,
   },
   rowName: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    lineHeight: 24,
     color: '#182339',
   },
   rowMeta: {
-    fontSize: 13,
-    color: '#4C5973',
-    marginTop: 2,
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#182339',
   },
   rowActions: {
     flexDirection: 'row',
-    gap: 16,
+    alignItems: 'center',
+    gap: 32,
+    paddingRight: 12,
   },
-  separator: {
-    height: 1,
-    backgroundColor: '#ECEEF3',
+  footer: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
   },
   addButton: {
-    height: 44,
+    height: 32,
     borderRadius: 8,
     backgroundColor: '#7C1AEE',
     alignItems: 'center',
@@ -84,6 +89,7 @@ export const styles = StyleSheet.create({
   addButtonText: {
     color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: '600',
+    lineHeight: 20,
+    fontWeight: '500',
   },
 });

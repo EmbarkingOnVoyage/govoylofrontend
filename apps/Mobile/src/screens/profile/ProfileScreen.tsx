@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, Image, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   UserRound,
@@ -11,6 +11,7 @@ import {
   Heart,
   MessageSquare,
   ChevronRight,
+  Check,
 } from 'lucide-react-native';
 import { useCustomerProfileMobile, AUTH_BASE_URL } from '@workspace/ui';
 import { styles } from './ProfileScreen.styles';
@@ -35,15 +36,23 @@ function getInitials(firstName?: string, lastName?: string): string {
   return initials || '?';
 }
 
+const VerifiedMark = () => (
+  <View style={styles.verifiedMark}>
+    <Check size={11} color="#FFFFFF" strokeWidth={3} />
+  </View>
+);
+
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, onSignOut }) => {
   const { data: profile } = useCustomerProfileMobile();
 
   return (
     <View style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={[styles.scrollContent, { paddingTop: (StatusBar.currentHeight ?? 44) + 8 }]}
+      >
         <LinearGradient
-          colors={['#6A16CB', '#350B65']}
-          start={{ x: 0, y: 0 }}
+          colors={['#46157B', '#5A189F', '#6A1AC4']}
+          start={{ x: 0, y: 1 }}
           end={{ x: 1, y: 0 }}
           style={styles.banner}
         >
@@ -66,28 +75,31 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, onSign
               <Text style={styles.bannerEmail} numberOfLines={1}>
                 {profile?.email || '—'}
               </Text>
+              {!!profile?.email && <VerifiedMark />}
             </View>
-            <Text style={styles.bannerPhone}>{profile?.phone || '—'}</Text>
+            <View style={styles.bannerRow}>
+              <Text style={styles.bannerPhone}>{profile?.phone || '—'}</Text>
+              {!!profile?.phone && <VerifiedMark />}
+            </View>
           </View>
         </LinearGradient>
 
         <Text style={styles.sectionTitle}>My Account</Text>
-        {MENU_ITEMS.map((item, index) => (
+        {MENU_ITEMS.map((item) => (
           <React.Fragment key={item.key}>
             <TouchableOpacity style={styles.listItem} onPress={() => onNavigate(item.key)}>
-              <item.Icon size={20} color="#182339" strokeWidth={2} />
+              <item.Icon size={20} color="#182339" strokeWidth={1.5} />
               <Text style={styles.listItemLabel}>{item.label}</Text>
-              <ChevronRight size={18} color="#7C8CAD" strokeWidth={2} />
+              <ChevronRight size={20} color="#3E4B64" strokeWidth={2} />
             </TouchableOpacity>
-            {index < MENU_ITEMS.length - 1 && <View style={styles.separator} />}
           </React.Fragment>
         ))}
 
         <Text style={styles.domainText}>govoylo.com</Text>
         <TouchableOpacity style={styles.listItem} onPress={() => onNavigate('ShareFeedback')}>
-          <MessageSquare size={20} color="#182339" strokeWidth={2} />
+          <MessageSquare size={20} color="#182339" strokeWidth={1.5} />
           <Text style={styles.listItemLabel}>Share your feedback</Text>
-          <ChevronRight size={18} color="#7C8CAD" strokeWidth={2} />
+          <ChevronRight size={20} color="#3E4B64" strokeWidth={2} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.signOutButton} onPress={onSignOut} activeOpacity={0.8}>

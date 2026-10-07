@@ -66,7 +66,7 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
         <View style={s.formWrapper}>
           <TextInput
             placeholder="Email address"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#99A6C0"
             style={[s.inputField, !!validationError && s.inputFieldError]}
             value={email}
             onChangeText={(text) => {
@@ -118,7 +118,7 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
         </TouchableOpacity>
 
         <Text style={s.footerText}>
-          By continuing you agree to our <Text style={s.footerLink}>Terms & Privacy Policy</Text>.
+          By continuing you agree to our <Text style={s.footerLink}>Terms & Privacy Policy.</Text>
         </Text>
       </View>
     </View>

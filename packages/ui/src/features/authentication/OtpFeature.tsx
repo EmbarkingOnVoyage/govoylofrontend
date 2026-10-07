@@ -140,8 +140,8 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
                 onKeyPress={(e) => handleKeyPress(e, i)}
                 keyboardType="number-pad"
                 editable={!isWorking}
-                placeholder="-"
-                placeholderTextColor="#D1D5DB"
+                placeholder="–"
+                placeholderTextColor="#B5B5B5"
                 autoFocus={i === 0}
               />
             ))}
@@ -162,8 +162,7 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
 
           {countdown > 0 ? (
             <Text style={s.spamText}>
-              Didn't receive an email? please check your spam folder or request another code in{" "}
-              <Text style={s.timerHighlight}>{countdown} seconds</Text>.
+              Didn't receive an email? please check your spam folder or request another code in {countdown} seconds.
             </Text>
           ) : (
             <Text style={s.spamText}>

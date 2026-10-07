@@ -133,14 +133,14 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
   return (
     <View style={styles.screen}>
       <LinearGradient
-        colors={['#6A16CB', '#350B65']}
+        colors={['#7C1AEE', '#7C1AEE']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
       >
         <SafeAreaView>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={onDone}>
-              <ArrowLeft size={22} color="#FFFFFF" />
+              <ArrowLeft size={24} color="#FFFFFF" strokeWidth={1.5} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{travellerId ? 'Edit co-traveller' : 'Add new traveller'}</Text>
           </View>
@@ -174,11 +174,11 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
 
         <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>First name</Text>
-          <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="Text" />
+          <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="Text" placeholderTextColor="#697691" />
         </View>
         <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>Last name</Text>
-          <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="Text" />
+          <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="Text" placeholderTextColor="#697691" />
         </View>
         <View style={styles.row}>
           <View style={styles.fieldWrapperHalf}>
@@ -191,7 +191,7 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
               style={styles.input}
               value={dateOfBirth}
               onChangeText={setDateOfBirth}
-              placeholder="DD/MM/YYYY"
+              placeholder="DD/MM/YYYY" placeholderTextColor="#697691"
             />
           </View>
         </View>
@@ -223,7 +223,7 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
               setPassportNumber(text);
               setPassportEdited(true);
             }}
-            placeholder="Text"
+            placeholder="Text" placeholderTextColor="#697691"
           />
         </View>
         <View style={styles.fieldWrapperFull}>
@@ -235,7 +235,7 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
               setPassportExpiryDate(text);
               setPassportEdited(true);
             }}
-            placeholder="DD/MM/YYYY"
+            placeholder="DD/MM/YYYY" placeholderTextColor="#697691"
           />
         </View>
         <View style={styles.fieldWrapperFull}>
@@ -247,7 +247,7 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
               setPassportIssueDate(text);
               setPassportEdited(true);
             }}
-            placeholder="DD/MM/YYYY"
+            placeholder="DD/MM/YYYY" placeholderTextColor="#697691"
           />
         </View>
         <View style={styles.fieldWrapperFull}>
