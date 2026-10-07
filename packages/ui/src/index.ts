@@ -129,11 +129,12 @@ export {
   BookingConfirmedWeb,
   type BookingConfirmation,
 } from './features/flights/booking/FlightReviewPageWeb.web';
+export { FlightPaymentPageWeb } from './features/flights/booking/FlightPaymentPageWeb.web';
 export { MyTripsPageWeb } from './features/flights/trips/MyTripsPageWeb.web';
 export { TripDetailsPageWeb } from './features/flights/trips/TripDetailsPageWeb.web';
 export { AirlineLogoWeb } from './features/flights/results/AirlineLogoWeb.web';
 export { useAirportLookup } from './features/flights/results/useAirportLookup';
-export type { FlightBookingSelection } from './features/flights/flightBookingSession';
+export type { FlightBookingSelection, FlightCheckoutDetails } from './features/flights/flightBookingSession';
 export {
   useBookingSession,
   readBookingSession,
