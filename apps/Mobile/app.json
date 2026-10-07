@@ -7,23 +7,35 @@
     "icon": "../../assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.govoylo.app",
+      "buildNumber": "1",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.govoylo.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#7C1AEE",
         "foregroundImage": "../../assets/android-icon-foreground.png",
         "backgroundImage": "../../assets/android-icon-background.png",
         "monochromeImage": "../../assets/android-icon-monochrome.png"
-      }
+      },
+      "blockedPermissions": [
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
       "favicon": "../../assets/favicon.png"
     },
     "plugins": [
       "expo-asset",
-      "expo-font"
+      "expo-font",
+      "./plugins/withReleaseSigning"
     ],
     "extra": {
       "eas": {
