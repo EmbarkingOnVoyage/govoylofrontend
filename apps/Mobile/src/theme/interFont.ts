@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TextInput } from 'react-native';
+import { Platform, StyleSheet, Text, TextInput } from 'react-native';
 
 // The Figma design (Product → Phone Dev) is set in Inter throughout. Inter is
 // bundled as one file per weight (assets/fonts, SIL OFL), and every Text /
@@ -25,14 +25,29 @@ const FAMILY_BY_WEIGHT: Record<string, keyof typeof INTER_FONTS> = {
   bold: 'Inter-Bold',
 };
 
+// Android rounds each glyph advance up to a whole pixel, which made text run
+// ~0.17pt per character wider than the Figma outlines; this pulls it back.
+const ANDROID_TRACKING = Platform.OS === 'android' ? -0.15 : 0;
+
 function withInter(style: unknown) {
-  const flat = (StyleSheet.flatten(style as never) ?? {}) as { fontFamily?: string; fontWeight?: string | number };
+  const flat = (StyleSheet.flatten(style as never) ?? {}) as {
+    fontFamily?: string;
+    fontWeight?: string | number;
+    letterSpacing?: number;
+  };
   // Anything that picks its own font (e.g. an icon font) is left alone.
   if (flat.fontFamily) return style;
   const family = FAMILY_BY_WEIGHT[String(flat.fontWeight ?? '400')] ?? 'Inter-Regular';
   // The weight is in the file itself; a leftover fontWeight would make Android
   // synthesise bold on top of it.
-  return [style, { fontFamily: family, fontWeight: 'normal' as const }];
+  return [
+    style,
+    {
+      fontFamily: family,
+      fontWeight: 'normal' as const,
+      letterSpacing: (flat.letterSpacing ?? 0) + ANDROID_TRACKING,
+    },
+  ];
 }
 
 function patch(component: unknown) {

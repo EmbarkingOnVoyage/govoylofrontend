@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image } from "react-native";
+import { MoveRight } from "lucide-react-native";
 import { useRequestOtpMutation } from "@workspace/api";
 import { LoginMobileStyles as s } from "@workspace/ui";
 import { authContextCache } from "./authContextCache";
@@ -114,7 +115,8 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
           style={s.guestLink}
           onPress={() => onNavigate("ON_CONTINUE_AS_GUEST")}
         >
-          <Text style={s.guestLinkText}>Continue as guest  ⟶</Text>
+          <Text style={s.guestLinkText}>Continue as guest</Text>
+          <MoveRight size={20} color="#7C1AEE" strokeWidth={1.2} />
         </TouchableOpacity>
 
         <Text style={s.footerText}>

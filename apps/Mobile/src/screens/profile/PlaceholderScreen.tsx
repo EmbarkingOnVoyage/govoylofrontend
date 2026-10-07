@@ -16,7 +16,7 @@ export const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ title, onB
       <SafeAreaView>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <ArrowLeft size={24} color="#FFFFFF" strokeWidth={1.5} />
+            <ArrowLeft size={20} color="#ECEEF3" strokeWidth={1.2} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{title}</Text>
         </View>
@@ -31,15 +31,16 @@ export const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ title, onB
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#FFFFFF' },
   header: {
-    height: 96,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
+    height: 47,
+    paddingLeft: 24,
+    paddingRight: 16,
+    paddingBottom: 9,
     flexDirection: 'row',
     alignItems: 'flex-end',
-    gap: 16,
+    gap: 10,
   },
-  backButton: { paddingVertical: 2 },
-  headerTitle: { color: '#FFFFFF', fontSize: 16, lineHeight: 28, fontWeight: '500' },
+  backButton: { height: 20, justifyContent: 'center' },
+  headerTitle: { color: '#ECEEF3', fontSize: 15, lineHeight: 20, fontWeight: '500' },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
   text: { fontSize: 15, color: '#4C5973', textAlign: 'center' },
 });

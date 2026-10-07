@@ -8,6 +8,7 @@ import {
   type CustomerProfile,
 } from '@workspace/ui';
 import { SelectField } from '../../components/SelectField';
+import { DateField } from '../../components/DateField';
 import {
   GENDER_OPTIONS,
   MARITAL_STATUS_OPTIONS,
@@ -193,7 +194,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
         <SafeAreaView>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <ArrowLeft size={24} color="#FFFFFF" strokeWidth={1.5} />
+              <ArrowLeft size={20} color="#ECEEF3" strokeWidth={1.2} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Personal details</Text>
           </View>
@@ -218,23 +219,20 @@ if (!isValidDateOfBirth(dateOfBirth)) {
   ]} value={lastName} onChangeText={setLastName} placeholder="Text" placeholderTextColor="#697691" />
         </View>
         <View style={styles.row}>
-          <View style={styles.fieldWrapperHalf}>
+          <View style={styles.fieldWrapperGender}>
             <Text style={styles.label}>Gender</Text>
             <SelectField value={gender} options={GENDER_OPTIONS} onSelect={setGender} title="Select gender"  style={showValidation && !gender.trim() ? styles.inputError : undefined} />
           </View>
           <View style={styles.fieldWrapperHalf}>
             <Text style={styles.label}>Date of birth</Text>
-            <TextInput
-              // style={styles.input}
-              style={[
-    styles.input,
-    showValidation &&
-      (!dateOfBirth.trim() || !isValidDateOfBirth(dateOfBirth)) &&
-      styles.inputError,
-  ]}
+            <DateField
+              style={
+                showValidation && (!dateOfBirth.trim() || !isValidDateOfBirth(dateOfBirth))
+                  ? styles.inputError
+                  : undefined
+              }
               value={dateOfBirth}
               onChangeText={setDateOfBirth}
-              placeholder="DD/MM/YYYY" placeholderTextColor="#697691"
             />
           </View>
         </View>
@@ -260,7 +258,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
             </View>
             <View style={styles.fieldWrapperHalf}>
               <Text style={styles.label}>Anniversary</Text>
-              <TextInput style={styles.input} value={anniversary} onChangeText={setAnniversary} placeholder="DD/MM/YYYY" placeholderTextColor="#697691" />
+              <DateField value={anniversary} onChangeText={setAnniversary} placeholder="Select" />
             </View>
           </View>
         ) : (

@@ -1,6 +1,5 @@
 import React from 'react';
-import { View, Text, Image, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { View, Text, Image, ImageBackground, ScrollView, TouchableOpacity } from 'react-native';
 import {
   UserRound,
   Users,
@@ -15,6 +14,11 @@ import {
 } from 'lucide-react-native';
 import { useCustomerProfileMobile, AUTH_BASE_URL } from '@workspace/ui';
 import { styles } from './ProfileScreen.styles';
+// global.d.ts types *.png as string; Metro hands RN an asset id (number).
+import bannerBackgroundSrc from '../../assets/images/profile-banner-bg.png';
+
+// Gradient, glow and plane photo rendered from the Figma "Profile" frame.
+const bannerBackground = bannerBackgroundSrc as unknown as number;
 
 interface ProfileScreenProps {
   onNavigate: (screen: string) => void;
@@ -38,7 +42,7 @@ function getInitials(firstName?: string, lastName?: string): string {
 
 const VerifiedMark = () => (
   <View style={styles.verifiedMark}>
-    <Check size={11} color="#FFFFFF" strokeWidth={3} />
+    <Check size={10} color="#FFFFFF" strokeWidth={2} />
   </View>
 );
 
@@ -47,14 +51,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, onSign
 
   return (
     <View style={styles.screen}>
-      <ScrollView
-        contentContainerStyle={[styles.scrollContent, { paddingTop: (StatusBar.currentHeight ?? 44) + 8 }]}
-      >
-        <LinearGradient
-          colors={['#46157B', '#5A189F', '#6A1AC4']}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 1, y: 0 }}
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <ImageBackground
+          source={bannerBackground}
+          resizeMode="stretch"
           style={styles.banner}
+          imageStyle={styles.bannerImage}
         >
           <View style={styles.avatarWrapper}>
             {profile?.profileImageUrl ? (
@@ -82,13 +84,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, onSign
               {!!profile?.phone && <VerifiedMark />}
             </View>
           </View>
-        </LinearGradient>
+        </ImageBackground>
 
         <Text style={styles.sectionTitle}>My Account</Text>
         {MENU_ITEMS.map((item) => (
           <React.Fragment key={item.key}>
             <TouchableOpacity style={styles.listItem} onPress={() => onNavigate(item.key)}>
-              <item.Icon size={20} color="#182339" strokeWidth={1.5} />
+              <item.Icon size={20} color="#182339" strokeWidth={1.25} />
               <Text style={styles.listItemLabel}>{item.label}</Text>
               <ChevronRight size={20} color="#3E4B64" strokeWidth={2} />
             </TouchableOpacity>
@@ -97,7 +99,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, onSign
 
         <Text style={styles.domainText}>govoylo.com</Text>
         <TouchableOpacity style={styles.listItem} onPress={() => onNavigate('ShareFeedback')}>
-          <MessageSquare size={20} color="#182339" strokeWidth={1.5} />
+          <MessageSquare size={20} color="#182339" strokeWidth={1.25} />
           <Text style={styles.listItemLabel}>Share your feedback</Text>
           <ChevronRight size={20} color="#3E4B64" strokeWidth={2} />
         </TouchableOpacity>

@@ -58,11 +58,11 @@ export const CoTravellerScreen: React.FC<CoTravellerScreenProps> = ({ onBack, on
           </Text>
         </View>
         <View style={styles.rowActions}>
-          <TouchableOpacity onPress={() => onEdit(item.id)}>
-            <Pencil size={20} color="#182339" strokeWidth={1.5} />
+          <TouchableOpacity style={styles.actionButton} onPress={() => onEdit(item.id)}>
+            <Pencil size={20} color="#182339" strokeWidth={1.2} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleDelete(item)}>
-            <Trash2 size={20} color="#182339" strokeWidth={1.5} />
+          <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
+            <Trash2 size={20} color="#182339" strokeWidth={1.2} />
           </TouchableOpacity>
         </View>
       </View>
@@ -75,7 +75,7 @@ export const CoTravellerScreen: React.FC<CoTravellerScreenProps> = ({ onBack, on
         <SafeAreaView>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <ArrowLeft size={24} color="#FFFFFF" strokeWidth={1.5} />
+              <ArrowLeft size={20} color="#ECEEF3" strokeWidth={1.2} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Co-Traveller</Text>
           </View>

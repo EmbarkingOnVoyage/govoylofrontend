@@ -1,97 +1,100 @@
 import { StyleSheet } from 'react-native';
 
-// Values follow the Figma "Onboarding_screen_Trust" frame (Phone Dev page).
+// Measured from the Figma "Onboarding_screen_Trust" frame (Phone Dev). The
+// block is bottom-anchored like the design, with the exact gaps between
+// Figma's text boxes.
 export const styles = StyleSheet.create({
-  screenBackground: {
+  screen: {
     flex: 1,
-    width: '100%',
-    height: '100%',
+    backgroundColor: '#000000',
   },
-  gradientOverlay: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
+  background: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
-  safeAreaRoot: {
-    flex: 1,
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   container: {
     flex: 1,
-    paddingHorizontal: 16,
     justifyContent: 'flex-end',
-    paddingBottom: 40,
+    paddingBottom: 19,
   },
-  headerVisualBlock: {
-    marginBottom: 16,
-  },
-  badgeContainer: {
+  badge: {
     alignSelf: 'flex-start',
+    marginLeft: 22,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     height: 24,
-    backgroundColor: '#182339', // Ink Dark
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: '#182339',
+    paddingLeft: 9.5,
+    paddingRight: 8,
+    borderRadius: 12,
+    marginBottom: 10.5,
   },
   badgeText: {
     color: '#FFFFFF',
     fontSize: 13,
     lineHeight: 16,
-    fontWeight: '500',
   },
   heroText: {
+    marginHorizontal: 22,
+    width: 337,
     color: '#FFFFFF',
     fontSize: 28,
     fontWeight: '700',
     lineHeight: 30,
     letterSpacing: -1.12, // -4%
-    marginBottom: 12,
+    marginBottom: 21,
   },
   subHeroText: {
-    color: '#99A6C0', // Cloud Dark
+    marginLeft: 22,
+    width: 337,
+    color: '#99A6C0',
     fontSize: 13,
     lineHeight: 16,
     fontWeight: '500',
+    marginBottom: 20.5,
   },
   perksContainer: {
-    marginBottom: 24,
+    marginLeft: 22,
     gap: 8,
+    marginBottom: 34,
   },
   perkRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 8,
+    gap: 8.7,
   },
   checkmarkBadge: {
     width: 20,
     height: 20,
     margin: 2,
-    borderRadius: 4,
-    backgroundColor: '#22C55E',
+    borderRadius: 6,
+    backgroundColor: '#007F20',
     alignItems: 'center',
     justifyContent: 'center',
   },
   perkText: {
+    width: 305,
+    marginTop: 2,
     color: '#FFFFFF',
     fontSize: 16,
-    lineHeight: 24,
+    lineHeight: 20,
     fontWeight: '500',
-    flex: 1,
-  },
-  actionContainer: {
-    gap: 10,
-    width: '100%',
   },
   primaryButton: {
+    marginHorizontal: 16,
     height: 44,
-    width: '100%',
-    padding: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#7C1AEE', // Product Normal
+    backgroundColor: '#7C1AEE',
     borderRadius: 12,
   },
   primaryButtonText: {
@@ -101,10 +104,11 @@ export const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
   guestLink: {
+    marginTop: 9,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
+    gap: 8.6,
     height: 44,
   },
   guestLinkText: {

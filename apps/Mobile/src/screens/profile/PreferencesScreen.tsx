@@ -26,7 +26,7 @@ export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({ title, onB
         <SafeAreaView>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <ArrowLeft size={24} color="#FFFFFF" strokeWidth={1.5} />
+              <ArrowLeft size={20} color="#ECEEF3" strokeWidth={1.2} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>{title}</Text>
           </View>
