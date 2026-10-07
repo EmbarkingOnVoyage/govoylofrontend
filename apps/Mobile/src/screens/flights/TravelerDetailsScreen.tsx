@@ -518,11 +518,11 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       <SafeAreaView style={styles.headerSafeArea}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <ArrowLeft size={24} color="#182339" strokeWidth={1.5} />
+            <ArrowLeft size={24} color="#182339" strokeWidth={1.2} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Flight Details</Text>
           <View style={styles.backButton}>
-            <Share2 size={22} color="#182339" strokeWidth={1.5} />
+            <Share2 size={16} color="#182339" strokeWidth={1.5} />
           </View>
         </View>
       </SafeAreaView>
@@ -542,11 +542,11 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
                 <View style={styles.routeHeader}>
                   <View style={styles.routeHeaderTitleRow}>
                     <Text style={styles.routeHeaderText}>{airportForCode(first.origin).city}</Text>
-                    <ArrowRight size={18} color="#FFFFFF" strokeWidth={2} />
+                    <ArrowRight size={16} color="#FFFFFF" strokeWidth={2} />
                     <Text style={styles.routeHeaderText}>{airportForCode(last.destination).city}</Text>
                   </View>
                   <View style={styles.routeHeaderTitleRow}>
-                    <Clock3 size={18} color="#FFFFFF" strokeWidth={1.5} />
+                    <Clock3 size={20} color="#FFFFFF" strokeWidth={1.5} />
                     <Text style={styles.routeHeaderDuration}>
                       {formatTotalDuration(first.departureDateTime, last.arrivalDateTime)}
                     </Text>
@@ -613,7 +613,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
                     {index < leg.segments.length - 1 && (
                       <View style={styles.layoverRow}>
                         <View style={styles.layoverIcon}>
-                          <MapPinPlus size={14} color="#182339" strokeWidth={1.5} />
+                          <MapPinPlus size={16} color="#182339" strokeWidth={1.5} />
                         </View>
                         <Text style={styles.layoverText}>
                           Layover at {airportForCode(segment.destination).city} (
@@ -665,7 +665,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
             <Text style={styles.noticeIconText}>!</Text>
           </View>
           <Text style={styles.noticeText}>
-            Please ensure your visa is valid, passport has 6+ months validity, and name matches your passport.
+            Please ensure your visa is valid. passport has 6+ months validity, and name matches your passport.
           </Text>
         </View>
 

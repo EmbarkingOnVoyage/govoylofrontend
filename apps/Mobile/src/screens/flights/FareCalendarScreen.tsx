@@ -265,6 +265,7 @@ export const FareCalendarScreen: React.FC<FareCalendarScreenProps> = ({
   return (
     <View style={styles.screen}>
       <SafeAreaView>
+        <View style={styles.grabber} />
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
             <ArrowLeft size={24} color="#182339" strokeWidth={1.5} />

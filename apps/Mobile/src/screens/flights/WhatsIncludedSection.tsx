@@ -223,8 +223,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Whats included</Text>
       <Text style={styles.sectionSubtitle}>
-        Check your included benefits and add the extras you need for a more comfortable trip. Add-on
-        prices shown are estimates and may change at checkout.
+        Check your included benefits and add the extras you need for a more comfortable trip.
       </Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll}>
@@ -238,7 +237,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
               activeOpacity={0.7}
             >
               <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{route.label}</Text>
-              <Text style={[styles.tabRoute, isActive && styles.tabRouteActive]}>
+              <Text numberOfLines={1} style={[styles.tabRoute, isActive && styles.tabRouteActive]}>
                 {route.origin} → {route.destination}
               </Text>
             </TouchableOpacity>
@@ -268,7 +267,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           <Text style={styles.ctaCardText}>
             {anySelected('baggage') ? 'Baggage added' : 'Add extra Baggage'}
           </Text>
-          <ChevronRight size={22} color="#FFFFFF" strokeWidth={2} />
+          <ChevronRight size={24} color="#FFFFFF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
@@ -277,7 +276,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
       <View style={styles.cardRow}>
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Random</Text>
-          <Text style={styles.infoCardSublabel}>Assigned at check-in</Text>
+          <Text style={[styles.infoCardSublabel, styles.infoCardSublabelSmall]}>Assigned at checked-in</Text>
           <Text style={styles.infoCardPrice}>Free</Text>
         </View>
         <TouchableOpacity
@@ -287,7 +286,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           disabled={seatTravelers.length === 0}
         >
           <Text style={styles.ctaCardText}>{anySelected('seat') ? 'Seat selected' : 'Pick exact seat on map'}</Text>
-          <ChevronRight size={22} color="#FFFFFF" strokeWidth={2} />
+          <ChevronRight size={24} color="#FFFFFF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
@@ -296,7 +295,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
       <View style={[styles.cardRow, styles.cardRowLast]}>
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Meal</Text>
-          <Text style={styles.infoCardSublabel}>Buy on board</Text>
+          <Text style={[styles.infoCardSublabel, styles.infoCardSublabelSmall]}>Buy on board</Text>
           <Text style={styles.infoCardPrice}>Free</Text>
         </View>
         <TouchableOpacity
@@ -306,7 +305,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           disabled={travelers.length === 0}
         >
           <Text style={styles.ctaCardText}>{anySelected('meal') ? 'Meal added' : 'Explore available meals'}</Text>
-          <ChevronRight size={22} color="#FFFFFF" strokeWidth={2} />
+          <ChevronRight size={24} color="#FFFFFF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
