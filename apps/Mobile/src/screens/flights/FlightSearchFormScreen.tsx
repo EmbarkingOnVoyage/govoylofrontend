@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Switch, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, ArrowLeftRight, X } from 'lucide-react-native';
+import { ArrowLeft, ArrowLeftRight, UserRound, X } from 'lucide-react-native';
 import {
   useSearchFlightsMobile,
   type TripType,
@@ -15,6 +15,7 @@ import { FareCalendarScreen } from './FareCalendarScreen';
 import { TravellersClassScreen } from './TravellersClassScreen';
 import type { Airport } from '../../data/airports';
 import { styles } from './FlightSearchFormScreen.styles';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 // Exported so the results screen's "edit" overlay (FlightResultsScreen's
 // toFormInitialValues) can build a compatible list to prefill this form's
@@ -64,10 +65,17 @@ function parseDisplayDateLocal(display: string): Date | null {
 
 type SubScreen =
   | { type: 'form' }
-  | { type: 'airportSearch'; field: 'origin' | 'destination'; segmentIndex: number | null }
-  | { type: 'calendar'; field: 'departure' | 'return'; segmentIndex: number | null }
+  | {
+      type: 'airportSearch';
+      field: 'origin' | 'destination';
+      segmentIndex: number | null;
+    }
+  | {
+      type: 'calendar';
+      field: 'departure' | 'return';
+      segmentIndex: number | null;
+    }
   | { type: 'travellers' };
-
 // Lets the results screen's "edit" overlay reopen this form pre-filled with the
 // search that's currently showing, instead of a blank form — display-format
 // dates (DD/MM/YYYY) since that's what the form's own date fields use internally.
@@ -105,6 +113,8 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
   initialValues,
   variant = 'screen',
 }) => {
+  useHardwareBack(() => onBack());
+
   const searchFlights = useSearchFlightsMobile();
 
   const [subScreen, setSubScreen] = useState<SubScreen>({ type: 'form' });
@@ -137,9 +147,30 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
     setDestination(prevOrigin);
   };
 
-  const updateMultiCitySegment = (index: number, patch: Partial<MultiCitySegment>) => {
-    setMultiCitySegments((prev) => prev.map((seg, i) => (i === index ? { ...seg, ...patch } : seg)));
-  };
+  const updateMultiCitySegment = (
+  index: number,
+  patch: Partial<MultiCitySegment>
+) => {
+  setMultiCitySegments((prev) => {
+    const updated = [...prev];
+
+    updated[index] = {
+      ...updated[index],
+      ...patch,
+    };
+
+    // When the destination of a flight changes,
+    // automatically use it as the origin of the next flight.
+    if (patch.destination && index < updated.length - 1) {
+      updated[index + 1] = {
+        ...updated[index + 1],
+        origin: patch.destination,
+      };
+    }
+
+    return updated;
+  });
+};
 
   const swapMultiCitySegment = (index: number) => {
     setMultiCitySegments((prev) =>
@@ -233,14 +264,17 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
   // --- Sub-screen navigation (full pages, matching Figma — not modals) ---
 
   if (subScreen.type === 'airportSearch') {
+    const segIndex = subScreen.segmentIndex;
     return (
       <AirportSearchScreen
-        title={subScreen.field === 'origin' ? 'Origin of city/airport code' : 'Destination city/airport code'}
+        field={subScreen.field}
+        origin={segIndex !== null ? multiCitySegments[segIndex].origin : origin}
+        destination={segIndex !== null ? multiCitySegments[segIndex].destination : destination}
         onBack={() => setSubScreen({ type: 'form' })}
-        onSelect={(airport) => {
-          if (subScreen.segmentIndex !== null) {
-            updateMultiCitySegment(subScreen.segmentIndex, { [subScreen.field]: airport } as Partial<MultiCitySegment>);
-          } else if (subScreen.field === 'origin') {
+        onSelect={(airport, field) => {
+          if (segIndex !== null) {
+            updateMultiCitySegment(segIndex, { [field]: airport } as Partial<MultiCitySegment>);
+          } else if (field === 'origin') {
             setOrigin(airport);
           } else {
             setDestination(airport);
@@ -252,54 +286,161 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
   }
 
   if (subScreen.type === 'calendar') {
-    const segIndex = subScreen.segmentIndex;
-    const currentOrigin = segIndex !== null ? multiCitySegments[segIndex].origin : origin;
-    const currentDestination = segIndex !== null ? multiCitySegments[segIndex].destination : destination;
-    const currentValue = segIndex !== null ? multiCitySegments[segIndex].date : subScreen.field === 'departure' ? departureDate : returnDate;
-    // Each multi-city leg must depart on or after the previous leg's date —
-    // round-trip's return leg has the same constraint against its departure.
-    const minDate =
-      segIndex !== null && segIndex > 0
-        ? parseDisplayDateLocal(multiCitySegments[segIndex - 1].date) ?? undefined
-        : subScreen.field === 'return'
-        ? parseDisplayDateLocal(departureDate) ?? undefined
-        : undefined;
+  const segIndex = subScreen.segmentIndex;
+
+  /*
+   * MULTI CITY
+   * One date per flight segment.
+   */
+  if (segIndex !== null) {
+    const currentSegment =
+      multiCitySegments[segIndex];
 
     return (
       <FareCalendarScreen
         title={
-          currentOrigin && currentDestination
-            ? `${currentOrigin.city} → ${currentDestination.city}`
-            : subScreen.field === 'departure'
-            ? 'Departure date'
-            : 'Return date'
+          currentSegment.origin &&
+          currentSegment.destination
+            ? `${currentSegment.origin.city} → ${currentSegment.destination.city}`
+            : 'Departure date'
         }
-        footerLabel={subScreen.field === 'departure' ? 'Departure date' : 'Return date'}
-        initialDate={parseDisplayDate(currentValue)}
-        minDate={minDate}
-        origin={currentOrigin?.code}
-        destination={currentDestination?.code}
-        onBack={() => setSubScreen({ type: 'form' })}
+        footerLabel="Departure date"
+        initialDate={
+          currentSegment.date || null
+        }
+        minDate={
+          segIndex > 0
+            ? parseDisplayDateLocal(
+                multiCitySegments[
+                  segIndex - 1
+                ].date
+              ) ?? undefined
+            : undefined
+        }
+        origin={
+          currentSegment.origin?.code
+        }
+        destination={
+          currentSegment.destination?.code
+        }
+        selectionMode="single"
+        onBack={() =>
+          setSubScreen({
+            type: 'form',
+          })
+        }
         onConfirm={(date) => {
-          const formatted = formatDisplayDate(date);
-          if (segIndex !== null) {
-            updateMultiCitySegment(segIndex, { date: formatted });
-          } else if (subScreen.field === 'departure') {
-            setDepartureDate(formatted);
-          } else {
-            setReturnDate(formatted);
-            // Adding a return date is what makes this a round trip — the "Add
-            // for discount" nudge on the One way tab shouldn't leave the tab
-            // saying "One way" once it stops being one.
-            if (tripType === 'OneWay') {
-              setTripType('RoundTrip');
+          const formatted =
+            formatDisplayDate(date);
+
+          updateMultiCitySegment(
+            segIndex,
+            {
+              date: formatted,
             }
-          }
-          setSubScreen({ type: 'form' });
+          );
+
+          setSubScreen({
+            type: 'form',
+          });
         }}
       />
     );
   }
+
+  /*
+   * ROUND TRIP
+   * Departure + return are selected
+   * inside the same calendar.
+   */
+  if (tripType === 'RoundTrip') {
+    return (
+      <FareCalendarScreen
+        title={
+          origin && destination
+            ? `${origin.city} → ${destination.city}`
+            : 'Select travel dates'
+        }
+        footerLabel="Travel dates"
+        initialDate={
+          departureDate || null
+        }
+        initialReturnDate={
+          returnDate || null
+        }
+        minDate={
+          undefined
+        }
+        origin={origin?.code}
+        destination={destination?.code}
+        selectionMode="range"
+        onBack={() =>
+          setSubScreen({
+            type: 'form',
+          })
+        }
+        onConfirm={(
+          selectedDeparture,
+          selectedReturn
+        ) => {
+          setDepartureDate(
+            formatDisplayDate(
+              selectedDeparture
+            )
+          );
+
+          if (selectedReturn) {
+            setReturnDate(
+              formatDisplayDate(
+                selectedReturn
+              )
+            );
+          }
+
+          setSubScreen({
+            type: 'form',
+          });
+        }}
+      />
+    );
+  }
+
+  /*
+   * ONE WAY
+   * Existing single-date behavior.
+   */
+  return (
+    <FareCalendarScreen
+      title={
+        origin && destination
+          ? `${origin.city} → ${destination.city}`
+          : 'Departure date'
+      }
+      footerLabel="Departure date"
+      initialDate={
+        departureDate || null
+      }
+      minDate={undefined}
+      origin={origin?.code}
+      destination={destination?.code}
+      selectionMode="single"
+      onBack={() =>
+        setSubScreen({
+          type: 'form',
+        })
+      }
+      onConfirm={(date) => {
+        setDepartureDate(
+          formatDisplayDate(date)
+        );
+
+        setSubScreen({
+          type: 'form',
+        });
+      }}
+    />
+  );
+}
 
   if (subScreen.type === 'travellers') {
     return (
@@ -327,7 +468,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
   const formContent = (
     <>
       <LinearGradient
-        colors={['rgba(11,19,237,0.8)', 'rgba(211,178,250,0.3)']}
+        colors={['#938EF2', '#E5DCF5']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientWrap}
@@ -335,7 +476,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
         <SafeAreaView>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <ArrowLeft size={22} color="#182339" strokeWidth={2} />
+              <ArrowLeft size={20} color="#182339" strokeWidth={1.5} />
             </TouchableOpacity>
             <LinearGradient
               colors={['#9335FF', '#5731FF']}
@@ -400,7 +541,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                   </TouchableOpacity>
                 </View>
                 <TouchableOpacity style={styles.swapButton} onPress={handleSwap}>
-                  <ArrowLeftRight size={16} color="#7C1AEE" strokeWidth={2} />
+                  <ArrowLeftRight size={16} color="#182339" strokeWidth={1.5} />
                 </TouchableOpacity>
                 <View style={[styles.odField, styles.odFieldEnd]}>
                   <Text style={styles.odLabel}>{destination ? `To - ${destination.code}` : 'To'}</Text>
@@ -459,7 +600,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                         </TouchableOpacity>
                       </View>
                       <TouchableOpacity style={styles.swapButton} onPress={() => swapMultiCitySegment(index)}>
-                        <ArrowLeftRight size={16} color="#7C1AEE" strokeWidth={2} />
+                        <ArrowLeftRight size={16} color="#182339" strokeWidth={1.5} />
                       </TouchableOpacity>
                       <View style={[styles.odField, styles.odFieldEnd]}>
                         <Text style={styles.odLabel}>{seg.destination ? `To - ${seg.destination.code}` : 'To'}</Text>
@@ -475,7 +616,8 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                         </TouchableOpacity>
                       </View>
                     </View>
-                    <View style={{ marginTop: 12 }}>
+                    <View style={styles.divider} />
+                    <View>
                       <Text style={styles.odLabel}>Departure</Text>
                       <View style={styles.multiCityDateRow}>
                         <TouchableOpacity
@@ -493,7 +635,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                               onPress={() => removeMultiCitySegment(index)}
                               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                              <X size={14} color="#6014B7" strokeWidth={2} />
+                              <X size={16} color="#7C1AEE" strokeWidth={1.5} />
                             </TouchableOpacity>
                           )}
                         </View>
@@ -502,17 +644,19 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                   </View>
                 ))}
 
-                {multiCitySegments.length < 5 && (
-                  <TouchableOpacity style={styles.addFlightButton} onPress={addMultiCitySegment}>
-                    <Text style={styles.addFlightText}>Add Flight</Text>
-                  </TouchableOpacity>
-                )}
               </>
             )}
 
             <TouchableOpacity style={styles.passengerRow} onPress={() => setSubScreen({ type: 'travellers' })}>
+              <UserRound size={20} color="#182339" strokeWidth={1.5} />
               <Text style={styles.passengerRowText}>{passengerSummary}</Text>
             </TouchableOpacity>
+
+            {tripType === 'MultiCity' && multiCitySegments.length < 5 && (
+              <TouchableOpacity style={styles.addFlightButton} onPress={addMultiCitySegment}>
+                <Text style={styles.addFlightText}>Add Flight</Text>
+              </TouchableOpacity>
+            )}
 
             <Text style={styles.sectionHeading}>Special Fares (Optional)</Text>
             <View style={styles.fareRow}>
@@ -536,15 +680,18 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
               </TouchableOpacity>
             </View>
 
-            <View style={styles.nonStopRow}>
-              <Switch
-                value={nonStopOnly}
-                onValueChange={setNonStopOnly}
-                trackColor={{ true: '#7C1AEE', false: '#ADB8CD' }}
-                thumbColor="#FFFFFF"
-              />
+            <TouchableOpacity
+              style={styles.nonStopRow}
+              onPress={() => setNonStopOnly(!nonStopOnly)}
+              activeOpacity={0.8}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: nonStopOnly }}
+            >
+              <View style={[styles.toggleTrack, nonStopOnly && styles.toggleTrackOn]}>
+                <View style={[styles.toggleThumb, nonStopOnly && styles.toggleThumbOn]} />
+              </View>
               <Text style={styles.nonStopLabel}>Non stop flight only</Text>
-            </View>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.searchButton, searchFlights.isPending && styles.searchButtonDisabled]}

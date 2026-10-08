@@ -36,6 +36,8 @@ import {
   fieldInputClass,
 } from './BookingLayoutWeb.web';
 import { useEscapeKey } from '../useEscapeKey.web';
+import { convenienceFeeFor } from '../logic/convenienceFee';
+import { useConvenienceFeeRules } from '../useConvenienceFeeRules';
 
 export { BookingConfirmedWeb, type BookingConfirmation } from './BookingConfirmedWeb.web';
 
@@ -357,7 +359,13 @@ export const FlightReviewPageWeb: React.FC<{
   const selectedTravellers = PAX_TYPES.flatMap((type) => byType[type].filter((t) => selectedIds.has(t.id)));
   const selectedCount = (type: PaxType) => byType[type].filter((t) => selectedIds.has(t.id)).length;
 
-  const breakdown = buildFareBreakdown(legs, addOns, paxSummaryText(passengerCounts));
+  const { data: convenienceFeeRules } = useConvenienceFeeRules();
+  const breakdown = buildFareBreakdown(
+    legs,
+    addOns,
+    paxSummaryText(passengerCounts),
+    convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, selection.summary.request.tripType)
+  );
   const money = (amount: number) => formatPrice(amount, breakdown.currencyCode);
 
   const addOnTravellers: AddOnTraveller[] = selectedTravellers.map((t) => ({

@@ -258,6 +258,7 @@ export const TripDetailsPageWeb: React.FC<{ tripBookingId: string; onBack: () =>
   }
 
   const { booking } = data;
+  const convenienceFee = booking.convenienceFee ?? 0;
   const status = bookingStatus(booking);
   const StatusIcon = status.icon === 'check' ? Check : status.icon === 'clock' ? Clock : X;
   const lines = flightLines(data);
@@ -370,10 +371,16 @@ export const TripDetailsPageWeb: React.FC<{ tripBookingId: string; onBack: () =>
                 <span className="text-[#182339]">{money(data.taxesAndFees)}</span>
               </div>
             )}
-            {data.baseFare != null && data.taxesAndFees != null && data.totalPaid - data.baseFare - data.taxesAndFees >= 1 && (
+            {data.baseFare != null && data.taxesAndFees != null && data.totalPaid - data.baseFare - data.taxesAndFees - convenienceFee >= 1 && (
               <div className="flex justify-between">
                 <span className="text-[#4C5973]">Add-ons &amp; other charges</span>
-                <span className="text-[#182339]">{money(data.totalPaid - data.baseFare - data.taxesAndFees)}</span>
+                <span className="text-[#182339]">{money(data.totalPaid - data.baseFare - data.taxesAndFees - convenienceFee)}</span>
+              </div>
+            )}
+            {convenienceFee > 0 && (
+              <div className="flex justify-between">
+                <span className="text-[#4C5973]">Convenience fee</span>
+                <span className="text-[#182339]">{money(convenienceFee)}</span>
               </div>
             )}
             <div className="flex justify-between pt-2 border-t border-[#E4E7EC] font-semibold">

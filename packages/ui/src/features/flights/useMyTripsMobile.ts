@@ -40,6 +40,9 @@ export interface TripBooking {
   cancelledAt: string | null;
   // What the supplier said it will refund once cancelled; null if it didn't say.
   refundAmount: number | null;
+  // GoVoylo's non-refundable convenience fee, paid on top of totalAmount
+  // (0 for bookings made before it existed).
+  convenienceFee?: number;
 }
 
 // legIndex: which leg of the booking the flight belongs to (0 outbound, 1 return).
@@ -72,6 +75,7 @@ export interface TripBookingDetails {
   passengers: TripBookingPassenger[];
   baseFare: number | null;
   taxesAndFees: number | null;
+  // Everything paid, including the convenience fee (booking.convenienceFee).
   totalPaid: number;
 }
 

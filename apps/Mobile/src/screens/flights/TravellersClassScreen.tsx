@@ -3,12 +3,13 @@ import { View, Text, TouchableOpacity, ScrollView, SafeAreaView } from 'react-na
 import { ArrowLeft, Minus, Plus } from 'lucide-react-native';
 import type { CabinClass } from '@workspace/ui';
 import { styles } from './TravellersClassScreen.styles';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 const CABIN_CLASS_OPTIONS: { label: string; value: CabinClass }[] = [
   { label: 'Economy', value: 'Economy' },
   { label: 'Premium Economy', value: 'PremiumEconomy' },
   { label: 'Business Class', value: 'Business' },
-  { label: 'First', value: 'First' },
+  { label: 'First Class', value: 'First' },
 ];
 
 interface TravellersClassScreenProps {
@@ -28,6 +29,8 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
   onConfirm,
   onBack,
 }) => {
+  useHardwareBack(() => onBack());
+
   const [adultCount, setAdultCount] = useState(initialAdults);
   const [childCount, setChildCount] = useState(initialChildren);
   const [infantCount, setInfantCount] = useState(initialInfants);
@@ -41,11 +44,12 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
   return (
     <View style={styles.screen}>
       <SafeAreaView>
+        <View style={styles.grabber} />
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <ArrowLeft size={22} color="#182339" strokeWidth={2} />
+            <ArrowLeft size={24} color="#182339" strokeWidth={1.5} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Select Travellers and Class</Text>
+          <Text style={styles.headerTitle}>Select Travellers and class</Text>
         </View>
       </SafeAreaView>
 
@@ -63,7 +67,7 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
               onPress={() => setAdultCount((c) => Math.max(1, c - 1))}
               disabled={adultCount <= 1}
             >
-              <Minus size={16} color={adultCount <= 1 ? '#ADB8CD' : '#7C1AEE'} strokeWidth={2} />
+              <Minus size={16} color={adultCount <= 1 ? '#ADB8CD' : '#182339'} strokeWidth={1.5} />
             </TouchableOpacity>
             <Text style={styles.stepperValue}>{adultCount}</Text>
             <TouchableOpacity
@@ -71,7 +75,7 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
               onPress={() => setAdultCount((c) => (atPassengerLimit ? c : c + 1))}
               disabled={atPassengerLimit}
             >
-              <Plus size={16} color={atPassengerLimit ? '#ADB8CD' : '#7C1AEE'} strokeWidth={2} />
+              <Plus size={16} color={atPassengerLimit ? '#ADB8CD' : '#182339'} strokeWidth={1.5} />
             </TouchableOpacity>
           </View>
         </View>
@@ -87,7 +91,7 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
               onPress={() => setChildCount((c) => Math.max(0, c - 1))}
               disabled={childCount <= 0}
             >
-              <Minus size={16} color={childCount <= 0 ? '#ADB8CD' : '#7C1AEE'} strokeWidth={2} />
+              <Minus size={16} color={childCount <= 0 ? '#ADB8CD' : '#182339'} strokeWidth={1.5} />
             </TouchableOpacity>
             <Text style={styles.stepperValue}>{childCount}</Text>
             <TouchableOpacity
@@ -95,7 +99,7 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
               onPress={() => setChildCount((c) => (atPassengerLimit ? c : c + 1))}
               disabled={atPassengerLimit}
             >
-              <Plus size={16} color={atPassengerLimit ? '#ADB8CD' : '#7C1AEE'} strokeWidth={2} />
+              <Plus size={16} color={atPassengerLimit ? '#ADB8CD' : '#182339'} strokeWidth={1.5} />
             </TouchableOpacity>
           </View>
         </View>
@@ -111,16 +115,17 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
               onPress={() => setInfantCount((c) => Math.max(0, c - 1))}
               disabled={infantCount <= 0}
             >
-              <Minus size={16} color={infantCount <= 0 ? '#ADB8CD' : '#7C1AEE'} strokeWidth={2} />
+              <Minus size={16} color={infantCount <= 0 ? '#ADB8CD' : '#182339'} strokeWidth={1.5} />
             </TouchableOpacity>
             <Text style={styles.stepperValue}>{infantCount}</Text>
             <TouchableOpacity style={styles.stepperButton} onPress={() => setInfantCount((c) => Math.min(9, c + 1))}>
-              <Plus size={16} color="#7C1AEE" strokeWidth={2} />
+              <Plus size={16} color="#182339" strokeWidth={1.5} />
             </TouchableOpacity>
           </View>
         </View>
 
-        <Text style={[styles.sectionLabel, { marginTop: 20 }]}>Select class</Text>
+        <View style={styles.sectionDivider} />
+        <Text style={styles.sectionLabel}>Select class</Text>
         <View style={styles.classGrid}>
           {CABIN_CLASS_OPTIONS.map((option) => {
             const isSelected = cabinClass === option.value;
@@ -137,14 +142,13 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
             );
           })}
         </View>
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={() => onConfirm({ adultCount, childCount, infantCount, cabinClass })}
+        >
+          <Text style={styles.confirmButtonText}>Confirm</Text>
+        </TouchableOpacity>
       </ScrollView>
-
-      <TouchableOpacity
-        style={styles.confirmButton}
-        onPress={() => onConfirm({ adultCount, childCount, infantCount, cabinClass })}
-      >
-        <Text style={styles.confirmButtonText}>Confirm</Text>
-      </TouchableOpacity>
     </View>
   );
 };

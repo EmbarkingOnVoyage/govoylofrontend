@@ -61,22 +61,21 @@ export interface ILoginWebStyles {
 // ==========================================
 
 export const mobile: ILoginMobileStyles = {
-  // Full-screen white page per the Figma "Welcome" mobile design — no
-  // backdrop/modal card. Content sits pinned toward the bottom half of the
-  // screen, matching the large empty top area in the design.
+  // Measured from the Figma "Welcome" frame (Phone Dev): content is anchored to
+  // the bottom with the exact gaps between Figma's boxes.
   screen: {
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
   container: {
     flex: 1,
-    paddingHorizontal: 16,
+    paddingHorizontal: 15,
     justifyContent: 'flex-end',
-    paddingBottom: 24,
+    paddingBottom: 37,
   },
   titleBlock: {
-    marginBottom: 24,
-    gap: 8,
+    marginBottom: 25,
+    gap: 7,
   },
   title: {
     fontSize: 24,
@@ -85,8 +84,8 @@ export const mobile: ILoginMobileStyles = {
     lineHeight: 32,
   },
   subtitle: {
+    maxWidth: 343,
     fontSize: 15,
-    fontWeight: '400',
     color: '#4C5973',
     lineHeight: 20,
   },
@@ -98,12 +97,13 @@ export const mobile: ILoginMobileStyles = {
   inputField: {
     width: '100%',
     height: 44,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 0,
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#ADB8CD',
     backgroundColor: '#FFFFFF',
-    fontSize: 15,
+    fontSize: 16,
     color: '#182339',
   },
   inputFieldError: {
@@ -113,72 +113,77 @@ export const mobile: ILoginMobileStyles = {
   errorText: {
     color: '#EF4444',
     fontSize: 12,
-    marginTop: 6,
+    marginTop: -6,
     marginLeft: 4,
     fontWeight: '500',
   },
   primaryButton: {
-    width: "100%",
+    width: '100%',
     height: 44,
-    backgroundColor: "#7C1AEE",
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#7C1AEE',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   disabledButton: {
-    backgroundColor: "#CEAAFF",
+    backgroundColor: '#CEAAFF',
   },
   primaryButtonText: {
-    color: "#FFFFFF",
+    color: '#FFFFFF',
     fontSize: 15,
-    fontWeight: "600",
+    lineHeight: 20,
+    fontWeight: '500',
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     width: '100%',
+    height: 16,
     marginTop: 24,
     marginBottom: 24,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#ECEEF3',
+    backgroundColor: '#D7DCE7',
   },
   dividerText: {
-    paddingHorizontal: 16,
+    paddingHorizontal: 5.5,
     fontSize: 13,
-    color: '#4C5973',
+    lineHeight: 16,
+    fontWeight: '500',
+    color: '#697691',
   },
   socialRow: {
     flexDirection: 'row',
     width: '100%',
-    justifyContent: 'space-between',
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 23,
   },
   socialButton: {
     flex: 1,
     height: 44,
-    backgroundColor: "#CCD3E0",
+    backgroundColor: '#CCD3E0',
     borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   socialIcon: {
-    width: 22,
-    height: 22,
-    resizeMode: "contain",
+    width: 20,
+    height: 20,
+    resizeMode: 'contain',
   },
   guestLink: {
     alignSelf: 'center',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 16,
+    gap: 8.6,
+    height: 44,
+    marginBottom: 26,
   },
   guestLinkText: {
     fontSize: 15,
+    lineHeight: 20,
     fontWeight: '500',
     color: '#7C1AEE',
   },
@@ -186,12 +191,10 @@ export const mobile: ILoginMobileStyles = {
     fontSize: 13,
     color: '#4C5973',
     textAlign: 'center',
-    lineHeight: 18,
+    lineHeight: 16,
   },
   footerLink: {
-    textDecorationLine: 'underline',
-    color: '#4C5973',
-    fontWeight: '500',
+    color: '#7C1AEE',
   },
 };
 

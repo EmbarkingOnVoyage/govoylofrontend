@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
-import { House, Percent, Briefcase, UserRound } from 'lucide-react-native';
+import { SvgXml } from 'react-native-svg';
+import { TAB_ICON_SVG } from '../components/figmaIcons';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { PersonalDetailsScreen } from '../screens/profile/PersonalDetailsScreen';
 import { CoTravellerScreen } from '../screens/profile/CoTravellerScreen';
 import { CoTravellerFormScreen } from '../screens/profile/CoTravellerFormScreen';
 import { PlaceholderScreen } from '../screens/profile/PlaceholderScreen';
+import { PreferencesScreen } from '../screens/profile/PreferencesScreen';
 import { LoginRequiredScreen } from '../screens/LoginRequiredScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { FlightSearchFormScreen } from '../screens/flights/FlightSearchFormScreen';
 import { FlightResultsScreen } from '../screens/flights/FlightResultsScreen';
 import { TravelerDetailsScreen } from '../screens/flights/TravelerDetailsScreen';
 import { MyTripsScreen } from '../screens/flights/MyTripsScreen';
-import type { FlightOffer, FlightSearchSummary, PassengerCounts } from '@workspace/ui';
+import type { FlightOffer, FlightSearchSummary, PassengerCounts, TripType } from '@workspace/ui';
+import { useHardwareBack } from './useHardwareBack';
 
 type TabKey = 'Home' | 'Deals' | 'MyTrips' | 'Profile';
 
@@ -20,6 +23,17 @@ type TabKey = 'Home' | 'Deals' | 'MyTrips' | 'Profile';
 // results -> traveller details -> add/edit a traveller), separate from the
 // bottom-tab selection, mirroring the Profile tab's sub-stack pattern below.
 type HomeStackScreen = 'Buttons' | 'FlightSearch' | 'FlightResults' | 'TravelerDetails' | 'AddTraveler';
+
+// Position of each Home screen in the flight flow. Screens below the current
+// one stay mounted (hidden) so going back returns to them exactly as they were
+// left — filled-in search form, picked onward leg, selected travellers.
+const HOME_DEPTH: Record<HomeStackScreen, number> = {
+  Buttons: 0,
+  FlightSearch: 1,
+  FlightResults: 2,
+  TravelerDetails: 3,
+  AddTraveler: 4,
+};
 
 // The Profile tab has its own internal stack (hub -> Personal details -> ...)
 // separate from the bottom-tab selection, since navigating into a profile
@@ -36,17 +50,15 @@ type ProfileStackScreen =
   | 'Saved'
   | 'ShareFeedback';
 
-const TABS: { key: TabKey; label: string; Icon: typeof House }[] = [
-  { key: 'Home', label: 'Home', Icon: House },
-  { key: 'Deals', label: 'Deals', Icon: Percent },
-  { key: 'MyTrips', label: 'My trips', Icon: Briefcase },
-  { key: 'Profile', label: 'Profile', Icon: UserRound },
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'Home', label: 'Home' },
+  { key: 'Deals', label: 'Deals' },
+  { key: 'MyTrips', label: 'My trips' },
+  { key: 'Profile', label: 'Profile' },
 ];
 
 const PLACEHOLDER_TITLES: Partial<Record<ProfileStackScreen, string>> = {
-  CustomizationPreferences: 'Customization preferences',
   PaymentMethods: 'Payment methods',
-  PrivacyDataManagement: 'Privacy & data management',
   Bookings: 'Bookings',
   Saved: 'Saved',
   ShareFeedback: 'Share your feedback',
@@ -80,16 +92,49 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
   // full flightOffers list.
   const [travelerLegs, setTravelerLegs] = useState<FlightOffer[]>([]);
   const [travelerLegLabels, setTravelerLegLabels] = useState<string[] | undefined>(undefined);
+  const [travelerTripType, setTravelerTripType] = useState<TripType | undefined>(undefined);
   const [travelerPassengerCounts, setTravelerPassengerCounts] = useState<PassengerCounts>({
     adult: 1,
     child: 0,
     infant: 0,
   });
 
+  // Android back on a tab's root screen goes to the Home tab; on Home's root
+  // it passes through (App decides). Screens deeper in a stack register their
+  // own handler and get the press first.
+  useHardwareBack(() => {
+    if (activeTab !== 'Home') {
+      setActiveTab('Home');
+      return true;
+    }
+    return false;
+  });
+
   const renderHomeStack = () => {
-    switch (homeScreen) {
-      case 'FlightSearch':
-        return (
+    if (homeScreen === 'Buttons') {
+      return (
+        <HomeScreen
+          onSelectFlightsAndHotels={() => {}}
+          onSelectHotels={() => {}}
+          onSelectFlights={() => setHomeScreen('FlightSearch')}
+        />
+      );
+    }
+
+    // Every flow screen up to the current one, in a fixed order so React keeps
+    // each instance; only the current one is shown.
+    const depth = HOME_DEPTH[homeScreen];
+    const layer = (screen: HomeStackScreen, node: React.ReactNode) =>
+      HOME_DEPTH[screen] <= depth ? (
+        <View key={screen} style={screen === homeScreen ? styles.homeLayer : styles.hiddenHomeLayer}>
+          {node}
+        </View>
+      ) : null;
+
+    return (
+      <>
+        {layer(
+          'FlightSearch',
           <FlightSearchFormScreen
             onBack={() => setHomeScreen('Buttons')}
             onResults={(offers, summary) => {
@@ -97,28 +142,30 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
               setFlightSearchSummary(summary);
               setHomeScreen('FlightResults');
             }}
-          />
-        );
-      case 'FlightResults':
-        return (
+          />,
+        )}
+        {layer(
+          'FlightResults',
           <FlightResultsScreen
             offers={flightOffers}
             summary={flightSearchSummary}
             onBack={() => setHomeScreen('FlightSearch')}
-            onContinueToTravelerDetails={(legs, legLabels, passengerCounts) => {
+            onContinueToTravelerDetails={(legs, legLabels, passengerCounts, tripType) => {
               setTravelerLegs(legs);
               setTravelerLegLabels(legLabels);
               setTravelerPassengerCounts(passengerCounts);
+              setTravelerTripType(tripType);
               setHomeScreen('TravelerDetails');
             }}
-          />
-        );
-      case 'TravelerDetails':
-        return (
+          />,
+        )}
+        {layer(
+          'TravelerDetails',
           <TravelerDetailsScreen
             legs={travelerLegs}
             legLabels={travelerLegLabels}
             passengerCounts={travelerPassengerCounts}
+            searchTripType={travelerTripType}
             onBack={() => setHomeScreen('FlightResults')}
             onAddTraveler={() => {
               setEditingTravellerId(null);
@@ -128,25 +175,17 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
               setEditingTravellerId(id);
               setHomeScreen('AddTraveler');
             }}
-          />
-        );
-      case 'AddTraveler':
-        return (
+          />,
+        )}
+        {layer(
+          'AddTraveler',
           <CoTravellerFormScreen
             travellerId={editingTravellerId}
             onDone={() => setHomeScreen('TravelerDetails')}
-          />
-        );
-      case 'Buttons':
-      default:
-        return (
-          <HomeScreen
-            onSelectFlightsAndHotels={() => {}}
-            onSelectHotels={() => {}}
-            onSelectFlights={() => setHomeScreen('FlightSearch')}
-          />
-        );
-    }
+          />,
+        )}
+      </>
+    );
   };
 
   const renderProfileStack = () => {
@@ -174,6 +213,10 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
             onDone={() => setProfileScreen('CoTraveller')}
           />
         );
+      case 'CustomizationPreferences':
+        return <PreferencesScreen title="Customization preferences" onBack={() => setProfileScreen('Hub')} />;
+      case 'PrivacyDataManagement':
+        return <PreferencesScreen title="Privacy and data management" onBack={() => setProfileScreen('Hub')} />;
       case 'Hub':
         return (
           <ProfileScreen
@@ -199,7 +242,7 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
       case 'Home':
         return renderHomeStack();
       case 'Deals':
-        return <PlaceholderScreen title="Deals" onBack={() => {}} />;
+        return <PlaceholderScreen title="Deals" onBack={() => setActiveTab('Home')} />;
       case 'MyTrips':
         return (
           <MyTripsScreen
@@ -226,7 +269,11 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
                 onPress={() => setActiveTab(tab.key)}
                 activeOpacity={0.7}
               >
-                <tab.Icon size={22} color={isActive ? '#7C1AEE' : '#3E4B64'} strokeWidth={2} />
+                <SvgXml
+                  xml={TAB_ICON_SVG[tab.key].replace(/COLOR/g, isActive ? '#7C1AEE' : '#3E4B64')}
+                  width={20}
+                  height={20}
+                />
                 <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
               </TouchableOpacity>
             );
@@ -240,16 +287,20 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   content: { flex: 1 },
+  homeLayer: { flex: 1 },
+  hiddenHomeLayer: { display: 'none' },
   tabBarSafeArea: { backgroundColor: '#FFFFFF' },
+  // Figma tab bar: 1pt #CCD3E0 rule, 20pt glyphs 10pt below it, 13/16
+  // Medium labels 2pt under the glyph.
   tabBar: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: '#ECEEF3',
-    paddingTop: 8,
+    borderTopColor: '#CCD3E0',
+    paddingTop: 9,
     paddingBottom: 8,
     backgroundColor: '#FFFFFF',
   },
-  tabItem: { flex: 1, alignItems: 'center', gap: 4 },
-  tabLabel: { fontSize: 13, fontWeight: '500', color: '#3E4B64' },
-  tabLabelActive: { color: '#7C1AEE' },
+  tabItem: { flex: 1, alignItems: 'center', gap: 2.2 },
+  tabLabel: { fontSize: 13, lineHeight: 16, fontWeight: '500', color: '#3E4B64' },
+  tabLabelActive: { color: '#6A16CB' },
 });

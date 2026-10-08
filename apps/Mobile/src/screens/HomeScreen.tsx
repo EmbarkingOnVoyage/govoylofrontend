@@ -1,12 +1,6 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Plane, Sparkles } from 'lucide-react-native';
-// global.d.ts types *.png as `string` for @workspace/ui's web-only re-exports;
-// Metro actually resolves a local RN import like this to an asset module id
-// (number), which is what Image.source expects — cast to match the runtime type.
-import flightsButtonCloudsSrc from '../assets/images/flights-button-clouds.png';
-const flightsButtonClouds = flightsButtonCloudsSrc as unknown as number;
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { FlightsTile } from '../components/FlightsTile';
 
 interface HomeScreenProps {
   onSelectFlightsAndHotels: () => void;
@@ -33,21 +27,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
     </View>
 
 
-      <TouchableOpacity onPress={onSelectFlights} activeOpacity={0.85}>
-        <LinearGradient
-          colors={['#973DFF', '#CF31FF']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.flightsButton}
-        >
-          <Image source={flightsButtonClouds} style={styles.flightsButtonClouds} resizeMode="cover" />
-          <Plane size={20} color="#FFFFFF" strokeWidth={2.5} />
-          <Text style={styles.flightsButtonText}>Flights</Text>
-          <Sparkles size={5} color="#D9D9D9" style={styles.star1} />
-          <Sparkles size={8} color="#D9D9D9" style={styles.star2} />
-          <Sparkles size={8} color="#D9D9D9" style={styles.star3} />
-        </LinearGradient>
-      </TouchableOpacity>
+      <FlightsTile onPress={onSelectFlights} />
     </View>
   </View>
 );
@@ -83,60 +63,19 @@ const styles = StyleSheet.create({
   squareButtonText: {
     color: '#FFFFFF',
     fontSize: 20,
+    lineHeight: 18.5,
+    // Android top-aligns text whose line height is below its font size.
+    paddingTop: 8.5,
     fontWeight: '700',
     textAlign: 'center',
   },
-  flightsButton: {
-    height: 80,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    overflow: 'hidden',
-    shadowColor: '#973DFF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  // Matches Figma's "Group 3" cloud decoration — positioned to bleed off the
-  // button's bottom edge, clipped by flightsButton's overflow: hidden.
-  flightsButtonClouds: {
-    position: 'absolute',
-    top: 49,
-    left: 99,
-    width: 226,
-    height: 99,
-  },
-  flightsButtonText: {
-    color: '#FFFFFF',
-    fontSize: 28,
-    fontWeight: '700',
-  },
-  star1: {
-    position: 'absolute',
-    top: 3,
-    right: 53,
-  },
-  star2: {
-    position: 'absolute',
-    top: 8,
-    right: 17,
-  },
-  star3: {
-    position: 'absolute',
-    top: 28,
-    right: 36,
-  },
-
   cardsContainer: {
-  backgroundColor: '#F2EAFA',
-   paddingHorizontal: 12,
-    paddingVertical: 20,
-    borderRadius: 16,
-    gap: 12,
+    backgroundColor: '#F2EAFA',
+    paddingHorizontal: 16,
+    paddingTop: 18,
+    paddingBottom: 16,
+    borderTopLeftRadius: 6,
+    gap: 16,
     width: '100%',
-
-},
+  },
 });

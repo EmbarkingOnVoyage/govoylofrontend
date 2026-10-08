@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react-native';
 import { useTravellersMobile, useDeleteTravellerMobile, type Traveler } from '@workspace/ui';
 import { styles } from './CoTravellerScreen.styles';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 const AVATAR_COLORS = ['#DC9898', '#A8DC98', '#A8C6DC', '#DCC998'];
 
@@ -25,6 +26,8 @@ interface CoTravellerScreenProps {
 }
 
 export const CoTravellerScreen: React.FC<CoTravellerScreenProps> = ({ onBack, onAdd, onEdit }) => {
+  useHardwareBack(() => onBack());
+
   const { data: travellers, isLoading } = useTravellersMobile();
   const deleteTraveller = useDeleteTravellerMobile();
 
@@ -58,25 +61,24 @@ export const CoTravellerScreen: React.FC<CoTravellerScreenProps> = ({ onBack, on
           </Text>
         </View>
         <View style={styles.rowActions}>
-          <TouchableOpacity onPress={() => onEdit(item.id)}>
-            <Pencil size={18} color="#4C5973" strokeWidth={2} />
+          <TouchableOpacity style={styles.actionButton} onPress={() => onEdit(item.id)}>
+            <Pencil size={20} color="#182339" strokeWidth={1.2} />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleDelete(item)}>
-            <Trash2 size={18} color="#EF4444" strokeWidth={2} />
+          <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
+            <Trash2 size={20} color="#182339" strokeWidth={1.2} />
           </TouchableOpacity>
         </View>
       </View>
-      <View style={styles.separator} />
     </View>
   );
 
   return (
     <View style={styles.screen}>
-      <LinearGradient colors={['#6A16CB', '#350B65']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
+      <LinearGradient colors={['#7C1AEE', '#7C1AEE']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
         <SafeAreaView>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <ArrowLeft size={22} color="#FFFFFF" />
+              <ArrowLeft size={20} color="#ECEEF3" strokeWidth={1.2} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Co-Traveller</Text>
           </View>
@@ -95,6 +97,7 @@ export const CoTravellerScreen: React.FC<CoTravellerScreenProps> = ({ onBack, on
             </View>
           ) : null
         }
+        ListFooterComponentStyle={styles.footer}
         ListFooterComponent={
           <TouchableOpacity style={styles.addButton} onPress={onAdd} activeOpacity={0.8}>
             <Text style={styles.addButtonText}>Add Co-Traveller</Text>

@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Modal, Alert } from 'react-native';
-import { ArrowLeft, ArrowLeftRight, Info, Plus, Check, CheckCircle2 } from 'lucide-react-native';
+import { ArrowLeft, ArrowRight, ChevronRight, Clock3, MapPinPlus, Plus, Check, CheckCircle2, Share2 } from 'lucide-react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import RazorpayCheckout from 'react-native-razorpay';
 import {
@@ -10,6 +10,8 @@ import {
   useCustomerProfileMobile,
   useCreateBookingMobile,
   useReleaseHoldMobile,
+  useConvenienceFeeRules,
+  convenienceFeeFor,
   BOOKING_STATUS_FAILED,
   type FlightOffer,
   type Traveler,
@@ -17,6 +19,7 @@ import {
   type BookingLegRequest,
   type CreateBookingResponse,
   type PassengerCounts,
+  type TripType,
 } from '@workspace/ui';
 import { findAirportByCode } from '../../data/airports';
 import { AirlineLogo } from './FlightResultsScreen';
@@ -36,17 +39,14 @@ import {
   type PaxType,
   type TravelerAgeCheck,
 } from '@workspace/ui/src/features/flights/logic/travellers';
+import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 // The Add Travellers list only shows the first 4 saved travellers inline; a
 // 5th+ traveller pushes the rest behind a "More" button that opens the full
 // list in a modal instead of growing this screen indefinitely.
 const INLINE_TRAVELER_LIMIT = 4;
 
-function formatCurrency(amount: number, currencyCode: string): string {
-  return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN', {
-    maximumFractionDigits: 0,
-  })}`;
-}
 
 function airportForCode(code: string) {
   return findAirportByCode(code) ?? { code, city: code, state: '', country: '', name: code };
@@ -68,6 +68,15 @@ function formatWeekdayDate(iso: string): string {
   return `${weekday}, ${date.getDate()}.${date.getMonth() + 1}`;
 }
 
+type SectionKey = 'farePolicy' | 'baggage' | 'travellers' | 'gst';
+
+const SECTION_CHIPS: { key: SectionKey; label: string }[] = [
+  { key: 'farePolicy', label: 'Fare policy' },
+  { key: 'baggage', label: 'Baggage' },
+  { key: 'travellers', label: 'Travellers' },
+  { key: 'gst', label: 'GST details' },
+];
+
 function formatTotalDuration(startIso: string, endIso: string): string {
   const start = new Date(startIso).getTime();
   const end = new Date(endIso).getTime();
@@ -84,6 +93,8 @@ interface TravelerDetailsScreenProps {
   // Travellers of each type the search was for; the screen asks for exactly
   // these, in separate Adult / Children / Infant blocks.
   passengerCounts: PassengerCounts;
+  // The search's trip type, for the convenience fee.
+  searchTripType?: TripType;
   onBack: () => void;
   onAddTraveler: () => void;
   onEditTraveler: (id: string) => void;
@@ -97,10 +108,13 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   legs,
   legLabels,
   passengerCounts,
+  searchTripType,
   onBack,
   onAddTraveler,
   onEditTraveler,
 }) => {
+  useHardwareBack(() => onBack());
+
   const { data: travelers, isLoading } = useTravellersMobile();
   const { data: customerProfile } = useCustomerProfileMobile();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -110,6 +124,15 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const [addOnTotal, setAddOnTotal] = useState(0);
   const [addOnSelections, setAddOnSelections] = useState<AddOnSelection[]>([]);
   const [showFareRules, setShowFareRules] = useState(false);
+  // Jump chips under the flight card scroll to these sections (Figma
+  // "Booking details": Fare policy, Baggage, Travellers, GST details).
+  const scrollRef = useRef<ScrollView>(null);
+  const sectionY = useRef<Record<SectionKey, number>>({ farePolicy: 0, baggage: 0, travellers: 0, gst: 0 });
+  const trackSection = (key: SectionKey) => (e: { nativeEvent: { layout: { y: number } } }) => {
+    sectionY.current[key] = e.nativeEvent.layout.y;
+  };
+  const scrollToSection = (key: SectionKey) =>
+    scrollRef.current?.scrollTo({ y: Math.max(0, sectionY.current[key] - 12), animated: true });
   const [useGst, setUseGst] = useState(false);
   const [gstNumber, setGstNumber] = useState('');
   const [gstHolderName, setGstHolderName] = useState('');
@@ -136,6 +159,18 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const baseTotalAmount = useMemo(() => legs.reduce((sum, leg) => sum + leg.totalAmount, 0), [legs]);
   const totalAmount = baseTotalAmount + addOnTotal;
   const currencyCode = legs[0]?.currencyCode ?? 'INR';
+
+  // GoVoylo's convenience fee, added on the Payment page. This is the app's
+  // estimate from the shared rules; once the booking is held, the server's own
+  // figure is what's charged.
+  const { data: convenienceFeeRules } = useConvenienceFeeRules();
+  const estimatedConvenienceFee = useMemo(
+    () => convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, searchTripType),
+    [convenienceFeeRules, legs, passengerCounts, searchTripType]
+  );
+  const [chargedConvenienceFee, setChargedConvenienceFee] = useState<number | null>(null);
+  const convenienceFee = chargedConvenienceFee ?? estimatedConvenienceFee;
+  const payableAmount = totalAmount + estimatedConvenienceFee;
 
   const requiredCounts: Record<PaxType, number> = {
     adult: passengerCounts.adult,
@@ -362,12 +397,14 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       // The supplier re-prices at booking time and the fare can move from what
       // search showed (in either direction) — charge what it will actually
       // charge, after the customer has seen and accepted any change.
-      const chargeAmount = booking.confirmedTotalAmount ?? totalAmount;
-      if (Math.round(chargeAmount) !== Math.round(totalAmount)) {
+      const serverConvenienceFee = booking.convenienceFee ?? estimatedConvenienceFee;
+      setChargedConvenienceFee(serverConvenienceFee);
+      const chargeAmount = (booking.confirmedTotalAmount ?? totalAmount) + serverConvenienceFee;
+      if (Math.round(chargeAmount) !== Math.round(payableAmount)) {
         const accepted = await new Promise<boolean>((resolve) =>
           Alert.alert(
             'Price updated',
-            `The airline has updated the fare for this booking from ${formatCurrency(totalAmount, currencyCode)} to ${formatCurrency(chargeAmount, currencyCode)}.`,
+            `The airline has updated the fare for this booking from ${formatMoney(payableAmount, currencyCode)} to ${formatMoney(chargeAmount, currencyCode)}.`,
             [
               { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
               { text: 'Continue', onPress: () => resolve(true) },
@@ -454,9 +491,9 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       <View key={traveler.id} style={styles.travelerRow}>
         <TouchableOpacity style={styles.travelerRowLeft} onPress={() => toggleSelected(traveler)} activeOpacity={0.7}>
           <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
-            {isSelected && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
+            {isSelected && <Check size={14} color="#FFFFFF" strokeWidth={3} />}
           </View>
-          <View>
+          <View style={styles.travelerInfo}>
             <Text style={styles.travelerName}>
               {traveler.firstName} {traveler.lastName}
             </Text>
@@ -485,7 +522,10 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           legLabels={legLabels}
           travellers={selectedTravelers.map((t) => ({ id: t.id, firstName: t.firstName, lastName: t.lastName }))}
           addOnSelections={addOnSelections}
-          totalAmount={totalAmount}
+          // The fee being charged (the server's once held), so a "fare change"
+          // row only ever reflects the airline's re-price.
+          totalAmount={totalAmount + convenienceFee}
+          convenienceFee={convenienceFee}
           confirmedAmount={confirmedAmount}
           currencyCode={currencyCode}
           paymentState={paymentState}
@@ -500,14 +540,16 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       <SafeAreaView style={styles.headerSafeArea}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <ArrowLeft size={22} color="#182339" strokeWidth={2} />
+            <ArrowLeft size={24} color="#182339" strokeWidth={1.2} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Traveller Details</Text>
-          <View style={styles.headerSpacer} />
+          <Text style={styles.headerTitle}>Flight Details</Text>
+          <View style={styles.backButton}>
+            <Share2 size={16} color="#182339" strokeWidth={1.5} />
+          </View>
         </View>
       </SafeAreaView>
 
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView ref={scrollRef} contentContainerStyle={styles.scrollContent}>
         {legs.map((leg, legIndex) => {
           const first = leg.segments[0];
           const last = leg.segments[leg.segments.length - 1];
@@ -520,13 +562,17 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
               )}
               <View style={styles.routeCard}>
                 <View style={styles.routeHeader}>
-                  <Text style={styles.routeHeaderText}>
-                    {airportForCode(first.origin).city} <ArrowLeftRight size={12} color="#FFFFFF" strokeWidth={2} />{' '}
-                    {airportForCode(last.destination).city}
-                  </Text>
-                  <Text style={styles.routeHeaderDuration}>
-                    {formatTotalDuration(first.departureDateTime, last.arrivalDateTime)}
-                  </Text>
+                  <View style={styles.routeHeaderTitleRow}>
+                    <Text style={styles.routeHeaderText}>{airportForCode(first.origin).city}</Text>
+                    <ArrowRight size={16} color="#FFFFFF" strokeWidth={2} />
+                    <Text style={styles.routeHeaderText}>{airportForCode(last.destination).city}</Text>
+                  </View>
+                  <View style={styles.routeHeaderTitleRow}>
+                    <Clock3 size={20} color="#FFFFFF" strokeWidth={1.5} />
+                    <Text style={styles.routeHeaderDuration}>
+                      {formatTotalDuration(first.departureDateTime, last.arrivalDateTime)}
+                    </Text>
+                  </View>
                 </View>
 
                 {leg.segments.map((segment, index) => (
@@ -588,34 +634,60 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
                     {index < leg.segments.length - 1 && (
                       <View style={styles.layoverRow}>
-                        <Info size={12} color="#697691" strokeWidth={2} />
+                        <View style={styles.layoverIcon}>
+                          <MapPinPlus size={16} color="#182339" strokeWidth={1.5} />
+                        </View>
                         <Text style={styles.layoverText}>
-                          {formatTotalDuration(segment.arrivalDateTime, leg.segments[index + 1].departureDateTime)}{' '}
-                          Layover at {airportForCode(segment.destination).city}
+                          Layover at {airportForCode(segment.destination).city} (
+                          {formatTotalDuration(segment.arrivalDateTime, leg.segments[index + 1].departureDateTime)})
                         </Text>
                       </View>
                     )}
                   </React.Fragment>
                 ))}
+                {legIndex === legs.length - 1 && (
+                  <TouchableOpacity style={styles.viewFlightDetailsRow} onPress={onBack}>
+                    <Text style={styles.viewFlightDetailsLink}>View Flight Details</Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </View>
           );
         })}
 
-        <TouchableOpacity onPress={onBack}>
-          <Text style={styles.viewFlightDetailsLink}>View Flight Details</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.sectionChips}>
+          {SECTION_CHIPS.map((chip) => (
+            <TouchableOpacity key={chip.key} style={styles.sectionChip} onPress={() => scrollToSection(chip.key)}>
+              <Text style={styles.sectionChipText}>{chip.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+
+        <TouchableOpacity
+          style={styles.infoCard}
+          onLayout={trackSection('farePolicy')}
+          onPress={() => setShowFareRules(true)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.infoCardText}>
+            <Text style={styles.infoCardTitle}>Fare policy</Text>
+            <Text style={styles.infoCardSubtitle}>View cancellation and rescheduling charges</Text>
+          </View>
+          <ChevronRight size={20} color="#182339" strokeWidth={1.5} />
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setShowFareRules(true)}>
-          <Text style={styles.viewFlightDetailsLink}>Fare Rules</Text>
-        </TouchableOpacity>
+        <View style={styles.sectionDivider} />
 
-        <Text style={styles.sectionTitle}>Add travellers</Text>
+        <Text style={styles.sectionTitle} onLayout={trackSection('travellers')}>
+          Add travellers
+        </Text>
 
         <View style={styles.noticeBanner}>
-          <Info size={16} color="#D9822B" strokeWidth={2} style={styles.noticeIcon} />
+          <View style={styles.noticeIcon}>
+            <Text style={styles.noticeIconText}>!</Text>
+          </View>
           <Text style={styles.noticeText}>
-            Please ensure your visa is valid, passport has 6+ months validity, and name matches your passport.
+            Please ensure your visa is valid. passport has 6+ months validity, and name matches your passport.
           </Text>
         </View>
 
@@ -653,8 +725,10 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
         <TouchableOpacity style={styles.addTravelerRow} onPress={onAddTraveler} activeOpacity={0.7}>
           <Text style={styles.addTravelerText}>Add new travellers</Text>
-          <Plus size={16} color="#7C1AEE" strokeWidth={2} />
+          <Plus size={20} color="#7C1AEE" strokeWidth={1.5} />
         </TouchableOpacity>
+
+        <View style={styles.sectionDivider} onLayout={trackSection('baggage')} />
 
         <WhatsIncludedSection
           legRoutes={legRoutes}
@@ -664,11 +738,22 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           onSelectionsChange={setAddOnSelections}
         />
 
-        <TouchableOpacity style={styles.gstToggleRow} onPress={() => setUseGst((v) => !v)} activeOpacity={0.7}>
-          <View style={[styles.checkbox, useGst && styles.checkboxChecked]}>
-            {useGst && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
+        <TouchableOpacity
+          style={[styles.infoCard, styles.gstCard]}
+          onLayout={trackSection('gst')}
+          onPress={() => setUseGst((v) => !v)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.infoCardText}>
+            <Text style={styles.infoCardTitle}>GST Number</Text>
+            <Text style={styles.infoCardSubtitle}>Add GST to claim tax credit</Text>
           </View>
-          <Text style={styles.gstToggleText}>Use GST for this booking</Text>
+          <ChevronRight
+            size={20}
+            color="#182339"
+            strokeWidth={1.5}
+            style={useGst ? { transform: [{ rotate: '90deg' }] } : undefined}
+          />
         </TouchableOpacity>
 
         {useGst && (
@@ -705,7 +790,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
             <CheckCircle2 size={28} color="#1E9E5A" strokeWidth={2} />
             <Text style={styles.paymentSuccessTitle}>Payment Successful</Text>
             <Text style={styles.paymentSuccessSubtitle}>
-              Your payment of {formatCurrency(confirmedAmount ?? totalAmount, currencyCode)} was received. Your booking is confirmed.
+              Your payment of {formatMoney(confirmedAmount ?? payableAmount, currencyCode)} was received. Your booking is confirmed.
             </Text>
             {!!bookingResult?.bookingRefNo && (
               <Text style={styles.paymentSuccessSubtitle}>Booking reference: {bookingResult.bookingRefNo}</Text>
@@ -716,16 +801,17 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           </View>
         ) : (
           <View style={styles.paymentSection}>
-            <View style={styles.paymentAmountRow}>
-              <Text style={styles.paymentAmountLabel}>Total amount</Text>
-              <Text style={styles.paymentAmountValue}>{formatCurrency(totalAmount, currencyCode)}</Text>
-            </View>
-
             {!!paymentError && <Text style={styles.paymentErrorText}>{paymentError}</Text>}
 
-            <TouchableOpacity style={styles.payButton} onPress={handleNext}>
-              <Text style={styles.payButtonText}>Next</Text>
-            </TouchableOpacity>
+            <View style={styles.paymentAmountRow}>
+              <View>
+                <Text style={styles.paymentAmountLabel}>Total</Text>
+                <Text style={styles.paymentAmountValue}>{formatMoney(totalAmount, currencyCode)}</Text>
+              </View>
+              <TouchableOpacity style={styles.payButton} onPress={handleNext}>
+                <Text style={styles.payButtonText}>Next</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       </ScrollView>

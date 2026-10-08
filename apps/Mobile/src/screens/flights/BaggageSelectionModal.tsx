@@ -4,6 +4,7 @@ import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { ArrowLeft, Luggage } from 'lucide-react-native';
 import type { AncillaryOption } from '@workspace/ui';
 import { styles } from './BaggageSelectionModal.styles';
+import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
 
 export interface BaggageTraveler {
   id: string;
@@ -11,11 +12,6 @@ export interface BaggageTraveler {
   lastName: string;
 }
 
-function formatPrice(amount: number, currencyCode: string): string {
-  return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN', {
-    maximumFractionDigits: 0,
-  })}`;
-}
 
 // Supplier descriptions vary ("Excess Baggage - 5 Kg", "+ 10 kg Xcess Baggage",
 // "1 Piece 15 Kg"); the card shows pieces (with a bag icon) when the option is
@@ -161,7 +157,7 @@ export const BaggageSelectionModal: React.FC<BaggageSelectionModalProps> = ({
                             )}
                             <Text style={styles.cardWeight}>{weight}</Text>
                             <Text style={styles.cardPrice}>
-                              {option.totalAmount > 0 ? formatPrice(option.totalAmount, currencyCode) : 'Free'}
+                              {option.totalAmount > 0 ? formatMoney(option.totalAmount, currencyCode) : 'Free'}
                             </Text>
                           </TouchableOpacity>
                         );
@@ -176,7 +172,7 @@ export const BaggageSelectionModal: React.FC<BaggageSelectionModalProps> = ({
         <View style={styles.footer}>
           <View>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatPrice(total, currencyCode)}</Text>
+            <Text style={styles.totalValue}>{formatMoney(total, currencyCode)}</Text>
           </View>
           <TouchableOpacity style={styles.saveButton} onPress={() => onSave(picks)} activeOpacity={0.8}>
             <Text style={styles.saveButtonText}>Save</Text>

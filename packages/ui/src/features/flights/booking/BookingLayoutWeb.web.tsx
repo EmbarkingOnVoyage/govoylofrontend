@@ -14,12 +14,19 @@ export interface FareBreakdown {
   taxes: number | null;
   flightTotal: number;
   addOns: { label: string; amount: number }[];
+  // GoVoylo's convenience fee, included in total.
+  convenienceFee: number;
   total: number;
   // "For 2 adults, 1 child"
   paxText: string;
 }
 
-export function buildFareBreakdown(legs: FlightOffer[], addOns: AddOnSelection[], paxText: string): FareBreakdown {
+export function buildFareBreakdown(
+  legs: FlightOffer[],
+  addOns: AddOnSelection[],
+  paxText: string,
+  convenienceFee = 0
+): FareBreakdown {
   const currencyCode = legs[0]?.currencyCode ?? 'INR';
   const flightTotal = legs.reduce((sum, leg) => sum + leg.totalAmount, 0);
   const baseKnown = legs.length > 0 && legs.every((leg) => legBaseFare(leg) > 0);
@@ -37,7 +44,8 @@ export function buildFareBreakdown(legs: FlightOffer[], addOns: AddOnSelection[]
     taxes: baseFare != null ? flightTotal - baseFare : null,
     flightTotal,
     addOns: groups,
-    total: flightTotal + addOnTotal,
+    convenienceFee,
+    total: flightTotal + addOnTotal + convenienceFee,
     paxText,
   };
 }
@@ -95,6 +103,7 @@ export const FareSummaryWeb: React.FC<{ breakdown: FareBreakdown }> = ({ breakdo
             )}
           </>
         )}
+        {breakdown.convenienceFee > 0 && <LineRow label="Convenience Fee" value={money(breakdown.convenienceFee)} />}
         <div className="pt-[2px]">
           <div className="flex items-center justify-between pt-4 pb-2 border-t border-[#7C8CAD]">
             <span className="text-[13px] leading-4 font-bold text-[#182339]">Net Payable Amount</span>

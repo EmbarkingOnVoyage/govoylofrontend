@@ -37,7 +37,8 @@ export function formatTime24(iso: string): string {
 export function formatDateShort(iso: string): string {
   const date = new Date(iso);
   if (isNaN(date.getTime())) return '';
-  return date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+  // "25 Mar" (Figma results header), independent of the device locale.
+  return `${date.getDate()} ${date.toLocaleDateString('en-US', { month: 'short' })}`;
 }
 
 // "Mon, 30.1" — the Flight details popup's own date format (Figma), distinct
@@ -501,8 +502,8 @@ export interface CombinedFilterState {
   layoverMax?: number | null;
   departAirports?: Set<string>;
   arriveAirports?: Set<string>;
-  // Bags the traveller wants: 1+ cabin bag needs a cabin allowance, 1+
-  // checked bag needs a checked-baggage allowance.
+  // Bags the traveller wants: keeps offers with a fare allowing at least
+  // this many cabin / checked pieces.
   cabinBags?: number;
   checkedBags?: number;
 }
@@ -517,8 +518,24 @@ export function getLayoverMinutes(offer: FlightOffer): number {
   return total;
 }
 
-function hasCabinBaggage(offer: FlightOffer): boolean {
-  return (offer.fares ?? []).some((fare) => /[1-9]/.test(fare.handBaggage ?? ''));
+// Pieces in a supplier baggage text: "30 Kg (2 pcs)" -> 2, "15 Kg (01 Piece
+// only)" -> 1, "1 Piece, 7 Kilogram each" -> 1. A weight with no piece count
+// ("15 Kg", "30KG") is one bag; empty, "0 KG" or "NIL" is none.
+export function baggagePieces(allowance: string | null | undefined): number {
+  const text = allowance ?? '';
+  const pieces = /(\d+)\s*(?:pcs?|pieces?)\b/i.exec(text);
+  if (pieces) return parseInt(pieces[1], 10);
+  return /[1-9]/.test(text) ? 1 : 0;
+}
+
+// Most bags any fare on the offer allows (the filter keeps an offer if some
+// fare covers what the traveller wants).
+export function maxCabinPieces(offer: FlightOffer): number {
+  return Math.max(0, ...(offer.fares ?? []).map((fare) => baggagePieces(fare.handBaggage)));
+}
+
+export function maxCheckInPieces(offer: FlightOffer): number {
+  return Math.max(0, ...(offer.fares ?? []).map((fare) => baggagePieces(fare.checkInBaggage)));
 }
 
 // Some fare on the offer includes checked baggage (e.g. "15 KG", "1 pcs").
@@ -559,8 +576,8 @@ export function applyCombinedFilters(
     })
     .filter((o) => !state.departAirports?.size || state.departAirports.has(o.segments[0].origin))
     .filter((o) => !state.arriveAirports?.size || state.arriveAirports.has(o.segments[o.segments.length - 1].destination))
-    .filter((o) => !state.cabinBags || hasCabinBaggage(o))
-    .filter((o) => !state.checkedBags || hasCheckInBaggage(o));
+    .filter((o) => !state.cabinBags || maxCabinPieces(o) >= state.cabinBags)
+    .filter((o) => !state.checkedBags || maxCheckInPieces(o) >= state.checkedBags);
 }
 
 // A whole-trip offer (one supplier price for outbound + return) split into one

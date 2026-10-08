@@ -13,6 +13,7 @@ import { styles } from './WhatsIncludedSection.styles';
 import { SeatSelectionModal, type SeatPick } from './SeatSelectionModal';
 import { BaggageSelectionModal } from './BaggageSelectionModal';
 import { MealSelectionModal } from './MealSelectionModal';
+import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
 
 interface AddOnTraveler {
   id: string;
@@ -23,9 +24,6 @@ interface AddOnTraveler {
   travelerType: string;
 }
 
-function formatCurrency(amount: number, currencyCode: string): string {
-  return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN')}`;
-}
 
 type AddOnCategory = 'baggage' | 'seat' | 'meal';
 
@@ -203,6 +201,19 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
     setOpenModal(null);
   };
 
+  // A traveller unticked on the page above takes their add-ons with them —
+  // otherwise those picks stay in the total and get booked against no one.
+  const travelerIdsKey = travelers.map((t) => t.id).join(',');
+  useEffect(() => {
+    const ids = new Set(travelers.map((t) => t.id));
+    const kept = Object.fromEntries(Object.entries(selections).filter(([, sel]) => ids.has(sel.travelerId)));
+    if (Object.keys(kept).length !== Object.keys(selections).length) {
+      setSelections(kept);
+      applyTotal(kept);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [travelerIdsKey]);
+
   const applyTotal = (next: SelectionMap) => {
     const values = Object.values(next);
     const grandTotal = values.reduce((sum, selection) => sum + selection.amount, 0);
@@ -223,8 +234,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Whats included</Text>
       <Text style={styles.sectionSubtitle}>
-        Check your included benefits and add the extras you need for a more comfortable trip. Add-on
-        prices shown are estimates and may change at checkout.
+        Check your included benefits and add the extras you need for a more comfortable trip.
       </Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll}>
@@ -238,8 +248,8 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
               activeOpacity={0.7}
             >
               <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{route.label}</Text>
-              <Text style={[styles.tabRoute, isActive && styles.tabRouteActive]}>
-                {route.origin} • {route.destination}
+              <Text numberOfLines={1} style={[styles.tabRoute, isActive && styles.tabRouteActive]}>
+                {route.origin} → {route.destination}
               </Text>
             </TouchableOpacity>
           );
@@ -247,7 +257,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
       </ScrollView>
 
       <Text style={styles.categoryTitle}>Baggage</Text>
-      <Text style={styles.categorySubtitle}>Adding baggage now is cheaper than at the airport.</Text>
+      <Text style={styles.categorySubtitle}>Adding baggage now is cheaper than at the airport!</Text>
       <View style={styles.cardRow}>
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Carry on bag</Text>
@@ -268,16 +278,16 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           <Text style={styles.ctaCardText}>
             {anySelected('baggage') ? 'Baggage added' : 'Add extra Baggage'}
           </Text>
-          <ChevronRight size={16} color="#FFFFFF" strokeWidth={2} />
+          <ChevronRight size={24} color="#FFFFFF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
       <Text style={styles.categoryTitle}>Seat</Text>
-      <Text style={styles.categorySubtitle}>Select your seat now and travel your way</Text>
+      <Text style={styles.categorySubtitle}>Select your seat now and travel your way!</Text>
       <View style={styles.cardRow}>
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Random</Text>
-          <Text style={styles.infoCardSublabel}>Assigned at check-in</Text>
+          <Text style={[styles.infoCardSublabel, styles.infoCardSublabelSmall]}>Assigned at checked-in</Text>
           <Text style={styles.infoCardPrice}>Free</Text>
         </View>
         <TouchableOpacity
@@ -286,17 +296,17 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           activeOpacity={0.8}
           disabled={seatTravelers.length === 0}
         >
-          <Text style={styles.ctaCardText}>{anySelected('seat') ? 'Seat selected' : 'Pick a seat'}</Text>
-          <ChevronRight size={16} color="#FFFFFF" strokeWidth={2} />
+          <Text style={styles.ctaCardText}>{anySelected('seat') ? 'Seat selected' : 'Pick exact seat on map'}</Text>
+          <ChevronRight size={24} color="#FFFFFF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
       <Text style={styles.categoryTitle}>Meal</Text>
-      <Text style={styles.categorySubtitle}>Pick your preferred meal before takeoff</Text>
-      <View style={styles.cardRow}>
+      <Text style={styles.categorySubtitle}>Pick your preferred meal before takeoff!</Text>
+      <View style={[styles.cardRow, styles.cardRowLast]}>
         <View style={styles.infoCard}>
           <Text style={styles.infoCardLabel}>Meal</Text>
-          <Text style={styles.infoCardSublabel}>No meal on board</Text>
+          <Text style={[styles.infoCardSublabel, styles.infoCardSublabelSmall]}>Buy on board</Text>
           <Text style={styles.infoCardPrice}>Free</Text>
         </View>
         <TouchableOpacity
@@ -306,7 +316,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           disabled={travelers.length === 0}
         >
           <Text style={styles.ctaCardText}>{anySelected('meal') ? 'Meal added' : 'Explore available meals'}</Text>
-          <ChevronRight size={16} color="#FFFFFF" strokeWidth={2} />
+          <ChevronRight size={24} color="#FFFFFF" strokeWidth={2} />
         </TouchableOpacity>
       </View>
 
