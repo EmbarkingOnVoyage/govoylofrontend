@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "com.govoylo.app",
-      "versionCode": 4,
+      "versionCode": 5,
       "adaptiveIcon": {
         "backgroundColor": "#7C1AEE",
         "foregroundImage": "../../assets/android-icon-foreground.png",
