@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, Image } from "react-native";
+import { MoveRight } from "lucide-react-native";
 import { useRequestOtpMutation } from "@workspace/api";
 import { LoginMobileStyles as s } from "@workspace/ui";
 import { authContextCache } from "./authContextCache";
@@ -57,7 +58,7 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
     <View style={s.screen}>
       <View style={s.container}>
         <View style={s.titleBlock}>
-          <Text style={s.title}>Welcome to your travel co-pilot</Text>
+          <Text style={s.title}>Welcome to your{"\n"}travel co-pilot</Text>
           <Text style={s.subtitle}>
             Log in or sign up to start the planning without the hassle
           </Text>
@@ -66,7 +67,7 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
         <View style={s.formWrapper}>
           <TextInput
             placeholder="Email address"
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor="#99A6C0"
             style={[s.inputField, !!validationError && s.inputFieldError]}
             value={email}
             onChangeText={(text) => {
@@ -114,11 +115,12 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
           style={s.guestLink}
           onPress={() => onNavigate("ON_CONTINUE_AS_GUEST")}
         >
-          <Text style={s.guestLinkText}>Continue as guest →</Text>
+          <Text style={s.guestLinkText}>Continue as guest</Text>
+          <MoveRight size={20} color="#7C1AEE" strokeWidth={1.2} />
         </TouchableOpacity>
 
         <Text style={s.footerText}>
-          By continuing you agree to our <Text style={s.footerLink}>Terms & Privacy Policy</Text>.
+          By continuing you agree to our <Text style={s.footerLink}>Terms & Privacy Policy.</Text>
         </Text>
       </View>
     </View>

@@ -111,24 +111,27 @@ export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onExploreTrips }) 
       <View style={styles.emptyState}>
         <View style={styles.emptyArt}>
           <View style={styles.emptyCircle}>
-            <Luggage size={52} color={PURPLE} strokeWidth={1.8} />
+            <Luggage size={52} color={PURPLE} strokeWidth={1.5} />
           </View>
-          <View style={{ position: 'absolute', right: 0, top: 6 }}>
-            <Plane size={26} color={PURPLE} strokeWidth={2} />
+          <View style={{ position: 'absolute', left: 102.5, top: 13.4 }}>
+            <Plane size={24} color="#6014B7" strokeWidth={2.08} />
           </View>
-          <View style={{ position: 'absolute', left: 6, bottom: 22 }}>
-            <Sparkles size={20} color={PURPLE} strokeWidth={2} />
+          <View style={{ position: 'absolute', left: 8, top: 90 }}>
+            <Sparkles size={20} color="#6014B7" strokeWidth={1.8} />
           </View>
         </View>
         <Text style={styles.emptyTitle}>{copy[activeTab].title}</Text>
         <Text style={styles.emptyText}>{copy[activeTab].text}</Text>
         <View style={styles.emptyButtons}>
-          <TouchableOpacity style={styles.primaryButton} onPress={onExploreTrips}>
-            <Text style={styles.primaryButtonText}>Explore Trips</Text>
+          <TouchableOpacity style={[styles.primaryButton, styles.emptyButton]} onPress={onExploreTrips}>
+            <Text style={[styles.primaryButtonText, styles.emptyButtonText]}>Explore Trips</Text>
           </TouchableOpacity>
           {activeTab === 'Upcoming' ? (
-            <TouchableOpacity style={styles.secondaryButton} onPress={() => setActiveTab('Completed')}>
-              <Text style={styles.secondaryButtonText}>View Past Trips</Text>
+            <TouchableOpacity
+              style={[styles.secondaryButton, styles.emptyButton]}
+              onPress={() => setActiveTab('Completed')}
+            >
+              <Text style={[styles.secondaryButtonText, styles.emptyButtonText]}>View Past Trips</Text>
             </TouchableOpacity>
           ) : null}
         </View>

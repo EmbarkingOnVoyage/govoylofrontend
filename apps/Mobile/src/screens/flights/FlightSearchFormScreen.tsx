@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Switch, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, ArrowLeftRight, X } from 'lucide-react-native';
+import { ArrowLeft, ArrowLeftRight, UserRound, X } from 'lucide-react-native';
 import {
   useSearchFlightsMobile,
   type TripType,
@@ -233,14 +233,17 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
   // --- Sub-screen navigation (full pages, matching Figma — not modals) ---
 
   if (subScreen.type === 'airportSearch') {
+    const segIndex = subScreen.segmentIndex;
     return (
       <AirportSearchScreen
-        title={subScreen.field === 'origin' ? 'Origin of city/airport code' : 'Destination city/airport code'}
+        field={subScreen.field}
+        origin={segIndex !== null ? multiCitySegments[segIndex].origin : origin}
+        destination={segIndex !== null ? multiCitySegments[segIndex].destination : destination}
         onBack={() => setSubScreen({ type: 'form' })}
-        onSelect={(airport) => {
-          if (subScreen.segmentIndex !== null) {
-            updateMultiCitySegment(subScreen.segmentIndex, { [subScreen.field]: airport } as Partial<MultiCitySegment>);
-          } else if (subScreen.field === 'origin') {
+        onSelect={(airport, field) => {
+          if (segIndex !== null) {
+            updateMultiCitySegment(segIndex, { [field]: airport } as Partial<MultiCitySegment>);
+          } else if (field === 'origin') {
             setOrigin(airport);
           } else {
             setDestination(airport);
@@ -327,7 +330,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
   const formContent = (
     <>
       <LinearGradient
-        colors={['rgba(11,19,237,0.8)', 'rgba(211,178,250,0.3)']}
+        colors={['#938EF2', '#E5DCF5']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradientWrap}
@@ -335,7 +338,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
         <SafeAreaView>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <ArrowLeft size={22} color="#182339" strokeWidth={2} />
+              <ArrowLeft size={20} color="#182339" strokeWidth={1.5} />
             </TouchableOpacity>
             <LinearGradient
               colors={['#9335FF', '#5731FF']}
@@ -400,7 +403,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                   </TouchableOpacity>
                 </View>
                 <TouchableOpacity style={styles.swapButton} onPress={handleSwap}>
-                  <ArrowLeftRight size={16} color="#7C1AEE" strokeWidth={2} />
+                  <ArrowLeftRight size={16} color="#182339" strokeWidth={1.5} />
                 </TouchableOpacity>
                 <View style={[styles.odField, styles.odFieldEnd]}>
                   <Text style={styles.odLabel}>{destination ? `To - ${destination.code}` : 'To'}</Text>
@@ -459,7 +462,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                         </TouchableOpacity>
                       </View>
                       <TouchableOpacity style={styles.swapButton} onPress={() => swapMultiCitySegment(index)}>
-                        <ArrowLeftRight size={16} color="#7C1AEE" strokeWidth={2} />
+                        <ArrowLeftRight size={16} color="#182339" strokeWidth={1.5} />
                       </TouchableOpacity>
                       <View style={[styles.odField, styles.odFieldEnd]}>
                         <Text style={styles.odLabel}>{seg.destination ? `To - ${seg.destination.code}` : 'To'}</Text>
@@ -475,7 +478,8 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                         </TouchableOpacity>
                       </View>
                     </View>
-                    <View style={{ marginTop: 12 }}>
+                    <View style={styles.divider} />
+                    <View>
                       <Text style={styles.odLabel}>Departure</Text>
                       <View style={styles.multiCityDateRow}>
                         <TouchableOpacity
@@ -493,7 +497,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                               onPress={() => removeMultiCitySegment(index)}
                               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                              <X size={14} color="#6014B7" strokeWidth={2} />
+                              <X size={16} color="#7C1AEE" strokeWidth={1.5} />
                             </TouchableOpacity>
                           )}
                         </View>
@@ -502,17 +506,19 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                   </View>
                 ))}
 
-                {multiCitySegments.length < 5 && (
-                  <TouchableOpacity style={styles.addFlightButton} onPress={addMultiCitySegment}>
-                    <Text style={styles.addFlightText}>Add Flight</Text>
-                  </TouchableOpacity>
-                )}
               </>
             )}
 
             <TouchableOpacity style={styles.passengerRow} onPress={() => setSubScreen({ type: 'travellers' })}>
+              <UserRound size={20} color="#182339" strokeWidth={1.5} />
               <Text style={styles.passengerRowText}>{passengerSummary}</Text>
             </TouchableOpacity>
+
+            {tripType === 'MultiCity' && multiCitySegments.length < 5 && (
+              <TouchableOpacity style={styles.addFlightButton} onPress={addMultiCitySegment}>
+                <Text style={styles.addFlightText}>Add Flight</Text>
+              </TouchableOpacity>
+            )}
 
             <Text style={styles.sectionHeading}>Special Fares (Optional)</Text>
             <View style={styles.fareRow}>
@@ -536,15 +542,18 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
               </TouchableOpacity>
             </View>
 
-            <View style={styles.nonStopRow}>
-              <Switch
-                value={nonStopOnly}
-                onValueChange={setNonStopOnly}
-                trackColor={{ true: '#7C1AEE', false: '#ADB8CD' }}
-                thumbColor="#FFFFFF"
-              />
+            <TouchableOpacity
+              style={styles.nonStopRow}
+              onPress={() => setNonStopOnly(!nonStopOnly)}
+              activeOpacity={0.8}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: nonStopOnly }}
+            >
+              <View style={[styles.toggleTrack, nonStopOnly && styles.toggleTrackOn]}>
+                <View style={[styles.toggleThumb, nonStopOnly && styles.toggleThumbOn]} />
+              </View>
               <Text style={styles.nonStopLabel}>Non stop flight only</Text>
-            </View>
+            </TouchableOpacity>
 
             <TouchableOpacity
               style={[styles.searchButton, searchFlights.isPending && styles.searchButtonDisabled]}
