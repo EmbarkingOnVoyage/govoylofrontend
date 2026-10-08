@@ -295,6 +295,7 @@ const BaggageModal: React.FC<{
               </TouchableOpacity>
             );
           })}
+          <View style={styles.baggageSheetDivider} />
           <ModalActions onClose={onClose} onSave={() => onSave(pending)} />
         </View>
       </View>
