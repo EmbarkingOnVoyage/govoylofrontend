@@ -141,7 +141,11 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const lastOfFirstTrip = firstTrip[firstTrip.length - 1];
   const lastTrip = allTrips[allTrips.length - 1] ?? [];
   const finalDestination = lastTrip[lastTrip.length - 1]?.destination;
-  const isRoundTrip = allTrips.length === 2 && finalDestination === firstSegment?.origin;
+  // Results labels a round trip's legs Onward/Return. Trust that over airport
+  // codes: a return can land at another airport of the same city (DEL out,
+  // DXN back).
+  const isRoundTrip =
+    allTrips.length === 2 && (legLabels?.[1] === 'Return' || finalDestination === firstSegment?.origin);
   const routeTitle = firstSegment
     ? isRoundTrip
       ? `${firstSegment.origin} ⇌ ${lastOfFirstTrip?.destination}`

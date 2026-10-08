@@ -1907,6 +1907,9 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   const handleContinueToTraveler = (selectedFares: (FareOption | undefined)[]) => {
     const chosenLegs = detailsLegs.map((leg, i) => (selectedFares[i] ? pinFare(leg, selectedFares[i]!) : leg));
     const request = activeSummary?.request;
+    // This screen stays mounted under Traveller details, so close the review
+    // modal: back lands on the last leg's list with earlier picks kept.
+    handleCloseDetails();
     onContinueToTravelerDetails(chosenLegs, detailsLegLabels, {
       adult: request?.adultCount ?? 1,
       child: request?.childCount ?? 0,
