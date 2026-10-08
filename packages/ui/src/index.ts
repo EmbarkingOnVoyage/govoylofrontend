@@ -117,6 +117,16 @@ export {
   type CancelTripBookingResponse,
 } from './features/flights/useMyTripsMobile';
 export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './features/flights/useHolidaysMobile';
+export { useConvenienceFeeRules } from './features/flights/useConvenienceFeeRules';
+export {
+  calculateConvenienceFee,
+  convenienceFeeFor,
+  journeysFor,
+  type ConvenienceFeeRules,
+  type ConvenienceFeeTripRate,
+  type ConvenienceFeePaxBand,
+  type JourneyBaseFare,
+} from './features/flights/logic/convenienceFee';
 export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';
 export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';
 export { useHolidaysWeb } from './features/flights/useHolidaysWeb';

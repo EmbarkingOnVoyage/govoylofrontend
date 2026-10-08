@@ -62,6 +62,10 @@ export interface FareOption {
   // Base fare (before taxes and fees) of bookingTotalAmount; 0 when the
   // supplier didn't split it.
   bookingBaseAmount?: number;
+  // Base fare for one adult / one child — what the convenience fee is a
+  // percentage of. 0 when the supplier didn't split it.
+  adultBaseFare?: number;
+  childBaseFare?: number;
 }
 
 export interface FlightOffer {
