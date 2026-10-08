@@ -17,6 +17,7 @@ import {
   COUNTRY_OPTIONS,
 } from '@workspace/ui/src/data/selectOptions';
 import { styles } from './PersonalDetailsScreen.styles';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 interface PersonalDetailsScreenProps {
   onBack: () => void;
@@ -45,6 +46,8 @@ function parseDisplayDate(display: string): string | null {
 }
 
 export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ onBack }) => {
+  useHardwareBack(() => onBack());
+
   const { data: profile } = useCustomerProfileMobile();
   const updateProfile = useUpdateCustomerProfileMobile();
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, SafeAreaView, ActivityIndicator, BackHandler } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, SafeAreaView, ActivityIndicator } from 'react-native';
 import { ArrowLeft, ChevronRight, ChevronUp, ChevronDown, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import type { FlightOffer } from '@workspace/ui';
@@ -8,6 +8,7 @@ import type { AddOnSelection } from './WhatsIncludedSection';
 import { styles } from './PaymentScreen.styles';
 import { PAYMENT_BADGE_SVG } from '../../components/paymentBadges';
 import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 export interface PaymentTraveller {
   id: string;
@@ -130,13 +131,9 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const payable = confirmedAmount ?? totalAmount;
 
   // Android back returns to Traveller Details, except mid-payment.
-  useEffect(() => {
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (paymentState !== 'processing') onBack();
-      return true;
-    });
-    return () => sub.remove();
-  }, [paymentState, onBack]);
+  useHardwareBack(() => {
+    if (paymentState !== 'processing') onBack();
+  });
 
   const allTrips = useMemo(() => legs.flatMap(tripsOf), [legs]);
   const firstTrip = allTrips[0] ?? [];

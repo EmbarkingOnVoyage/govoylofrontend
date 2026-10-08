@@ -37,6 +37,7 @@ import {
   type TravelerAgeCheck,
 } from '@workspace/ui/src/features/flights/logic/travellers';
 import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 // The Add Travellers list only shows the first 4 saved travellers inline; a
 // 5th+ traveller pushes the rest behind a "More" button that opens the full
@@ -106,6 +107,8 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   onAddTraveler,
   onEditTraveler,
 }) => {
+  useHardwareBack(() => onBack());
+
   const { data: travelers, isLoading } = useTravellersMobile();
   const { data: customerProfile } = useCustomerProfileMobile();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());

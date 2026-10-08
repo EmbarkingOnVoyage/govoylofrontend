@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft } from 'lucide-react-native';
 import { SelectField } from '../../components/SelectField';
 import { styles } from './PersonalDetailsScreen.styles';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 // Currency and language choices from the Figma "Customization preferences" and
 // "Privacy and data management" frames. Only INR / English are offered for now,
@@ -17,6 +18,8 @@ interface PreferencesScreenProps {
 }
 
 export const PreferencesScreen: React.FC<PreferencesScreenProps> = ({ title, onBack }) => {
+  useHardwareBack(() => onBack());
+
   const [currency, setCurrency] = useState(CURRENCY_OPTIONS[0]);
   const [language, setLanguage] = useState(LANGUAGE_OPTIONS[0]);
 

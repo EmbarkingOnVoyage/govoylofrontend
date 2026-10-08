@@ -11,6 +11,7 @@ import { SelectField } from '../../components/SelectField';
 import { DateField } from '../../components/DateField';
 import { GENDER_OPTIONS, INDIAN_STATE_OPTIONS, INDIAN_CITY_OPTIONS, COUNTRY_OPTIONS } from '@workspace/ui/src/data/selectOptions';
 import { styles } from './PersonalDetailsScreen.styles';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 interface CoTravellerFormScreenProps {
   travellerId: string | null;
@@ -40,6 +41,8 @@ function parseDisplayDate(display: string): string | null {
 }
 
 export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ travellerId, onDone }) => {
+  useHardwareBack(() => onDone());
+
   const {
     data: detail,
     isLoading: isLoadingDetail,

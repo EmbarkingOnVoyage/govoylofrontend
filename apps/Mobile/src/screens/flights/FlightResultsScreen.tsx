@@ -70,6 +70,7 @@ import { styles } from './FlightResultsScreen.styles';
 // (number), which is what Image.source expects — cast to match the runtime type.
 import insuranceBannerSrc from '../../assets/images/insurance-banner.png';
 import { AIRLINE_LOGO_XML } from '@workspace/ui/src/assets/airlines/airlineLogos';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 const insuranceBanner = insuranceBannerSrc as unknown as number;
 
 // Falls back to a code-only stand-in when the airport isn't in the app's small
@@ -1833,6 +1834,16 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
     setCombinedFilters(initialFilters(activeSummary));
     setActiveSortId(null);
   };
+
+  // Android back: in the leg-by-leg flow it steps back to the previous leg's
+  // list (return -> onward, Flight 3 -> Flight 2); otherwise it leaves results.
+  useHardwareBack(() => {
+    if (usingSequentialFlow && selectedLegOffers.length > 0) {
+      handleChangeLegAt(selectedLegOffers.length - 1);
+    } else {
+      onBack();
+    }
+  });
 
   // A single-offer card's press always opens the fare-detail modal first —
   // matching the Figma "round onward" / "Round return" screens, where
