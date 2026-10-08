@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Modal, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Modal, ActivityIndicator } from 'react-native';
+import { ModalSafeArea } from '../../components/ModalSafeArea';
 import { Info, Clock, ArrowLeft, CalendarDays } from 'lucide-react-native';
 import { useFareRulesMobile } from '@workspace/ui';
 import { styles, PURPLE } from './FareRulesModal.styles';
@@ -242,7 +243,7 @@ export const FareRulesModal: React.FC<FareRulesModalProps> = ({ visible, legs, o
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView style={styles.screen}>
+      <ModalSafeArea style={styles.screen}>
         <View style={styles.header}>
           <Text style={styles.title}>Fare rules</Text>
           <Text style={styles.subtitle} numberOfLines={1}>
@@ -346,7 +347,7 @@ export const FareRulesModal: React.FC<FareRulesModalProps> = ({ visible, legs, o
             <Text style={styles.gotItButtonText}>Got it</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </ModalSafeArea>
     </Modal>
   );
 };
