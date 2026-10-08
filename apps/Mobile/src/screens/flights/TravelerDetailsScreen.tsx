@@ -10,6 +10,8 @@ import {
   useCustomerProfileMobile,
   useCreateBookingMobile,
   useReleaseHoldMobile,
+  useConvenienceFeeRules,
+  convenienceFeeFor,
   BOOKING_STATUS_FAILED,
   type FlightOffer,
   type Traveler,
@@ -17,6 +19,7 @@ import {
   type BookingLegRequest,
   type CreateBookingResponse,
   type PassengerCounts,
+  type TripType,
 } from '@workspace/ui';
 import { findAirportByCode } from '../../data/airports';
 import { AirlineLogo } from './FlightResultsScreen';
@@ -90,6 +93,8 @@ interface TravelerDetailsScreenProps {
   // Travellers of each type the search was for; the screen asks for exactly
   // these, in separate Adult / Children / Infant blocks.
   passengerCounts: PassengerCounts;
+  // The search's trip type, for the convenience fee.
+  searchTripType?: TripType;
   onBack: () => void;
   onAddTraveler: () => void;
   onEditTraveler: (id: string) => void;
@@ -103,6 +108,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   legs,
   legLabels,
   passengerCounts,
+  searchTripType,
   onBack,
   onAddTraveler,
   onEditTraveler,
@@ -153,6 +159,18 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const baseTotalAmount = useMemo(() => legs.reduce((sum, leg) => sum + leg.totalAmount, 0), [legs]);
   const totalAmount = baseTotalAmount + addOnTotal;
   const currencyCode = legs[0]?.currencyCode ?? 'INR';
+
+  // GoVoylo's convenience fee, added on the Payment page. This is the app's
+  // estimate from the shared rules; once the booking is held, the server's own
+  // figure is what's charged.
+  const { data: convenienceFeeRules } = useConvenienceFeeRules();
+  const estimatedConvenienceFee = useMemo(
+    () => convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, searchTripType),
+    [convenienceFeeRules, legs, passengerCounts, searchTripType]
+  );
+  const [chargedConvenienceFee, setChargedConvenienceFee] = useState<number | null>(null);
+  const convenienceFee = chargedConvenienceFee ?? estimatedConvenienceFee;
+  const payableAmount = totalAmount + estimatedConvenienceFee;
 
   const requiredCounts: Record<PaxType, number> = {
     adult: passengerCounts.adult,
@@ -379,12 +397,14 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       // The supplier re-prices at booking time and the fare can move from what
       // search showed (in either direction) — charge what it will actually
       // charge, after the customer has seen and accepted any change.
-      const chargeAmount = booking.confirmedTotalAmount ?? totalAmount;
-      if (Math.round(chargeAmount) !== Math.round(totalAmount)) {
+      const serverConvenienceFee = booking.convenienceFee ?? estimatedConvenienceFee;
+      setChargedConvenienceFee(serverConvenienceFee);
+      const chargeAmount = (booking.confirmedTotalAmount ?? totalAmount) + serverConvenienceFee;
+      if (Math.round(chargeAmount) !== Math.round(payableAmount)) {
         const accepted = await new Promise<boolean>((resolve) =>
           Alert.alert(
             'Price updated',
-            `The airline has updated the fare for this booking from ${formatMoney(totalAmount, currencyCode)} to ${formatMoney(chargeAmount, currencyCode)}.`,
+            `The airline has updated the fare for this booking from ${formatMoney(payableAmount, currencyCode)} to ${formatMoney(chargeAmount, currencyCode)}.`,
             [
               { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
               { text: 'Continue', onPress: () => resolve(true) },
@@ -502,7 +522,10 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           legLabels={legLabels}
           travellers={selectedTravelers.map((t) => ({ id: t.id, firstName: t.firstName, lastName: t.lastName }))}
           addOnSelections={addOnSelections}
-          totalAmount={totalAmount}
+          // The fee being charged (the server's once held), so a "fare change"
+          // row only ever reflects the airline's re-price.
+          totalAmount={totalAmount + convenienceFee}
+          convenienceFee={convenienceFee}
           confirmedAmount={confirmedAmount}
           currencyCode={currencyCode}
           paymentState={paymentState}
@@ -767,7 +790,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
             <CheckCircle2 size={28} color="#1E9E5A" strokeWidth={2} />
             <Text style={styles.paymentSuccessTitle}>Payment Successful</Text>
             <Text style={styles.paymentSuccessSubtitle}>
-              Your payment of {formatMoney(confirmedAmount ?? totalAmount, currencyCode)} was received. Your booking is confirmed.
+              Your payment of {formatMoney(confirmedAmount ?? payableAmount, currencyCode)} was received. Your booking is confirmed.
             </Text>
             {!!bookingResult?.bookingRefNo && (
               <Text style={styles.paymentSuccessSubtitle}>Booking reference: {bookingResult.bookingRefNo}</Text>

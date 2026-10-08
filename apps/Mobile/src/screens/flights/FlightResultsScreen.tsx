@@ -15,6 +15,7 @@ import {
   type FlightSearchSummary,
   type FlightSearchSegment,
   type PassengerCounts,
+  type TripType,
 } from '@workspace/ui';
 import {
   CABIN_CLASS_LABELS,
@@ -1636,7 +1637,9 @@ interface FlightResultsScreenProps {
   onContinueToTravelerDetails: (
     legs: FlightOffer[],
     legLabels: string[] | undefined,
-    passengerCounts: PassengerCounts
+    passengerCounts: PassengerCounts,
+    // The search's trip type — the convenience fee depends on it.
+    tripType: TripType | undefined
   ) => void;
 }
 
@@ -1980,11 +1983,16 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
     // This screen stays mounted under Traveller details, so close the review
     // modal: back lands on the last leg's list with earlier picks kept.
     handleCloseDetails();
-    onContinueToTravelerDetails(chosenLegs, detailsLegLabels, {
-      adult: request?.adultCount ?? 1,
-      child: request?.childCount ?? 0,
-      infant: request?.infantCount ?? 0,
-    });
+    onContinueToTravelerDetails(
+      chosenLegs,
+      detailsLegLabels,
+      {
+        adult: request?.adultCount ?? 1,
+        child: request?.childCount ?? 0,
+        infant: request?.infantCount ?? 0,
+      },
+      request?.tripType
+    );
   };
 
   return (

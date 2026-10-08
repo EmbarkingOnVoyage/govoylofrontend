@@ -58,7 +58,7 @@ export function buildBookingLegs(
 }
 
 // The fare being booked on a leg: the one picked, else the offer's own.
-function bookedFare(leg: FlightOffer) {
+export function bookedFare(leg: FlightOffer) {
   return (
     leg.fares.find((f) => f.fareId === leg.selectedFareId) ??
     leg.fares.find((f) => Math.round(f.bookingTotalAmount) === Math.round(leg.totalAmount))

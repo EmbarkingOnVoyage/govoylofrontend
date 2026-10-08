@@ -62,6 +62,9 @@ export interface CreateBookingResponse {
   // confirms an amount at booking time — fares can change after search. Null
   // means charge the searched price.
   confirmedTotalAmount?: number | null;
+  // GoVoylo's convenience fee as the server calculated it, charged on top of
+  // the fare total — this, not the app's own estimate, is what gets charged.
+  convenienceFee?: number;
 }
 
 // Places a Flyshop Block_Ticket hold (a reversible hold, not a final purchase

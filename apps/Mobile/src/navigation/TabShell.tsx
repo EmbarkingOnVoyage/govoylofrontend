@@ -14,7 +14,7 @@ import { FlightSearchFormScreen } from '../screens/flights/FlightSearchFormScree
 import { FlightResultsScreen } from '../screens/flights/FlightResultsScreen';
 import { TravelerDetailsScreen } from '../screens/flights/TravelerDetailsScreen';
 import { MyTripsScreen } from '../screens/flights/MyTripsScreen';
-import type { FlightOffer, FlightSearchSummary, PassengerCounts } from '@workspace/ui';
+import type { FlightOffer, FlightSearchSummary, PassengerCounts, TripType } from '@workspace/ui';
 import { useHardwareBack } from './useHardwareBack';
 
 type TabKey = 'Home' | 'Deals' | 'MyTrips' | 'Profile';
@@ -92,6 +92,7 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
   // full flightOffers list.
   const [travelerLegs, setTravelerLegs] = useState<FlightOffer[]>([]);
   const [travelerLegLabels, setTravelerLegLabels] = useState<string[] | undefined>(undefined);
+  const [travelerTripType, setTravelerTripType] = useState<TripType | undefined>(undefined);
   const [travelerPassengerCounts, setTravelerPassengerCounts] = useState<PassengerCounts>({
     adult: 1,
     child: 0,
@@ -149,10 +150,11 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
             offers={flightOffers}
             summary={flightSearchSummary}
             onBack={() => setHomeScreen('FlightSearch')}
-            onContinueToTravelerDetails={(legs, legLabels, passengerCounts) => {
+            onContinueToTravelerDetails={(legs, legLabels, passengerCounts, tripType) => {
               setTravelerLegs(legs);
               setTravelerLegLabels(legLabels);
               setTravelerPassengerCounts(passengerCounts);
+              setTravelerTripType(tripType);
               setHomeScreen('TravelerDetails');
             }}
           />,
@@ -163,6 +165,7 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
             legs={travelerLegs}
             legLabels={travelerLegLabels}
             passengerCounts={travelerPassengerCounts}
+            searchTripType={travelerTripType}
             onBack={() => setHomeScreen('FlightResults')}
             onAddTraveler={() => {
               setEditingTravellerId(null);

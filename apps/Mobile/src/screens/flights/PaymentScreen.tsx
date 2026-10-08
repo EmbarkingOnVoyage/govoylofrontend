@@ -21,9 +21,12 @@ interface PaymentScreenProps {
   legLabels?: string[];
   travellers: PaymentTraveller[];
   addOnSelections: AddOnSelection[];
-  // Flight fares for every passenger plus add-ons — what Securely pay charges
-  // unless the airline re-prices at booking (confirmedAmount).
+  // Flight fares for every passenger plus add-ons and the convenience fee —
+  // what Securely pay charges unless the airline re-prices at booking
+  // (confirmedAmount).
   totalAmount: number;
+  // GoVoylo's convenience fee, included in totalAmount.
+  convenienceFee: number;
   confirmedAmount: number | null;
   currencyCode: string;
   paymentState: 'idle' | 'processing' | 'success';
@@ -115,6 +118,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   travellers,
   addOnSelections,
   totalAmount,
+  convenienceFee,
   confirmedAmount,
   currencyCode,
   paymentState,
@@ -361,6 +365,13 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                     </View>
                   ) : null}
                 </>
+              ) : null}
+
+              {convenienceFee > 0 ? (
+                <View style={styles.fareRow}>
+                  <Text style={styles.fareLabel}>Convenience Fee</Text>
+                  <Text style={styles.fareValue}>{money(convenienceFee)}</Text>
+                </View>
               ) : null}
 
               {Math.abs(fareChange) >= 1 ? (
