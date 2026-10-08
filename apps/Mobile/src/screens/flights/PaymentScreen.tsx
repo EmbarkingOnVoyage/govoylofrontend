@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, SafeAreaView, ActivityIndicator, BackHandler } from 'react-native';
-import { ArrowLeft, ChevronRight, ChevronUp, ChevronDown, ShieldCheck, CheckCircle2, Lock } from 'lucide-react-native';
+import { ArrowLeft, ChevronRight, ChevronUp, ChevronDown, ShieldCheck, CheckCircle2 } from 'lucide-react-native';
 import { SvgXml } from 'react-native-svg';
 import type { FlightOffer } from '@workspace/ui';
 import { AirlineLogo } from './FlightResultsScreen';
@@ -242,10 +242,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                   <Text style={styles.payButtonText}>Processing…</Text>
                 </>
               ) : (
-                <>
-                  <Lock size={16} color="#FFFFFF" strokeWidth={2} />
-                  <Text style={styles.payButtonText}>Securely pay {money(payable)}</Text>
-                </>
+                <Text style={styles.payButtonText}>Securely pay {money(payable)}</Text>
               )}
             </TouchableOpacity>
           </>
