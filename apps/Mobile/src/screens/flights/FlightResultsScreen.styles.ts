@@ -134,6 +134,14 @@ export const styles = StyleSheet.create({
     backgroundColor: '#7C1AEE',
     borderColor: '#7C1AEE',
   },
+  // Figma Baggage sheet: 1pt rule under the rows, 24pt above Close / Save
+  // (the shared footer adds 16).
+  baggageSheetDivider: {
+    height: 1,
+    backgroundColor: '#CCD3E0',
+    marginTop: 2,
+    marginBottom: 8,
+  },
   modalActionsRow: {
     flexDirection: 'row',
     gap: 8,

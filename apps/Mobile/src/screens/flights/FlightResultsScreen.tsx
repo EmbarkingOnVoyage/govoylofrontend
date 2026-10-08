@@ -71,6 +71,7 @@ import { styles } from './FlightResultsScreen.styles';
 import insuranceBannerSrc from '../../assets/images/insurance-banner.png';
 import { AIRLINE_LOGO_XML } from '@workspace/ui/src/assets/airlines/airlineLogos';
 import { useHardwareBack } from '../../navigation/useHardwareBack';
+import { BAGGAGE_ICON_SVG } from '../../components/figmaIcons';
 const insuranceBanner = insuranceBannerSrc as unknown as number;
 
 // Falls back to a code-only stand-in when the airport isn't in the app's small
@@ -243,6 +244,62 @@ const ModalActions: React.FC<{ onClose: () => void; onSave: () => void }> = ({ o
     </TouchableOpacity>
   </View>
 );
+
+// Figma "Modal (Mobile) / Baggage": the Bags chip's sheet. Ticking a row keeps
+// only flights whose fare includes that allowance (1 bag of the same
+// cabinBags / checkedBags filter the Filter screen's steppers set by count).
+// maxBags caps the Filter screen's steppers at the most pieces fares offer
+// (one cabin bag, two checked), same as web.
+const BAGGAGE_ROWS = [
+  { key: 'cabinBags', label: 'Cabin baggage', icon: BAGGAGE_ICON_SVG.cabin, maxBags: 1 },
+  { key: 'checkedBags', label: 'Checked baggage', icon: BAGGAGE_ICON_SVG.checked, maxBags: 2 },
+] as const;
+
+type BaggageSelection = { cabinBags: boolean; checkedBags: boolean };
+
+const BaggageModal: React.FC<{
+  visible: boolean;
+  applied: BaggageSelection;
+  onSave: (selected: BaggageSelection) => void;
+  onClose: () => void;
+}> = ({ visible, applied, onSave, onClose }) => {
+  const [pending, setPending] = useState<BaggageSelection>(applied);
+
+  useEffect(() => {
+    if (visible) setPending(applied);
+  }, [visible, applied]);
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={styles.modalRoot}>
+        <TouchableOpacity style={styles.modalBackdrop} activeOpacity={1} onPress={onClose} />
+        <View style={styles.modalSheet}>
+          <Text style={styles.modalTitle}>Baggage</Text>
+          {BAGGAGE_ROWS.map((row) => {
+            const isChecked = pending[row.key];
+            return (
+              <TouchableOpacity
+                key={row.key}
+                style={styles.checkRow}
+                onPress={() => setPending((prev) => ({ ...prev, [row.key]: !prev[row.key] }))}
+              >
+                <View style={styles.checkRowLeft}>
+                  <SvgXml xml={row.icon.replace(/COLOR/g, '#182339')} width={20} height={20} />
+                  <Text style={styles.checkRowLabel}>{row.label}</Text>
+                </View>
+                <View style={[styles.checkbox, isChecked && styles.checkboxChecked]}>
+                  {isChecked && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+          <View style={styles.baggageSheetDivider} />
+          <ModalActions onClose={onClose} onSave={() => onSave(pending)} />
+        </View>
+      </View>
+    </Modal>
+  );
+};
 
 const AirlineModal: React.FC<{
   visible: boolean;
@@ -616,23 +673,25 @@ const FilterScreen: React.FC<{
             {tab === 'baggage' && (
               <>
                 <Text style={styles.timeSectionLabel}>Baggage</Text>
-                <Text style={styles.filterBaggageNote}>
-                  Not connected to real fare data yet — adjusting this doesn't change the results below.
-                </Text>
-                {(['Cabin baggage', 'Checked baggage'] as const).map((label) => (
-                  <View key={label} style={styles.baggageStepperRow}>
-                    <Text style={styles.checkRowLabel}>{label}</Text>
-                    <View style={styles.baggageStepper}>
-                      <View style={styles.baggageStepperButton}>
-                        <Minus size={14} color="#697691" strokeWidth={2} />
-                      </View>
-                      <Text style={styles.baggageStepperValue}>0</Text>
-                      <View style={styles.baggageStepperButton}>
-                        <Plus size={14} color="#697691" strokeWidth={2} />
+                {BAGGAGE_ROWS.map(({ key, label, maxBags }) => {
+                  const count = pending[key] ?? 0;
+                  const step = (delta: number) =>
+                    setPending((prev) => ({ ...prev, [key]: Math.min(maxBags, Math.max(0, (prev[key] ?? 0) + delta)) }));
+                  return (
+                    <View key={key} style={styles.baggageStepperRow}>
+                      <Text style={styles.checkRowLabel}>{label}</Text>
+                      <View style={styles.baggageStepper}>
+                        <TouchableOpacity style={styles.baggageStepperButton} onPress={() => step(-1)} disabled={count === 0}>
+                          <Minus size={14} color="#697691" strokeWidth={2} />
+                        </TouchableOpacity>
+                        <Text style={styles.baggageStepperValue}>{count}</Text>
+                        <TouchableOpacity style={styles.baggageStepperButton} onPress={() => step(1)} disabled={count === maxBags}>
+                          <Plus size={14} color="#697691" strokeWidth={2} />
+                        </TouchableOpacity>
                       </View>
                     </View>
-                  </View>
-                ))}
+                  );
+                })}
               </>
             )}
 
@@ -742,6 +801,8 @@ const FilterScreen: React.FC<{
                   time: { departure: null, arrival: null },
                   priceMax: null,
                   durationMax: null,
+                  cabinBags: 0,
+                  checkedBags: 0,
                 });
                 setSliderResetKey((k) => k + 1);
               }}
@@ -1391,6 +1452,8 @@ const FilterBar: React.FC<{
   onToggleNonStop: () => void;
   onSortPress: () => void;
   sortActive: boolean;
+  onBagsPress: () => void;
+  bagsActive: boolean;
   onAirlinePress: () => void;
   airlineActive: boolean;
   onLayoverPress: () => void;
@@ -1404,6 +1467,8 @@ const FilterBar: React.FC<{
   onToggleNonStop,
   onSortPress,
   sortActive,
+  onBagsPress,
+  bagsActive,
   onAirlinePress,
   airlineActive,
   onLayoverPress,
@@ -1438,9 +1503,9 @@ const FilterBar: React.FC<{
     >
       <Text style={[styles.filterChipText, nonStopOnly && styles.filterChipTextActive]}>Non stop</Text>
     </TouchableOpacity>
-    <TouchableOpacity style={styles.filterChip}>
-      <Text style={styles.filterChipText}>Bags</Text>
-      <ChevronDown size={14} color="#3E4B64" strokeWidth={2} />
+    <TouchableOpacity style={[styles.filterChip, bagsActive && styles.filterChipActive]} onPress={onBagsPress}>
+      <Text style={[styles.filterChipText, bagsActive && styles.filterChipTextActive]}>Bags</Text>
+      <ChevronDown size={14} color={bagsActive ? '#7C1AEE' : '#3E4B64'} strokeWidth={2} />
     </TouchableOpacity>
     <TouchableOpacity
       style={[styles.filterChip, airlineActive && styles.filterChipActive]}
@@ -1587,6 +1652,7 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [activeSortId, setActiveSortId] = useState<SortOptionId | null>(null);
   const [airlineModalVisible, setAirlineModalVisible] = useState(false);
+  const [baggageModalVisible, setBaggageModalVisible] = useState(false);
   const [layoverModalVisible, setLayoverModalVisible] = useState(false);
   const [timeModalVisible, setTimeModalVisible] = useState(false);
   const [filterScreenVisible, setFilterScreenVisible] = useState(false);
@@ -1599,6 +1665,10 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   // chips (Non stop, Airline, Time) both read and write — one shared source
   // of truth so either path stays in sync with the other.
   const [combinedFilters, setCombinedFilters] = useState<CombinedFilterState>(() => initialFilters(summary));
+  const baggageSelection = useMemo(
+    () => ({ cabinBags: !!combinedFilters.cabinBags, checkedBags: !!combinedFilters.checkedBags }),
+    [combinedFilters.cabinBags, combinedFilters.checkedBags]
+  );
   const [roundTripView, setRoundTripView] = useState<RoundTripView>('individual');
   // The sequential-pick flow ("Individual Flights" for round-trip, or the
   // only flow multi-city has): each leg picked so far, in order. Length 0
@@ -1907,6 +1977,9 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   const handleContinueToTraveler = (selectedFares: (FareOption | undefined)[]) => {
     const chosenLegs = detailsLegs.map((leg, i) => (selectedFares[i] ? pinFare(leg, selectedFares[i]!) : leg));
     const request = activeSummary?.request;
+    // This screen stays mounted under Traveller details, so close the review
+    // modal: back lands on the last leg's list with earlier picks kept.
+    handleCloseDetails();
     onContinueToTravelerDetails(chosenLegs, detailsLegLabels, {
       adult: request?.adultCount ?? 1,
       child: request?.childCount ?? 0,
@@ -1989,6 +2062,8 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
             combinedFilters.stops.size > 0 ||
             combinedFilters.hideNonRefundable ||
             combinedFilters.cabinCheckinBaggage ||
+            !!combinedFilters.cabinBags ||
+            !!combinedFilters.checkedBags ||
             combinedFilters.airlines.size > 0 ||
             combinedFilters.layoverCities.size > 0 ||
             combinedFilters.time.departure !== null ||
@@ -2010,6 +2085,8 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
           }
           onSortPress={() => setSortModalVisible(true)}
           sortActive={activeSortId !== null}
+          onBagsPress={() => setBaggageModalVisible(true)}
+          bagsActive={!!combinedFilters.cabinBags || !!combinedFilters.checkedBags}
           onAirlinePress={() => setAirlineModalVisible(true)}
           airlineActive={combinedFilters.airlines.size > 0}
           onLayoverPress={() => setLayoverModalVisible(true)}
@@ -2027,6 +2104,20 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
           setSortModalVisible(false);
         }}
         onClose={() => setSortModalVisible(false)}
+      />
+
+      <BaggageModal
+        visible={baggageModalVisible}
+        applied={baggageSelection}
+        onSave={(selected) => {
+          setCombinedFilters((prev) => ({
+            ...prev,
+            cabinBags: selected.cabinBags ? Math.max(1, prev.cabinBags ?? 0) : 0,
+            checkedBags: selected.checkedBags ? Math.max(1, prev.checkedBags ?? 0) : 0,
+          }));
+          setBaggageModalVisible(false);
+        }}
+        onClose={() => setBaggageModalVisible(false)}
       />
 
       <AirlineModal

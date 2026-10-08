@@ -24,6 +24,17 @@ type TabKey = 'Home' | 'Deals' | 'MyTrips' | 'Profile';
 // bottom-tab selection, mirroring the Profile tab's sub-stack pattern below.
 type HomeStackScreen = 'Buttons' | 'FlightSearch' | 'FlightResults' | 'TravelerDetails' | 'AddTraveler';
 
+// Position of each Home screen in the flight flow. Screens below the current
+// one stay mounted (hidden) so going back returns to them exactly as they were
+// left — filled-in search form, picked onward leg, selected travellers.
+const HOME_DEPTH: Record<HomeStackScreen, number> = {
+  Buttons: 0,
+  FlightSearch: 1,
+  FlightResults: 2,
+  TravelerDetails: 3,
+  AddTraveler: 4,
+};
+
 // The Profile tab has its own internal stack (hub -> Personal details -> ...)
 // separate from the bottom-tab selection, since navigating into a profile
 // sub-page shouldn't change which tab is highlighted.
@@ -99,9 +110,30 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
   });
 
   const renderHomeStack = () => {
-    switch (homeScreen) {
-      case 'FlightSearch':
-        return (
+    if (homeScreen === 'Buttons') {
+      return (
+        <HomeScreen
+          onSelectFlightsAndHotels={() => {}}
+          onSelectHotels={() => {}}
+          onSelectFlights={() => setHomeScreen('FlightSearch')}
+        />
+      );
+    }
+
+    // Every flow screen up to the current one, in a fixed order so React keeps
+    // each instance; only the current one is shown.
+    const depth = HOME_DEPTH[homeScreen];
+    const layer = (screen: HomeStackScreen, node: React.ReactNode) =>
+      HOME_DEPTH[screen] <= depth ? (
+        <View key={screen} style={screen === homeScreen ? styles.homeLayer : styles.hiddenHomeLayer}>
+          {node}
+        </View>
+      ) : null;
+
+    return (
+      <>
+        {layer(
+          'FlightSearch',
           <FlightSearchFormScreen
             onBack={() => setHomeScreen('Buttons')}
             onResults={(offers, summary) => {
@@ -109,10 +141,10 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
               setFlightSearchSummary(summary);
               setHomeScreen('FlightResults');
             }}
-          />
-        );
-      case 'FlightResults':
-        return (
+          />,
+        )}
+        {layer(
+          'FlightResults',
           <FlightResultsScreen
             offers={flightOffers}
             summary={flightSearchSummary}
@@ -123,10 +155,10 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
               setTravelerPassengerCounts(passengerCounts);
               setHomeScreen('TravelerDetails');
             }}
-          />
-        );
-      case 'TravelerDetails':
-        return (
+          />,
+        )}
+        {layer(
+          'TravelerDetails',
           <TravelerDetailsScreen
             legs={travelerLegs}
             legLabels={travelerLegLabels}
@@ -140,25 +172,17 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
               setEditingTravellerId(id);
               setHomeScreen('AddTraveler');
             }}
-          />
-        );
-      case 'AddTraveler':
-        return (
+          />,
+        )}
+        {layer(
+          'AddTraveler',
           <CoTravellerFormScreen
             travellerId={editingTravellerId}
             onDone={() => setHomeScreen('TravelerDetails')}
-          />
-        );
-      case 'Buttons':
-      default:
-        return (
-          <HomeScreen
-            onSelectFlightsAndHotels={() => {}}
-            onSelectHotels={() => {}}
-            onSelectFlights={() => setHomeScreen('FlightSearch')}
-          />
-        );
-    }
+          />,
+        )}
+      </>
+    );
   };
 
   const renderProfileStack = () => {
@@ -260,6 +284,8 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   content: { flex: 1 },
+  homeLayer: { flex: 1 },
+  hiddenHomeLayer: { display: 'none' },
   tabBarSafeArea: { backgroundColor: '#FFFFFF' },
   // Figma tab bar: 1pt #CCD3E0 rule, 20pt glyphs 10pt below it, 13/16
   // Medium labels 2pt under the glyph.
