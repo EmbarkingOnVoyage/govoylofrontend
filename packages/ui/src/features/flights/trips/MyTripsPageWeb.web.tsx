@@ -134,7 +134,7 @@ export const MyTripsPageWeb: React.FC<{
           ) : (
             <div className="text-right">
               <div className="text-[10px] font-semibold text-[#697691]">TOTAL</div>
-              <div className="text-sm font-bold text-[#182339]">{formatCurrency(trip.totalAmount, trip.currencyCode)}</div>
+              <div className="text-sm font-bold text-[#182339]">{formatCurrency(trip.totalPaid || trip.totalAmount, trip.currencyCode)}</div>
             </div>
           )}
         </div>
