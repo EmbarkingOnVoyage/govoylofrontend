@@ -1,3 +1,4 @@
+import { formatPrice } from './flightResults';
 import type { TripBooking, TripBookingDetails, TripBookingSegment } from '../useMyTripsMobile';
 
 // The supplier's status at booking time: 11-Success (ticketed), 22-Failed,
@@ -65,8 +66,9 @@ export function formatDuration(minutes: number): string {
   return h ? `${h}h ${m}m` : `${m}m`;
 }
 
+// Same rules as every other price in the app (paise only when there are any).
 export function formatCurrency(amount: number, currencyCode: string): string {
-  return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${Math.round(amount).toLocaleString('en-IN')}`;
+  return formatPrice(amount, currencyCode);
 }
 
 export function passengerCount(booking: TripBooking): number {
