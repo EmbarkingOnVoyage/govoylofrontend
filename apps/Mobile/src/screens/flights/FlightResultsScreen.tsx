@@ -1189,9 +1189,11 @@ const FlightDetailsModal: React.FC<{
   const selectedFare = sortedFares.find((f) => f.fareId === activeSelection.fareId) ?? sortedFares[0];
 
   const perLegSelectedFares = legs.map((leg, i) => resolveSelectedFare(leg, legSelections[i] ?? { tier: null, fareId: null }));
+  // The footer reads "for N Travellers", so it shows the fare for every
+  // searched passenger (bookingTotalAmount), not the per-adult figure.
   const footerAmount = isMultiLegView
-    ? perLegSelectedFares.reduce((sum, fare) => sum + (fare?.totalAmount ?? 0), 0)
-    : selectedFare?.totalAmount;
+    ? perLegSelectedFares.reduce((sum, fare) => sum + (fare?.bookingTotalAmount ?? 0), 0)
+    : selectedFare?.bookingTotalAmount;
   const footerCurrency = selectedFare?.currencyCode ?? activeOffer.currencyCode;
   // Every leg must have a fare selected for a combined total to mean
   // anything — a leg with no fares at all leaves part of the sum missing.
@@ -1360,7 +1362,7 @@ const FlightDetailsModal: React.FC<{
           <View style={styles.detailsFooter}>
             <View>
               <Text style={styles.detailsFooterPrice}>
-                {footerReady ? `${formatPrice(footerAmount!, footerCurrency)}/adult` : '--'}
+                {footerReady ? formatPrice(footerAmount!, footerCurrency) : '--'}
               </Text>
               <Text style={styles.detailsFooterTravellerCount}>
                 for {passengerCount} Traveller{passengerCount > 1 ? 's' : ''}
