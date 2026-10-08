@@ -20,6 +20,10 @@ export default defineConfig(({ mode }) => {
       alias: {
         // Contract Enforcement: Map all mobile imports safely to web primitives
         'react-native': 'react-native-web',
+        // Shared mobile screens in @workspace/ui (e.g. LoginFeature) import
+        // icons from lucide-react-native, which needs react-native-svg's native
+        // code; lucide-react exports the same icons for the web.
+        'lucide-react-native': 'lucide-react',
         '@workspace/styles': path.resolve(__dirname, '../../packages/src/styles'),
         '@workspace/loginbuttonstyles': path.resolve(__dirname, '../../packages/src/styles/base/baseButtonstyles.ts')
       },
