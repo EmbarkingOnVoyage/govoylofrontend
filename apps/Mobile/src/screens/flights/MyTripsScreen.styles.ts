@@ -134,7 +134,7 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 16,
   },
   listTitle: {
     fontSize: 16,
@@ -305,11 +305,12 @@ export const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: 6,
-    marginTop: 18,
+    marginTop: 12,
     marginHorizontal: -8,
   },
   primaryButton: {
     flex: 1,
+    flexBasis: 0,
     height: 46,
     borderRadius: 13,
     backgroundColor: PURPLE,
@@ -326,6 +327,7 @@ export const styles = StyleSheet.create({
   },
   secondaryButton: {
     flex: 1,
+    flexBasis: 0,
     height: 46,
     borderRadius: 13,
     borderWidth: 1,

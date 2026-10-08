@@ -78,6 +78,8 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    paddingVertical: 6,
+    paddingLeft: 10,
   },
   flightRowDivided: {
     borderTopWidth: 1,
@@ -136,9 +138,9 @@ export const styles = StyleSheet.create({
     marginTop: 1,
   },
   sectionTitle: {
-    fontSize: 16.5,
+    fontSize: 16,
     lineHeight: 22,
-    fontWeight: '500',
+    fontWeight: '700',
     color: INK,
   },
   sectionHeader: {
@@ -195,8 +197,9 @@ export const styles = StyleSheet.create({
     color: '#697691',
   },
   fareValue: {
-    fontSize: 16,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '500',
     color: INK,
   },
   fareDivider: {
@@ -212,8 +215,8 @@ export const styles = StyleSheet.create({
     color: INK,
   },
   totalValue: {
-    fontSize: 19.5,
-    lineHeight: 24,
+    fontSize: 16,
+    lineHeight: 22,
     fontWeight: '700',
     color: INK,
   },
