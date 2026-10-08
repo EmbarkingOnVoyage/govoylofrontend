@@ -215,7 +215,7 @@ export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onExploreTrips }) 
           ) : (
             <View style={{ alignItems: 'flex-end' }}>
               <Text style={styles.metaLabel}>TOTAL</Text>
-              <Text style={styles.amountText}>{formatCurrency(item.totalAmount, item.currencyCode)}</Text>
+              <Text style={styles.amountText}>{formatCurrency(item.totalPaid || item.totalAmount, item.currencyCode)}</Text>
             </View>
           )}
         </View>
