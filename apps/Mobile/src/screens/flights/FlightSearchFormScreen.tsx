@@ -63,13 +63,6 @@ function parseDisplayDateLocal(display: string): Date | null {
   return new Date(Number(year), Number(month) - 1, Number(day));
 }
 
-// type SubScreen =
-//   | { type: 'form' }
-//   | { type: 'airportSearch'; field: 'origin' | 'destination'; segmentIndex: number | null }
-//   | { type: 'calendar'; field: 'departure' | 'return'; segmentIndex: number | null }
-//   | { type: 'travellers' };
-
-
 type SubScreen =
   | { type: 'form' }
   | {
@@ -153,10 +146,6 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
     setOrigin(destination);
     setDestination(prevOrigin);
   };
-
-  // const updateMultiCitySegment = (index: number, patch: Partial<MultiCitySegment>) => {
-  //   setMultiCitySegments((prev) => prev.map((seg, i) => (i === index ? { ...seg, ...patch } : seg)));
-  // };
 
   const updateMultiCitySegment = (
   index: number,
@@ -295,57 +284,6 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
       />
     );
   }
-
-  // if (subScreen.type === 'calendar') {
-  //   const segIndex = subScreen.segmentIndex;
-  //   const currentOrigin = segIndex !== null ? multiCitySegments[segIndex].origin : origin;
-  //   const currentDestination = segIndex !== null ? multiCitySegments[segIndex].destination : destination;
-  //   const currentValue = segIndex !== null ? multiCitySegments[segIndex].date : subScreen.field === 'departure' ? departureDate : returnDate;
-  //   // Each multi-city leg must depart on or after the previous leg's date —
-  //   // round-trip's return leg has the same constraint against its departure.
-  //   const minDate =
-  //     segIndex !== null && segIndex > 0
-  //       ? parseDisplayDateLocal(multiCitySegments[segIndex - 1].date) ?? undefined
-  //       : subScreen.field === 'return'
-  //       ? parseDisplayDateLocal(departureDate) ?? undefined
-  //       : undefined;
-
-  //   return (
-  //     <FareCalendarScreen
-  //       title={
-  //         currentOrigin && currentDestination
-  //           ? `${currentOrigin.city} → ${currentDestination.city}`
-  //           : subScreen.field === 'departure'
-  //           ? 'Departure date'
-  //           : 'Return date'
-  //       }
-  //       footerLabel={subScreen.field === 'departure' ? 'Departure date' : 'Return date'}
-  //       initialDate={parseDisplayDate(currentValue)}
-  //       minDate={minDate}
-  //       origin={currentOrigin?.code}
-  //       destination={currentDestination?.code}
-  //       onBack={() => setSubScreen({ type: 'form' })}
-  //       onConfirm={(date) => {
-  //         const formatted = formatDisplayDate(date);
-  //         if (segIndex !== null) {
-  //           updateMultiCitySegment(segIndex, { date: formatted });
-  //         } else if (subScreen.field === 'departure') {
-  //           setDepartureDate(formatted);
-  //         } else {
-  //           setReturnDate(formatted);
-  //           // Adding a return date is what makes this a round trip — the "Add
-  //           // for discount" nudge on the One way tab shouldn't leave the tab
-  //           // saying "One way" once it stops being one.
-  //           if (tripType === 'OneWay') {
-  //             setTripType('RoundTrip');
-  //           }
-  //         }
-  //         setSubScreen({ type: 'form' });
-  //       }}
-  //     />
-  //   );
-  // }
-
 
   if (subScreen.type === 'calendar') {
   const segIndex = subScreen.segmentIndex;
