@@ -14,7 +14,8 @@ const EMPTY_MS = 800;
 const RETURN_MS = 400;
 
 // Plane start, relative to its resting place (bbox x -140..0, y 69.5..81).
-const PLANE_START_X = 470;
+// Far enough right that the small plane is fully hidden while the clouds rest.
+const PLANE_START_X = 560;
 const PLANE_START_Y = -66;
 const PLANE_START_SCALE = 0.4;
 const CLOUDS_OUT_X = -330;
@@ -36,7 +37,7 @@ export const FlightsTile: React.FC<FlightsTileProps> = ({ onPress }) => {
           Animated.timing(plane, {
             toValue: 1,
             duration: FLY_MS,
-            easing: Easing.inOut(Easing.quad),
+            easing: Easing.linear,
             useNativeDriver: true,
           }),
           Animated.sequence([
