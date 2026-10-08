@@ -246,16 +246,14 @@ const ModalActions: React.FC<{ onClose: () => void; onSave: () => void }> = ({ o
 );
 
 // Figma "Modal (Mobile) / Baggage": the Bags chip's sheet. Ticking a row keeps
-// only flights whose fare includes that allowance (same cabinBags /
-// checkedBags filter the Filter screen's Baggage steppers set).
+// only flights whose fare includes that allowance (1 bag of the same
+// cabinBags / checkedBags filter the Filter screen's steppers set by count).
+// maxBags caps the Filter screen's steppers at the most pieces fares offer
+// (one cabin bag, two checked), same as web.
 const BAGGAGE_ROWS = [
-  { key: 'cabinBags', label: 'Cabin baggage', icon: BAGGAGE_ICON_SVG.cabin },
-  { key: 'checkedBags', label: 'Checked baggage', icon: BAGGAGE_ICON_SVG.checked },
+  { key: 'cabinBags', label: 'Cabin baggage', icon: BAGGAGE_ICON_SVG.cabin, maxBags: 1 },
+  { key: 'checkedBags', label: 'Checked baggage', icon: BAGGAGE_ICON_SVG.checked, maxBags: 2 },
 ] as const;
-
-// Fares only say whether an allowance is included, so any count from 1 up
-// filters the same way; the steppers stop at a sensible bag count.
-const MAX_BAGS = 3;
 
 type BaggageSelection = { cabinBags: boolean; checkedBags: boolean };
 
@@ -675,10 +673,10 @@ const FilterScreen: React.FC<{
             {tab === 'baggage' && (
               <>
                 <Text style={styles.timeSectionLabel}>Baggage</Text>
-                {BAGGAGE_ROWS.map(({ key, label }) => {
+                {BAGGAGE_ROWS.map(({ key, label, maxBags }) => {
                   const count = pending[key] ?? 0;
                   const step = (delta: number) =>
-                    setPending((prev) => ({ ...prev, [key]: Math.min(MAX_BAGS, Math.max(0, (prev[key] ?? 0) + delta)) }));
+                    setPending((prev) => ({ ...prev, [key]: Math.min(maxBags, Math.max(0, (prev[key] ?? 0) + delta)) }));
                   return (
                     <View key={key} style={styles.baggageStepperRow}>
                       <Text style={styles.checkRowLabel}>{label}</Text>
@@ -687,7 +685,7 @@ const FilterScreen: React.FC<{
                           <Minus size={14} color="#697691" strokeWidth={2} />
                         </TouchableOpacity>
                         <Text style={styles.baggageStepperValue}>{count}</Text>
-                        <TouchableOpacity style={styles.baggageStepperButton} onPress={() => step(1)} disabled={count === MAX_BAGS}>
+                        <TouchableOpacity style={styles.baggageStepperButton} onPress={() => step(1)} disabled={count === maxBags}>
                           <Plus size={14} color="#697691" strokeWidth={2} />
                         </TouchableOpacity>
                       </View>
