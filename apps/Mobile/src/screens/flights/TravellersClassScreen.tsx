@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, SafeAreaView } from 'react-na
 import { ArrowLeft, Minus, Plus } from 'lucide-react-native';
 import type { CabinClass } from '@workspace/ui';
 import { styles } from './TravellersClassScreen.styles';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 const CABIN_CLASS_OPTIONS: { label: string; value: CabinClass }[] = [
   { label: 'Economy', value: 'Economy' },
@@ -28,6 +29,8 @@ export const TravellersClassScreen: React.FC<TravellersClassScreenProps> = ({
   onConfirm,
   onBack,
 }) => {
+  useHardwareBack(() => onBack());
+
   const [adultCount, setAdultCount] = useState(initialAdults);
   const [childCount, setChildCount] = useState(initialChildren);
   const [infantCount, setInfantCount] = useState(initialInfants);

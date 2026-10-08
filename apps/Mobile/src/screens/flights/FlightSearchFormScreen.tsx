@@ -15,6 +15,7 @@ import { FareCalendarScreen } from './FareCalendarScreen';
 import { TravellersClassScreen } from './TravellersClassScreen';
 import type { Airport } from '../../data/airports';
 import { styles } from './FlightSearchFormScreen.styles';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 // Exported so the results screen's "edit" overlay (FlightResultsScreen's
 // toFormInitialValues) can build a compatible list to prefill this form's
@@ -105,6 +106,8 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
   initialValues,
   variant = 'screen',
 }) => {
+  useHardwareBack(() => onBack());
+
   const searchFlights = useSearchFlightsMobile();
 
   const [subScreen, setSubScreen] = useState<SubScreen>({ type: 'form' });

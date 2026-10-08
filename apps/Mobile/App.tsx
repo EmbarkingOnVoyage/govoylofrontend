@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native';
 import { LandingScreen } from './src/screens/LandingScreen';
 import { TabShell } from './src/navigation/TabShell';
 import { applyInterFont, INTER_FONTS } from './src/theme/interFont';
+import { useHardwareBack } from './src/navigation/useHardwareBack';
 
 // Every screen renders in Inter, the design's typeface (see interFont.ts).
 applyInterFont();
@@ -23,6 +24,21 @@ export default function App() {
     }
     navigateByRule(rule);
   };
+
+  // Android back at the shell level: sign-in steps go back one step, and a
+  // guest on Home returns to the welcome screen. A signed-in user on Home (or
+  // anyone on the welcome screen) gets Android's default, which closes the app.
+  useHardwareBack(() => {
+    if (currentScreen !== 'Landing') {
+      handleNavigate('ON_BACK');
+      return true;
+    }
+    if (isGuest && !isLoggedIn) {
+      setIsGuest(false);
+      return true;
+    }
+    return false;
+  });
 
   const handleSignOut = () => {
     authContextCache.clearSession();

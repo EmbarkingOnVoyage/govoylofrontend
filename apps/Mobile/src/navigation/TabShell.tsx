@@ -15,6 +15,7 @@ import { FlightResultsScreen } from '../screens/flights/FlightResultsScreen';
 import { TravelerDetailsScreen } from '../screens/flights/TravelerDetailsScreen';
 import { MyTripsScreen } from '../screens/flights/MyTripsScreen';
 import type { FlightOffer, FlightSearchSummary, PassengerCounts } from '@workspace/ui';
+import { useHardwareBack } from './useHardwareBack';
 
 type TabKey = 'Home' | 'Deals' | 'MyTrips' | 'Profile';
 
@@ -84,6 +85,17 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
     adult: 1,
     child: 0,
     infant: 0,
+  });
+
+  // Android back on a tab's root screen goes to the Home tab; on Home's root
+  // it passes through (App decides). Screens deeper in a stack register their
+  // own handler and get the press first.
+  useHardwareBack(() => {
+    if (activeTab !== 'Home') {
+      setActiveTab('Home');
+      return true;
+    }
+    return false;
   });
 
   const renderHomeStack = () => {
@@ -203,7 +215,7 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
       case 'Home':
         return renderHomeStack();
       case 'Deals':
-        return <PlaceholderScreen title="Deals" onBack={() => {}} />;
+        return <PlaceholderScreen title="Deals" onBack={() => setActiveTab('Home')} />;
       case 'MyTrips':
         return (
           <MyTripsScreen

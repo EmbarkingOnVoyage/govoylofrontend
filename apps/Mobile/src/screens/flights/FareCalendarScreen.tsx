@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, FlatList, SafeAreaView } from 'react-nati
 import { ArrowLeft } from 'lucide-react-native';
 import { useFareCalendarMobile, useHolidaysMobile, type FareCalendarDay, type Holiday } from '@workspace/ui';
 import { styles } from './FareCalendarScreen.styles';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 const WEEKDAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const MONTH_NAMES = [
@@ -248,6 +249,8 @@ export const FareCalendarScreen: React.FC<FareCalendarScreenProps> = ({
   onConfirm,
   onBack,
 }) => {
+  useHardwareBack(() => onBack());
+
   const [selected, setSelected] = useState<Date | null>(initialDate ? new Date(initialDate) : null);
   const [monthCount, setMonthCount] = useState(INITIAL_MONTHS);
 
