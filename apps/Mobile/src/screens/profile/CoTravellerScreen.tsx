@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react-native';
 import { useTravellersMobile, useDeleteTravellerMobile, type Traveler } from '@workspace/ui';
 import { styles } from './CoTravellerScreen.styles';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 const AVATAR_COLORS = ['#DC9898', '#A8DC98', '#A8C6DC', '#DCC998'];
 
@@ -25,6 +26,8 @@ interface CoTravellerScreenProps {
 }
 
 export const CoTravellerScreen: React.FC<CoTravellerScreenProps> = ({ onBack, onAdd, onEdit }) => {
+  useHardwareBack(() => onBack());
+
   const { data: travellers, isLoading } = useTravellersMobile();
   const deleteTraveller = useDeleteTravellerMobile();
 

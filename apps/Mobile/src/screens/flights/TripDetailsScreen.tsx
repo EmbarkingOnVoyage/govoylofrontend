@@ -24,6 +24,7 @@ import {
   formatShortDate,
   formatTime24,
 } from '@workspace/ui/src/features/flights/logic/myTrips';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 interface TripDetailsScreenProps {
   tripBookingId: string;
@@ -57,6 +58,8 @@ function initials(first: string, last: string): string {
 }
 
 export const TripDetailsScreen: React.FC<TripDetailsScreenProps> = ({ tripBookingId, onBack }) => {
+  useHardwareBack(() => onBack());
+
   const { data, isLoading, isError, refetch } = useTripBookingDetailsMobile(tripBookingId);
   const releaseHold = useCancelTripBookingMobile();
   const [cancelOpen, setCancelOpen] = useState(false);

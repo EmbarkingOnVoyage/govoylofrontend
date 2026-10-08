@@ -12,6 +12,7 @@ import {
   type Airport,
 } from '../../data/airports';
 import { styles } from './AirportSearchScreen.styles';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 export type AirportField = 'origin' | 'destination';
 
@@ -44,6 +45,8 @@ export const AirportSearchScreen: React.FC<AirportSearchScreenProps> = ({
   onSelect,
   onBack,
 }) => {
+  useHardwareBack(() => onBack());
+
   const [field, setField] = useState<AirportField>(initialField);
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');

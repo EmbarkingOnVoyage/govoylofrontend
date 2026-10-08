@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft } from 'lucide-react-native';
+import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 interface PlaceholderScreenProps {
   title: string;
@@ -10,7 +11,9 @@ interface PlaceholderScreenProps {
 
 // Matches the same "coming soon" convention already used by the web app's
 // ProfileStep1 for any tab that doesn't have a built-out screen yet.
-export const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ title, onBack }) => (
+export const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ title, onBack }) => {
+  useHardwareBack(() => onBack());
+  return (
   <View style={styles.screen}>
     <LinearGradient colors={['#7C1AEE', '#7C1AEE']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
       <SafeAreaView>
@@ -26,7 +29,8 @@ export const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ title, onB
       <Text style={styles.text}>Component for "{title}" view coming soon!</Text>
     </View>
   </View>
-);
+  );
+};
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#FFFFFF' },
