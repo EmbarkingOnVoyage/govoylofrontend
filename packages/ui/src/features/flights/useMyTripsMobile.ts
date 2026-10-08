@@ -43,6 +43,9 @@ export interface TripBooking {
   // GoVoylo's non-refundable convenience fee, paid on top of totalAmount
   // (0 for bookings made before it existed).
   convenienceFee?: number;
+  // Everything the customer paid: fare, add-ons and convenience fee. Use this,
+  // not totalAmount (the supplier's fare), wherever "paid" is shown.
+  totalPaid?: number;
 }
 
 // legIndex: which leg of the booking the flight belongs to (0 outbound, 1 return).
