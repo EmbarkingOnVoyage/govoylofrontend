@@ -3,6 +3,7 @@ import type { FareOption, FlightOffer, FlightSearchSummary } from '../useSearchF
 import {
   EMPTY_COMBINED_FILTERS,
   applyCombinedFilters,
+  baggagePieces,
   buildRoundTripPackages,
   cabinTierForFare,
   cheapestFareSelection,
@@ -197,5 +198,33 @@ describe('display helpers', () => {
     expect(hasCheckInBaggage(offer('a', { fares: [fare({ checkInBaggage: '15 KG' })] }))).toBe(true);
     expect(hasCheckInBaggage(offer('b', { fares: [fare({ checkInBaggage: '0 KG' })] }))).toBe(false);
     expect(hasCheckInBaggage(offer('c', { fares: [fare({ checkInBaggage: null })] }))).toBe(false);
+  });
+
+  test('baggage texts are read as a number of pieces', () => {
+    // Formats seen in UAT search results.
+    expect(baggagePieces('30 Kg (2 pcs)')).toBe(2);
+    expect(baggagePieces('40 Kg (2 pcs)')).toBe(2);
+    expect(baggagePieces('12 Kg (1 pc)')).toBe(1);
+    expect(baggagePieces('15 Kg (01 Piece only)')).toBe(1);
+    expect(baggagePieces('1 Piece, 7 Kilogram each')).toBe(1);
+    expect(baggagePieces('15 Kg')).toBe(1);
+    expect(baggagePieces('30KG')).toBe(1);
+    expect(baggagePieces('0 KG')).toBe(0);
+    expect(baggagePieces('NIL')).toBe(0);
+    expect(baggagePieces(null)).toBe(0);
+  });
+
+  test('the bag steppers keep offers whose fare allows that many pieces', () => {
+    const oneBag = offer('one', { fares: [fare({ checkInBaggage: '15 Kg', handBaggage: '7 Kg' })] });
+    const twoBags = offer('two', {
+      fares: [fare({ checkInBaggage: '15 Kg' }), fare({ checkInBaggage: '30 Kg (2 pcs)', handBaggage: '12 Kg (1 pc)' })],
+    });
+    const none = offer('none', { fares: [fare({ checkInBaggage: '0 KG', handBaggage: null })] });
+    const ids = (state: Partial<typeof EMPTY_COMBINED_FILTERS>) =>
+      applyCombinedFilters([oneBag, twoBags, none], { ...EMPTY_COMBINED_FILTERS, ...state }, () => '').map((o) => o.offerId);
+    expect(ids({ checkedBags: 1 })).toEqual(['one', 'two']);
+    expect(ids({ checkedBags: 2 })).toEqual(['two']);
+    expect(ids({ cabinBags: 1 })).toEqual(['one', 'two']);
+    expect(ids({})).toEqual(['one', 'two', 'none']);
   });
 });
