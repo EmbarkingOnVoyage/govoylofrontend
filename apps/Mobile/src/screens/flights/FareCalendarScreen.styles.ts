@@ -218,4 +218,21 @@ export const styles = StyleSheet.create({
     lineHeight: 24,
     fontWeight: '600',
   },
+
+  dayCellInRange: {
+  backgroundColor: '#E8F1FF',
+},
+
+dayCellRangeStart: {
+  backgroundColor: '#7C1AEE',
+  borderTopLeftRadius: 8,
+  borderBottomLeftRadius: 8,
+},
+
+dayCellRangeEnd: {
+  backgroundColor: '#7C1AEE',
+  borderTopRightRadius: 8,
+  borderBottomRightRadius: 8,
+},
+
 });

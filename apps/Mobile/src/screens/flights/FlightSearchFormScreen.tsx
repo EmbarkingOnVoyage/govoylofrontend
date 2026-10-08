@@ -63,12 +63,26 @@ function parseDisplayDateLocal(display: string): Date | null {
   return new Date(Number(year), Number(month) - 1, Number(day));
 }
 
+// type SubScreen =
+//   | { type: 'form' }
+//   | { type: 'airportSearch'; field: 'origin' | 'destination'; segmentIndex: number | null }
+//   | { type: 'calendar'; field: 'departure' | 'return'; segmentIndex: number | null }
+//   | { type: 'travellers' };
+
+
 type SubScreen =
   | { type: 'form' }
-  | { type: 'airportSearch'; field: 'origin' | 'destination'; segmentIndex: number | null }
-  | { type: 'calendar'; field: 'departure' | 'return'; segmentIndex: number | null }
+  | {
+      type: 'airportSearch';
+      field: 'origin' | 'destination';
+      segmentIndex: number | null;
+    }
+  | {
+      type: 'calendar';
+      field: 'departure' | 'return';
+      segmentIndex: number | null;
+    }
   | { type: 'travellers' };
-
 // Lets the results screen's "edit" overlay reopen this form pre-filled with the
 // search that's currently showing, instead of a blank form — display-format
 // dates (DD/MM/YYYY) since that's what the form's own date fields use internally.
@@ -140,9 +154,34 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
     setDestination(prevOrigin);
   };
 
-  const updateMultiCitySegment = (index: number, patch: Partial<MultiCitySegment>) => {
-    setMultiCitySegments((prev) => prev.map((seg, i) => (i === index ? { ...seg, ...patch } : seg)));
-  };
+  // const updateMultiCitySegment = (index: number, patch: Partial<MultiCitySegment>) => {
+  //   setMultiCitySegments((prev) => prev.map((seg, i) => (i === index ? { ...seg, ...patch } : seg)));
+  // };
+
+  const updateMultiCitySegment = (
+  index: number,
+  patch: Partial<MultiCitySegment>
+) => {
+  setMultiCitySegments((prev) => {
+    const updated = [...prev];
+
+    updated[index] = {
+      ...updated[index],
+      ...patch,
+    };
+
+    // When the destination of a flight changes,
+    // automatically use it as the origin of the next flight.
+    if (patch.destination && index < updated.length - 1) {
+      updated[index + 1] = {
+        ...updated[index + 1],
+        origin: patch.destination,
+      };
+    }
+
+    return updated;
+  });
+};
 
   const swapMultiCitySegment = (index: number) => {
     setMultiCitySegments((prev) =>
@@ -257,55 +296,213 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
     );
   }
 
+  // if (subScreen.type === 'calendar') {
+  //   const segIndex = subScreen.segmentIndex;
+  //   const currentOrigin = segIndex !== null ? multiCitySegments[segIndex].origin : origin;
+  //   const currentDestination = segIndex !== null ? multiCitySegments[segIndex].destination : destination;
+  //   const currentValue = segIndex !== null ? multiCitySegments[segIndex].date : subScreen.field === 'departure' ? departureDate : returnDate;
+  //   // Each multi-city leg must depart on or after the previous leg's date —
+  //   // round-trip's return leg has the same constraint against its departure.
+  //   const minDate =
+  //     segIndex !== null && segIndex > 0
+  //       ? parseDisplayDateLocal(multiCitySegments[segIndex - 1].date) ?? undefined
+  //       : subScreen.field === 'return'
+  //       ? parseDisplayDateLocal(departureDate) ?? undefined
+  //       : undefined;
+
+  //   return (
+  //     <FareCalendarScreen
+  //       title={
+  //         currentOrigin && currentDestination
+  //           ? `${currentOrigin.city} → ${currentDestination.city}`
+  //           : subScreen.field === 'departure'
+  //           ? 'Departure date'
+  //           : 'Return date'
+  //       }
+  //       footerLabel={subScreen.field === 'departure' ? 'Departure date' : 'Return date'}
+  //       initialDate={parseDisplayDate(currentValue)}
+  //       minDate={minDate}
+  //       origin={currentOrigin?.code}
+  //       destination={currentDestination?.code}
+  //       onBack={() => setSubScreen({ type: 'form' })}
+  //       onConfirm={(date) => {
+  //         const formatted = formatDisplayDate(date);
+  //         if (segIndex !== null) {
+  //           updateMultiCitySegment(segIndex, { date: formatted });
+  //         } else if (subScreen.field === 'departure') {
+  //           setDepartureDate(formatted);
+  //         } else {
+  //           setReturnDate(formatted);
+  //           // Adding a return date is what makes this a round trip — the "Add
+  //           // for discount" nudge on the One way tab shouldn't leave the tab
+  //           // saying "One way" once it stops being one.
+  //           if (tripType === 'OneWay') {
+  //             setTripType('RoundTrip');
+  //           }
+  //         }
+  //         setSubScreen({ type: 'form' });
+  //       }}
+  //     />
+  //   );
+  // }
+
+
   if (subScreen.type === 'calendar') {
-    const segIndex = subScreen.segmentIndex;
-    const currentOrigin = segIndex !== null ? multiCitySegments[segIndex].origin : origin;
-    const currentDestination = segIndex !== null ? multiCitySegments[segIndex].destination : destination;
-    const currentValue = segIndex !== null ? multiCitySegments[segIndex].date : subScreen.field === 'departure' ? departureDate : returnDate;
-    // Each multi-city leg must depart on or after the previous leg's date —
-    // round-trip's return leg has the same constraint against its departure.
-    const minDate =
-      segIndex !== null && segIndex > 0
-        ? parseDisplayDateLocal(multiCitySegments[segIndex - 1].date) ?? undefined
-        : subScreen.field === 'return'
-        ? parseDisplayDateLocal(departureDate) ?? undefined
-        : undefined;
+  const segIndex = subScreen.segmentIndex;
+
+  /*
+   * MULTI CITY
+   * One date per flight segment.
+   */
+  if (segIndex !== null) {
+    const currentSegment =
+      multiCitySegments[segIndex];
 
     return (
       <FareCalendarScreen
         title={
-          currentOrigin && currentDestination
-            ? `${currentOrigin.city} → ${currentDestination.city}`
-            : subScreen.field === 'departure'
-            ? 'Departure date'
-            : 'Return date'
+          currentSegment.origin &&
+          currentSegment.destination
+            ? `${currentSegment.origin.city} → ${currentSegment.destination.city}`
+            : 'Departure date'
         }
-        footerLabel={subScreen.field === 'departure' ? 'Departure date' : 'Return date'}
-        initialDate={parseDisplayDate(currentValue)}
-        minDate={minDate}
-        origin={currentOrigin?.code}
-        destination={currentDestination?.code}
-        onBack={() => setSubScreen({ type: 'form' })}
+        footerLabel="Departure date"
+        initialDate={
+          currentSegment.date || null
+        }
+        minDate={
+          segIndex > 0
+            ? parseDisplayDateLocal(
+                multiCitySegments[
+                  segIndex - 1
+                ].date
+              ) ?? undefined
+            : undefined
+        }
+        origin={
+          currentSegment.origin?.code
+        }
+        destination={
+          currentSegment.destination?.code
+        }
+        selectionMode="single"
+        onBack={() =>
+          setSubScreen({
+            type: 'form',
+          })
+        }
         onConfirm={(date) => {
-          const formatted = formatDisplayDate(date);
-          if (segIndex !== null) {
-            updateMultiCitySegment(segIndex, { date: formatted });
-          } else if (subScreen.field === 'departure') {
-            setDepartureDate(formatted);
-          } else {
-            setReturnDate(formatted);
-            // Adding a return date is what makes this a round trip — the "Add
-            // for discount" nudge on the One way tab shouldn't leave the tab
-            // saying "One way" once it stops being one.
-            if (tripType === 'OneWay') {
-              setTripType('RoundTrip');
+          const formatted =
+            formatDisplayDate(date);
+
+          updateMultiCitySegment(
+            segIndex,
+            {
+              date: formatted,
             }
-          }
-          setSubScreen({ type: 'form' });
+          );
+
+          setSubScreen({
+            type: 'form',
+          });
         }}
       />
     );
   }
+
+  /*
+   * ROUND TRIP
+   * Departure + return are selected
+   * inside the same calendar.
+   */
+  if (tripType === 'RoundTrip') {
+    return (
+      <FareCalendarScreen
+        title={
+          origin && destination
+            ? `${origin.city} → ${destination.city}`
+            : 'Select travel dates'
+        }
+        footerLabel="Travel dates"
+        initialDate={
+          departureDate || null
+        }
+        initialReturnDate={
+          returnDate || null
+        }
+        minDate={
+          undefined
+        }
+        origin={origin?.code}
+        destination={destination?.code}
+        selectionMode="range"
+        onBack={() =>
+          setSubScreen({
+            type: 'form',
+          })
+        }
+        onConfirm={(
+          selectedDeparture,
+          selectedReturn
+        ) => {
+          setDepartureDate(
+            formatDisplayDate(
+              selectedDeparture
+            )
+          );
+
+          if (selectedReturn) {
+            setReturnDate(
+              formatDisplayDate(
+                selectedReturn
+              )
+            );
+          }
+
+          setSubScreen({
+            type: 'form',
+          });
+        }}
+      />
+    );
+  }
+
+  /*
+   * ONE WAY
+   * Existing single-date behavior.
+   */
+  return (
+    <FareCalendarScreen
+      title={
+        origin && destination
+          ? `${origin.city} → ${destination.city}`
+          : 'Departure date'
+      }
+      footerLabel="Departure date"
+      initialDate={
+        departureDate || null
+      }
+      minDate={undefined}
+      origin={origin?.code}
+      destination={destination?.code}
+      selectionMode="single"
+      onBack={() =>
+        setSubScreen({
+          type: 'form',
+        })
+      }
+      onConfirm={(date) => {
+        setDepartureDate(
+          formatDisplayDate(date)
+        );
+
+        setSubScreen({
+          type: 'form',
+        });
+      }}
+    />
+  );
+}
 
   if (subScreen.type === 'travellers') {
     return (
