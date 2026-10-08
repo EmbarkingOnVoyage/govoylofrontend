@@ -213,7 +213,6 @@ const MonthBlock: React.FC<MonthBlockProps> = ({
           {week.map((date, di) => {
             if (!date) return <View key={di} style={styles.dayCell} />;
             const isPast = date < earliest;
-            // const isSelected = !!selected && isSameDay(date, selected);
             const isSelected = !!selected && isSameDay(date, selected);
             const isRangeStart = !!rangeStart && isSameDay(date, rangeStart);
             const isRangeEnd = !!rangeEnd && isSameDay(date, rangeEnd);
@@ -225,11 +224,6 @@ const MonthBlock: React.FC<MonthBlockProps> = ({
             return (
               <TouchableOpacity
                 key={di}
-                // style={[
-                //   styles.dayCell,
-                //   isSelected && styles.dayCellSelected,
-                //   isPast && styles.dayCellDisabled,
-                // ]}
                 style={[
                   styles.dayCell,
                   isInRange && styles.dayCellInRange,
