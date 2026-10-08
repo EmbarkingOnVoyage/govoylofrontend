@@ -96,6 +96,7 @@ export const TripDetailsScreen: React.FC<TripDetailsScreenProps> = ({ tripBookin
   }
 
   const { booking } = data;
+  const convenienceFee = booking.convenienceFee ?? 0;
   const status = bookingStatus(booking);
   const StatusIcon = status.icon === 'check' ? Check : status.icon === 'clock' ? Clock : X;
   const lines = flightLines(data);
@@ -220,15 +221,21 @@ export const TripDetailsScreen: React.FC<TripDetailsScreenProps> = ({ tripBookin
               <Text style={styles.fareValue}>{formatCurrency(data.taxesAndFees, booking.currencyCode)}</Text>
             </View>
           ) : null}
-          {data.baseFare != null && data.taxesAndFees != null && data.totalPaid - data.baseFare - data.taxesAndFees >= 1 ? (
+          {data.baseFare != null && data.taxesAndFees != null && data.totalPaid - data.baseFare - data.taxesAndFees - convenienceFee >= 1 ? (
             <View style={styles.fareRow}>
               <Text style={styles.fareLabel}>Add-ons & other charges</Text>
               <Text style={styles.fareValue}>
-                {formatCurrency(data.totalPaid - data.baseFare - data.taxesAndFees, booking.currencyCode)}
+                {formatCurrency(data.totalPaid - data.baseFare - data.taxesAndFees - convenienceFee, booking.currencyCode)}
               </Text>
             </View>
           ) : null}
-          {data.baseFare != null || data.taxesAndFees != null ? <View style={styles.fareDivider} /> : null}
+          {convenienceFee > 0 ? (
+            <View style={styles.fareRow}>
+              <Text style={styles.fareLabel}>Convenience Fee</Text>
+              <Text style={styles.fareValue}>{formatCurrency(convenienceFee, booking.currencyCode)}</Text>
+            </View>
+          ) : null}
+          {data.baseFare != null || data.taxesAndFees != null || convenienceFee > 0 ? <View style={styles.fareDivider} /> : null}
           <View style={styles.fareRow}>
             <Text style={styles.totalLabel}>Total Paid</Text>
             <Text style={styles.totalValue}>{formatCurrency(data.totalPaid, booking.currencyCode)}</Text>

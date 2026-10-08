@@ -10,6 +10,8 @@ import { RazorpayCheckoutError, openRazorpayCheckout } from '../../payments/razo
 import { CABIN_CLASS_LABELS, formatPrice, formatTime24, formatTotalDuration, stopsLabel } from '../logic/flightResults';
 import { PAX_TYPES, type PaxType } from '../logic/travellers';
 import { buildBookingLegs, buildBookingTravelers } from '../logic/booking';
+import { convenienceFeeFor } from '../logic/convenienceFee';
+import { useConvenienceFeeRules } from '../useConvenienceFeeRules';
 import { AirlineLogoWeb } from '../results/AirlineLogoWeb.web';
 import { useAirportLookup } from '../results/useAirportLookup';
 import { BookingPageWeb, FareSummaryWeb, SectionHeading, Separator, buildFareBreakdown } from './BookingLayoutWeb.web';
@@ -90,7 +92,11 @@ export const FlightPaymentPageWeb: React.FC<{
   const [priceChange, setPriceChange] = useState<{ from: number; to: number; resolve: (ok: boolean) => void } | null>(null);
 
   const cabin = CABIN_CLASS_LABELS[summary.cabinClass];
-  const breakdown = buildFareBreakdown(legs, checkout.addOns, paxSummaryText(passengerCounts));
+  // The app's estimate of the convenience fee; the server's own figure from the
+  // hold is what's charged.
+  const { data: convenienceFeeRules } = useConvenienceFeeRules();
+  const convenienceFee = convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, summary.request.tripType);
+  const breakdown = buildFareBreakdown(legs, checkout.addOns, paxSummaryText(passengerCounts), convenienceFee);
   const totalAmount = breakdown.total;
   const currencyCode = breakdown.currencyCode;
   const money = (amount: number) => formatPrice(amount, currencyCode);
@@ -142,7 +148,8 @@ export const FlightPaymentPageWeb: React.FC<{
 
       // The supplier re-prices at booking time; charge what it will charge,
       // once the customer has accepted any change.
-      const chargeAmount = booking.confirmedTotalAmount ?? totalAmount;
+      const chargedConvenienceFee = booking.convenienceFee ?? convenienceFee;
+      const chargeAmount = (booking.confirmedTotalAmount ?? totalAmount - convenienceFee) + chargedConvenienceFee;
       if (Math.round(chargeAmount) !== Math.round(totalAmount)) {
         const accepted = await new Promise<boolean>((resolve) => setPriceChange({ from: totalAmount, to: chargeAmount, resolve }));
         setPriceChange(null);
@@ -183,7 +190,7 @@ export const FlightPaymentPageWeb: React.FC<{
         amount: chargeAmount,
         currencyCode,
         route: `${cityFor(first.origin)} (${first.origin}) → ${cityFor(destination)} (${destination})`,
-        breakdown: { ...breakdown, total: chargeAmount },
+        breakdown: { ...breakdown, convenienceFee: chargedConvenienceFee, total: chargeAmount },
       });
     } catch (err) {
       setPayState('idle');
