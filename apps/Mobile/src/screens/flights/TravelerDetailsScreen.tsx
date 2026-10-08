@@ -36,17 +36,13 @@ import {
   type PaxType,
   type TravelerAgeCheck,
 } from '@workspace/ui/src/features/flights/logic/travellers';
+import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
 
 // The Add Travellers list only shows the first 4 saved travellers inline; a
 // 5th+ traveller pushes the rest behind a "More" button that opens the full
 // list in a modal instead of growing this screen indefinitely.
 const INLINE_TRAVELER_LIMIT = 4;
 
-function formatCurrency(amount: number, currencyCode: string): string {
-  return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN', {
-    maximumFractionDigits: 0,
-  })}`;
-}
 
 function airportForCode(code: string) {
   return findAirportByCode(code) ?? { code, city: code, state: '', country: '', name: code };
@@ -385,7 +381,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         const accepted = await new Promise<boolean>((resolve) =>
           Alert.alert(
             'Price updated',
-            `The airline has updated the fare for this booking from ${formatCurrency(totalAmount, currencyCode)} to ${formatCurrency(chargeAmount, currencyCode)}.`,
+            `The airline has updated the fare for this booking from ${formatMoney(totalAmount, currencyCode)} to ${formatMoney(chargeAmount, currencyCode)}.`,
             [
               { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
               { text: 'Continue', onPress: () => resolve(true) },
@@ -768,7 +764,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
             <CheckCircle2 size={28} color="#1E9E5A" strokeWidth={2} />
             <Text style={styles.paymentSuccessTitle}>Payment Successful</Text>
             <Text style={styles.paymentSuccessSubtitle}>
-              Your payment of {formatCurrency(confirmedAmount ?? totalAmount, currencyCode)} was received. Your booking is confirmed.
+              Your payment of {formatMoney(confirmedAmount ?? totalAmount, currencyCode)} was received. Your booking is confirmed.
             </Text>
             {!!bookingResult?.bookingRefNo && (
               <Text style={styles.paymentSuccessSubtitle}>Booking reference: {bookingResult.bookingRefNo}</Text>
@@ -784,7 +780,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
             <View style={styles.paymentAmountRow}>
               <View>
                 <Text style={styles.paymentAmountLabel}>Total</Text>
-                <Text style={styles.paymentAmountValue}>{formatCurrency(totalAmount, currencyCode)}</Text>
+                <Text style={styles.paymentAmountValue}>{formatMoney(totalAmount, currencyCode)}</Text>
               </View>
               <TouchableOpacity style={styles.payButton} onPress={handleNext}>
                 <Text style={styles.payButtonText}>Next</Text>

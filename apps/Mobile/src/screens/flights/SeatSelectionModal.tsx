@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, Modal, SafeAreaView, Activity
 import { ArrowLeft, ArrowRight, X } from 'lucide-react-native';
 import { SSR_STATUS_AVAILABLE, type AncillaryOption, type SeatMapSegment } from '@workspace/ui';
 import { styles } from './SeatSelectionModal.styles';
+import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
 
 export interface SeatTraveler {
   id: string;
@@ -21,11 +22,6 @@ function pickKey(segmentIndex: number, travelerId: string): string {
   return `${segmentIndex}:${travelerId}`;
 }
 
-function formatPrice(amount: number, currencyCode: string): string {
-  return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN', {
-    maximumFractionDigits: 0,
-  })}`;
-}
 
 // "12A" → { row: 12, letter: 'A' }. Positions from the supplier win when present.
 function seatLabelParts(seat: AncillaryOption): { row: number | null; letter: string } {
@@ -99,8 +95,8 @@ function buildSections(segment: SeatMapSegment | undefined, currencyCode: string
           : max === 0
             ? 'Free'
             : min === max
-              ? formatPrice(min, currencyCode)
-              : `${formatPrice(min, currencyCode)} - ${formatPrice(max, currencyCode)}`;
+              ? formatMoney(min, currencyCode)
+              : `${formatMoney(min, currencyCode)} - ${formatMoney(max, currencyCode)}`;
       sections.push({ heading: `${legroom ? 'Extra leg room' : 'Standard'} · ${price}`, rows: [] });
       currentKey = key;
     }
@@ -369,7 +365,7 @@ export const SeatSelectionModal: React.FC<SeatSelectionModalProps> = ({
         <View style={styles.footer}>
           <View>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatPrice(total, currencyCode)}</Text>
+            <Text style={styles.totalValue}>{formatMoney(total, currencyCode)}</Text>
           </View>
           <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.8}>
             <Text style={styles.saveButtonText}>Save</Text>

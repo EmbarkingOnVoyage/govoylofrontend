@@ -13,6 +13,7 @@ import { styles } from './WhatsIncludedSection.styles';
 import { SeatSelectionModal, type SeatPick } from './SeatSelectionModal';
 import { BaggageSelectionModal } from './BaggageSelectionModal';
 import { MealSelectionModal } from './MealSelectionModal';
+import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
 
 interface AddOnTraveler {
   id: string;
@@ -23,9 +24,6 @@ interface AddOnTraveler {
   travelerType: string;
 }
 
-function formatCurrency(amount: number, currencyCode: string): string {
-  return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN')}`;
-}
 
 type AddOnCategory = 'baggage' | 'seat' | 'meal';
 
@@ -202,6 +200,19 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
     applyTotal(next);
     setOpenModal(null);
   };
+
+  // A traveller unticked on the page above takes their add-ons with them —
+  // otherwise those picks stay in the total and get booked against no one.
+  const travelerIdsKey = travelers.map((t) => t.id).join(',');
+  useEffect(() => {
+    const ids = new Set(travelers.map((t) => t.id));
+    const kept = Object.fromEntries(Object.entries(selections).filter(([, sel]) => ids.has(sel.travelerId)));
+    if (Object.keys(kept).length !== Object.keys(selections).length) {
+      setSelections(kept);
+      applyTotal(kept);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [travelerIdsKey]);
 
   const applyTotal = (next: SelectionMap) => {
     const values = Object.values(next);

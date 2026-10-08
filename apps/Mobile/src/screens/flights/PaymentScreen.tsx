@@ -7,6 +7,7 @@ import { AirlineLogo } from './FlightResultsScreen';
 import type { AddOnSelection } from './WhatsIncludedSection';
 import { styles } from './PaymentScreen.styles';
 import { PAYMENT_BADGE_SVG } from '../../components/paymentBadges';
+import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
 
 export interface PaymentTraveller {
   id: string;
@@ -35,9 +36,6 @@ interface PaymentScreenProps {
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-function formatCurrency(amount: number, currencyCode: string): string {
-  return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${Math.round(amount).toLocaleString('en-IN')}`;
-}
 
 function formatTime24(iso: string): string {
   const date = new Date(iso);
@@ -128,7 +126,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   const [tripOpen, setTripOpen] = useState(false);
   const [fareOpen, setFareOpen] = useState(false);
   const [addOnsOpen, setAddOnsOpen] = useState(true);
-  const money = (amount: number) => formatCurrency(amount, currencyCode);
+  const money = (amount: number) => formatMoney(amount, currencyCode);
   const payable = confirmedAmount ?? totalAmount;
 
   // Android back returns to Traveller Details, except mid-payment.
