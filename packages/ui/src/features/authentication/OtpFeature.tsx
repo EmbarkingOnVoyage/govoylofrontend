@@ -48,7 +48,16 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
 
   const handleChangeText = (text: string, index: number) => {
     const cleanText = text.replace(/[^0-9]/g, "");
-    if (!cleanText) return;
+    // Android soft keyboards report a deleted digit as an empty change (their
+    // Backspace keypress isn't reliable), so clear the box here too.
+    if (!cleanText) {
+      if (text === "" && otp[index] !== "") {
+        const cleared = [...otp];
+        cleared[index] = "";
+        setOtp(cleared);
+      }
+      return;
+    }
 
     const newOtp = [...otp];
     newOtp[index] = cleanText.substring(cleanText.length - 1);
@@ -140,8 +149,8 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
                 onKeyPress={(e) => handleKeyPress(e, i)}
                 keyboardType="number-pad"
                 editable={!isWorking}
-                placeholder="-"
-                placeholderTextColor="#D1D5DB"
+                placeholder="–"
+                placeholderTextColor="#B5B5B5"
                 autoFocus={i === 0}
               />
             ))}
@@ -162,8 +171,7 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate }) => {
 
           {countdown > 0 ? (
             <Text style={s.spamText}>
-              Didn't receive an email? please check your spam folder or request another code in{" "}
-              <Text style={s.timerHighlight}>{countdown} seconds</Text>.
+              Didn't receive an email? please check your spam folder or request another code in {countdown} seconds.
             </Text>
           ) : (
             <Text style={s.spamText}>

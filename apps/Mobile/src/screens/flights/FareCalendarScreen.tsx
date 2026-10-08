@@ -77,8 +77,8 @@ function formatHolidayNote(holiday: Holiday): string {
   // positive-UTC-offset zone (India included).
   const [year, month, day] = holiday.date.slice(0, 10).split('-').map(Number);
   const d = new Date(year, month - 1, day);
-  const dayMonth = d.toLocaleDateString('en-US', { day: '2-digit', month: 'short' });
-  return `${dayMonth}: ${holiday.name}`;
+  const dayMonth = `${String(d.getDate()).padStart(2, '0')} ${MONTH_NAMES[d.getMonth()].slice(0, 3)}`;
+  return `${dayMonth} : ${holiday.name}`;
 }
 
 function monthsFrom(earliest: Date, count: number): MonthKey[] {
@@ -88,20 +88,29 @@ function monthsFrom(earliest: Date, count: number): MonthKey[] {
   });
 }
 
-// Prices are colored relative to the cheapest half of the days actually
-// returned for that month, rather than a hardcoded rupee threshold — a
-// short domestic route and a long international one have wildly different
-// price scales, so a fixed cutoff would mislabel one of them as all-cheap
-// or all-expensive.
-function buildPriceColorLookup(days: FareCalendarDay[]): Map<string, boolean> {
+type PriceTier = 'cheap' | 'mid' | 'high';
+
+// Prices are colored by tertile of the days actually returned for that month
+// (green / orange / red, as in Figma), rather than a hardcoded rupee
+// threshold — a short domestic route and a long international one have
+// wildly different price scales, so a fixed cutoff would mislabel one of them.
+function buildPriceTierLookup(days: FareCalendarDay[]): Map<string, PriceTier> {
   const sorted = [...days].sort((a, b) => a.amount - b.amount);
-  const medianAmount = sorted.length > 0 ? sorted[Math.floor((sorted.length - 1) / 2)].amount : 0;
-  const isCheap = new Map<string, boolean>();
+  const at = (q: number) => (sorted.length > 0 ? sorted[Math.floor((sorted.length - 1) * q)].amount : 0);
+  const lowCut = at(1 / 3);
+  const highCut = at(2 / 3);
+  const tiers = new Map<string, PriceTier>();
   for (const day of days) {
-    isCheap.set(day.date.slice(0, 10), day.amount <= medianAmount);
+    tiers.set(day.date.slice(0, 10), day.amount <= lowCut ? 'cheap' : day.amount <= highCut ? 'mid' : 'high');
   }
-  return isCheap;
+  return tiers;
 }
+
+const PRICE_TIER_STYLE = {
+  cheap: styles.priceTextCheap,
+  mid: styles.priceTextMid,
+  high: styles.priceTextHigh,
+};
 
 function formatPrice(amount: number): string {
   return Math.round(amount).toLocaleString('en-IN');
@@ -140,7 +149,7 @@ const MonthBlock: React.FC<MonthBlockProps> = ({
     return map;
   }, [data]);
 
-  const cheapByDay = useMemo(() => buildPriceColorLookup(data?.days ?? []), [data]);
+  const tierByDay = useMemo(() => buildPriceTierLookup(data?.days ?? []), [data]);
 
   const holidayByDay = useMemo(() => {
     const map = new Map<string, Holiday>();
@@ -158,14 +167,18 @@ const MonthBlock: React.FC<MonthBlockProps> = ({
   return (
     <View style={styles.monthBlock}>
       <View style={styles.monthHeadingRow}>
+        <View style={styles.monthHeadingLine} />
         <Text style={styles.monthHeading}>
           {MONTH_NAMES[month].toUpperCase()} {year}
         </Text>
         {monthHolidays.length > 0 && (
-          <Text style={styles.holidayCountBadge}>
-            {monthHolidays.length} HOLIDAY{monthHolidays.length > 1 ? 'S' : ''}
-          </Text>
+          <View style={styles.holidayCountBadge}>
+            <Text style={styles.holidayCountBadgeText}>
+              {monthHolidays.length} HOLIDAY{monthHolidays.length > 1 ? 'S' : ''}
+            </Text>
+          </View>
         )}
+        <View style={styles.monthHeadingLine} />
       </View>
       {buildMonthGrid(year, month).map((week, wi) => (
         <View key={wi} style={styles.weekRow}>
@@ -176,7 +189,7 @@ const MonthBlock: React.FC<MonthBlockProps> = ({
             const iso = toLocalIsoDate(date);
             const holiday = holidayByDay.get(iso);
             const priceDay = priceByDay.get(iso);
-            const isCheap = cheapByDay.get(iso);
+            const tier = tierByDay.get(iso) ?? 'cheap';
             return (
               <TouchableOpacity
                 key={di}
@@ -189,15 +202,17 @@ const MonthBlock: React.FC<MonthBlockProps> = ({
                 onPress={() => onSelectDay(date)}
               >
                 <View style={styles.dayNumberRow}>
-                  <Text style={[styles.dayText, isSelected && styles.dayTextSelected]}>{date.getDate()}</Text>
+                  <Text style={[styles.dayText, isPast && styles.dayTextDisabled, isSelected && styles.dayTextSelected]}>
+                    {date.getDate()}
+                  </Text>
                   {!!holiday && <View style={[styles.holidayDot, isSelected && styles.holidayDotSelected]} />}
                 </View>
-                {!!priceDay && (
+                {!!priceDay && !isPast && (
                   <Text
                     numberOfLines={1}
                     style={[
                       styles.priceText,
-                      isCheap ? styles.priceTextCheap : styles.priceTextRegular,
+                      PRICE_TIER_STYLE[tier],
                       isSelected && styles.priceTextSelected,
                     ]}
                   >
@@ -212,9 +227,10 @@ const MonthBlock: React.FC<MonthBlockProps> = ({
       {monthHolidays.length > 0 && (
         <View style={styles.holidayNotesBlock}>
           {monthHolidays.map((h) => (
-            <Text key={`${h.date}-${h.name}`} style={styles.holidayNoteText}>
-              {formatHolidayNote(h)}
-            </Text>
+            <View key={`${h.date}-${h.name}`} style={styles.holidayNoteRow}>
+              <View style={styles.holidayNoteBullet} />
+              <Text style={styles.holidayNoteText}>{formatHolidayNote(h)}</Text>
+            </View>
           ))}
         </View>
       )}
@@ -241,15 +257,18 @@ export const FareCalendarScreen: React.FC<FareCalendarScreenProps> = ({
   const months = useMemo(() => monthsFrom(earliest, monthCount), [earliest.getTime(), monthCount]);
 
   const formattedSelected = selected
-    ? selected.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
+    ? `${selected.toLocaleDateString('en-US', { weekday: 'short' })}, ${selected.getDate()} ${MONTH_NAMES[
+        selected.getMonth()
+      ].slice(0, 3)}`
     : 'Select a date';
 
   return (
     <View style={styles.screen}>
       <SafeAreaView>
+        <View style={styles.grabber} />
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={onBack}>
-            <ArrowLeft size={22} color="#182339" strokeWidth={2} />
+            <ArrowLeft size={24} color="#182339" strokeWidth={1.5} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{title}</Text>
         </View>
@@ -283,19 +302,19 @@ export const FareCalendarScreen: React.FC<FareCalendarScreenProps> = ({
       />
 
       <View style={styles.footer}>
-        <View>
+        <View style={styles.footerRow}>
           <Text style={styles.footerLabel}>{footerLabel}</Text>
           <Text style={styles.footerValue}>{formattedSelected}</Text>
         </View>
-      </View>
 
-      <TouchableOpacity
-        style={[styles.confirmButton, !selected && styles.confirmButtonDisabled]}
-        disabled={!selected}
-        onPress={() => selected && onConfirm(selected)}
-      >
-        <Text style={styles.confirmButtonText}>Confirm</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.confirmButton, !selected && styles.confirmButtonDisabled]}
+          disabled={!selected}
+          onPress={() => selected && onConfirm(selected)}
+        >
+          <Text style={styles.confirmButtonText}>Confirm</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };

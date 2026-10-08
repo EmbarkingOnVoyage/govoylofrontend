@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 
 export const styles = StyleSheet.create({
   field: {
-    height: 44,
+    height: 40,
     borderWidth: 1,
     borderColor: '#ADB8CD',
     borderRadius: 8,
@@ -13,12 +13,12 @@ export const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   fieldText: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#182339',
   },
   fieldPlaceholder: {
-    fontSize: 14,
-    color: '#9CA3AF',
+    fontSize: 16,
+    color: '#697691',
   },
   overlay: {
     flex: 1,

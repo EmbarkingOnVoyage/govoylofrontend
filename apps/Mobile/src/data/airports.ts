@@ -59,3 +59,7 @@ export function getRecentAirports(): Airport[] {
 export function addRecentAirport(airport: Airport) {
   recentAirports = [airport, ...recentAirports.filter((a) => a.code !== airport.code)].slice(0, 5);
 }
+
+export function clearRecentAirports() {
+  recentAirports = [];
+}

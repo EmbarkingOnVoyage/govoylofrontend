@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
-import { House, Percent, Briefcase, UserRound } from 'lucide-react-native';
+import { SvgXml } from 'react-native-svg';
+import { TAB_ICON_SVG } from '../components/figmaIcons';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { PersonalDetailsScreen } from '../screens/profile/PersonalDetailsScreen';
 import { CoTravellerScreen } from '../screens/profile/CoTravellerScreen';
 import { CoTravellerFormScreen } from '../screens/profile/CoTravellerFormScreen';
 import { PlaceholderScreen } from '../screens/profile/PlaceholderScreen';
+import { PreferencesScreen } from '../screens/profile/PreferencesScreen';
 import { LoginRequiredScreen } from '../screens/LoginRequiredScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { FlightSearchFormScreen } from '../screens/flights/FlightSearchFormScreen';
@@ -36,17 +38,15 @@ type ProfileStackScreen =
   | 'Saved'
   | 'ShareFeedback';
 
-const TABS: { key: TabKey; label: string; Icon: typeof House }[] = [
-  { key: 'Home', label: 'Home', Icon: House },
-  { key: 'Deals', label: 'Deals', Icon: Percent },
-  { key: 'MyTrips', label: 'My trips', Icon: Briefcase },
-  { key: 'Profile', label: 'Profile', Icon: UserRound },
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'Home', label: 'Home' },
+  { key: 'Deals', label: 'Deals' },
+  { key: 'MyTrips', label: 'My trips' },
+  { key: 'Profile', label: 'Profile' },
 ];
 
 const PLACEHOLDER_TITLES: Partial<Record<ProfileStackScreen, string>> = {
-  CustomizationPreferences: 'Customization preferences',
   PaymentMethods: 'Payment methods',
-  PrivacyDataManagement: 'Privacy & data management',
   Bookings: 'Bookings',
   Saved: 'Saved',
   ShareFeedback: 'Share your feedback',
@@ -174,6 +174,10 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
             onDone={() => setProfileScreen('CoTraveller')}
           />
         );
+      case 'CustomizationPreferences':
+        return <PreferencesScreen title="Customization preferences" onBack={() => setProfileScreen('Hub')} />;
+      case 'PrivacyDataManagement':
+        return <PreferencesScreen title="Privacy and data management" onBack={() => setProfileScreen('Hub')} />;
       case 'Hub':
         return (
           <ProfileScreen
@@ -226,7 +230,11 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
                 onPress={() => setActiveTab(tab.key)}
                 activeOpacity={0.7}
               >
-                <tab.Icon size={22} color={isActive ? '#7C1AEE' : '#3E4B64'} strokeWidth={2} />
+                <SvgXml
+                  xml={TAB_ICON_SVG[tab.key].replace(/COLOR/g, isActive ? '#7C1AEE' : '#3E4B64')}
+                  width={20}
+                  height={20}
+                />
                 <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>{tab.label}</Text>
               </TouchableOpacity>
             );
@@ -241,15 +249,17 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
   content: { flex: 1 },
   tabBarSafeArea: { backgroundColor: '#FFFFFF' },
+  // Figma tab bar: 1pt #CCD3E0 rule, 20pt glyphs 10pt below it, 13/16
+  // Medium labels 2pt under the glyph.
   tabBar: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: '#ECEEF3',
-    paddingTop: 8,
+    borderTopColor: '#CCD3E0',
+    paddingTop: 9,
     paddingBottom: 8,
     backgroundColor: '#FFFFFF',
   },
-  tabItem: { flex: 1, alignItems: 'center', gap: 4 },
-  tabLabel: { fontSize: 13, fontWeight: '500', color: '#3E4B64' },
-  tabLabelActive: { color: '#7C1AEE' },
+  tabItem: { flex: 1, alignItems: 'center', gap: 2.2 },
+  tabLabel: { fontSize: 13, lineHeight: 16, fontWeight: '500', color: '#3E4B64' },
+  tabLabelActive: { color: '#6A16CB' },
 });

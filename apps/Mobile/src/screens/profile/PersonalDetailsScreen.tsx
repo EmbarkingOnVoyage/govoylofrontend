@@ -8,6 +8,7 @@ import {
   type CustomerProfile,
 } from '@workspace/ui';
 import { SelectField } from '../../components/SelectField';
+import { DateField } from '../../components/DateField';
 import {
   GENDER_OPTIONS,
   MARITAL_STATUS_OPTIONS,
@@ -186,14 +187,14 @@ if (!isValidDateOfBirth(dateOfBirth)) {
   return (
     <View style={styles.screen}>
       <LinearGradient
-        colors={['#6A16CB', '#350B65']}
+        colors={['#7C1AEE', '#7C1AEE']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
       >
         <SafeAreaView>
           <View style={styles.header}>
             <TouchableOpacity style={styles.backButton} onPress={onBack}>
-              <ArrowLeft size={22} color="#FFFFFF" />
+              <ArrowLeft size={20} color="#ECEEF3" strokeWidth={1.2} />
             </TouchableOpacity>
             <Text style={styles.headerTitle}>Personal details</Text>
           </View>
@@ -208,33 +209,30 @@ if (!isValidDateOfBirth(dateOfBirth)) {
           <TextInput  style={[
     styles.input,
     showValidation && !firstName.trim() && styles.inputError,
-  ]} value={firstName} onChangeText={setFirstName} placeholder="Text" />
+  ]} value={firstName} onChangeText={setFirstName} placeholder="Text" placeholderTextColor="#697691" />
         </View>
         <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>Last name</Text>
           <TextInput  style={[
     styles.input,
     showValidation && !lastName.trim() && styles.inputError,
-  ]} value={lastName} onChangeText={setLastName} placeholder="Text" />
+  ]} value={lastName} onChangeText={setLastName} placeholder="Text" placeholderTextColor="#697691" />
         </View>
         <View style={styles.row}>
-          <View style={styles.fieldWrapperHalf}>
+          <View style={styles.fieldWrapperGender}>
             <Text style={styles.label}>Gender</Text>
             <SelectField value={gender} options={GENDER_OPTIONS} onSelect={setGender} title="Select gender"  style={showValidation && !gender.trim() ? styles.inputError : undefined} />
           </View>
           <View style={styles.fieldWrapperHalf}>
             <Text style={styles.label}>Date of birth</Text>
-            <TextInput
-              // style={styles.input}
-              style={[
-    styles.input,
-    showValidation &&
-      (!dateOfBirth.trim() || !isValidDateOfBirth(dateOfBirth)) &&
-      styles.inputError,
-  ]}
+            <DateField
+              style={
+                showValidation && (!dateOfBirth.trim() || !isValidDateOfBirth(dateOfBirth))
+                  ? styles.inputError
+                  : undefined
+              }
               value={dateOfBirth}
               onChangeText={setDateOfBirth}
-              placeholder="DD/MM/YYYY"
             />
           </View>
         </View>
@@ -260,7 +258,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
             </View>
             <View style={styles.fieldWrapperHalf}>
               <Text style={styles.label}>Anniversary</Text>
-              <TextInput style={styles.input} value={anniversary} onChangeText={setAnniversary} placeholder="DD/MM/YYYY" />
+              <DateField value={anniversary} onChangeText={setAnniversary} placeholder="Select" />
             </View>
           </View>
         ) : (
@@ -304,7 +302,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
               setPassportNumber(text);
               setPassportNumberEdited(true);
             }}
-            placeholder="Text"
+            placeholder="Text" placeholderTextColor="#697691"
           />
         </View>
         <View style={styles.fieldWrapperFull}>
@@ -313,7 +311,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
             style={styles.input}
             value={passportExpiryDate}
             onChangeText={setPassportExpiryDate}
-            placeholder="DD/MM/YYYY"
+            placeholder="DD/MM/YYYY" placeholderTextColor="#697691"
           />
         </View>
         <View style={styles.fieldWrapperFull}>
@@ -337,7 +335,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
               setPanCardNumber(text);
               setPanCardNumberEdited(true);
             }}
-            placeholder="Text"
+            placeholder="Text" placeholderTextColor="#697691"
           />
           <Text style={styles.panNote}>
     <Text style={styles.panNoteHighlight}>NOTE:</Text> Your PAN No. will only be used for international bookings as per RBI Guidelines
