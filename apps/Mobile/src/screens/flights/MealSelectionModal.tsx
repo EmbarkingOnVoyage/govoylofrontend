@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import type { AncillaryOption } from '@workspace/ui';
 import { SelectField } from '../../components/SelectField';
 import { styles } from './MealSelectionModal.styles';
+import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
 
 export interface MealTraveler {
   id: string;
@@ -11,11 +12,6 @@ export interface MealTraveler {
   lastName: string;
 }
 
-function formatPrice(amount: number, currencyCode: string): string {
-  return `${currencyCode === 'INR' ? '₹' : currencyCode + ' '}${amount.toLocaleString('en-IN', {
-    maximumFractionDigits: 0,
-  })}`;
-}
 
 // Airlines return named meals ("VEG BIRYANI Combo", "Chicken Junglee Sandwich",
 // "Hindu Veg Meal" / AVML) rather than a veg / non-veg flag, so the quick-pick
@@ -33,7 +29,7 @@ function mealKind(option: AncillaryOption): 'veg' | 'nonveg' | null {
 
 function mealLabel(option: AncillaryOption, currencyCode: string): string {
   return option.totalAmount > 0
-    ? `${option.ssrTypeDesc} · ${formatPrice(option.totalAmount, currencyCode)}`
+    ? `${option.ssrTypeDesc} · ${formatMoney(option.totalAmount, currencyCode)}`
     : option.ssrTypeDesc;
 }
 
@@ -118,7 +114,7 @@ export const MealSelectionModal: React.FC<MealSelectionModalProps> = ({
         activeOpacity={0.7}
       >
         <Text style={styles.cardText}>{label}</Text>
-        {meal.totalAmount > 0 && <Text style={styles.cardPrice}>{formatPrice(meal.totalAmount, currencyCode)}</Text>}
+        {meal.totalAmount > 0 && <Text style={styles.cardPrice}>{formatMoney(meal.totalAmount, currencyCode)}</Text>}
       </TouchableOpacity>
     );
   };
@@ -194,7 +190,7 @@ export const MealSelectionModal: React.FC<MealSelectionModalProps> = ({
         <View style={styles.footer}>
           <View>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>{formatPrice(total, currencyCode)}</Text>
+            <Text style={styles.totalValue}>{formatMoney(total, currencyCode)}</Text>
           </View>
           <TouchableOpacity style={styles.saveButton} onPress={() => onSave(picks)} activeOpacity={0.8}>
             <Text style={styles.saveButtonText}>Save</Text>
