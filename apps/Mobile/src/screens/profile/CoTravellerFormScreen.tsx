@@ -5,6 +5,7 @@ import { ArrowLeft, Check } from 'lucide-react-native';
 import {
   useTravellerDetailMobile,
   useSaveTravellerMobile,
+  useCustomerProfileMobile,
   type TravelerDetail,
 } from '@workspace/ui';
 import { SelectField } from '../../components/SelectField';
@@ -15,6 +16,8 @@ import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 interface CoTravellerFormScreenProps {
   travellerId: string | null;
+  // Adding the signed-in customer themselves: prefilled from their profile.
+  asAccountHolder?: boolean;
   onDone: () => void;
 }
 
@@ -50,7 +53,7 @@ function parseDisplayDate(display: string): string | null {
   return date.toISOString();
 }
 
-export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ travellerId, onDone }) => {
+export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ travellerId, asAccountHolder = false, onDone }) => {
   useHardwareBack(() => onDone());
 
   const {
@@ -61,6 +64,9 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
     isRefetching: isRetryingDetail,
   } = useTravellerDetailMobile(travellerId);
   const saveTraveller = useSaveTravellerMobile();
+  const { data: profile } = useCustomerProfileMobile();
+  // The customer's own traveller: their email is the account (primary) email.
+  const isSelf = travellerId ? !!detail?.isAccountHolder : asAccountHolder;
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -100,6 +106,23 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
     }
     setPassportEdited(false);
   }, [detail]);
+
+  // "Add yourself": start from what the profile already has.
+  useEffect(() => {
+    if (travellerId || !asAccountHolder || !profile) return;
+    if (profile.firstName) setFirstName(profile.firstName);
+    if (profile.lastName) setLastName(profile.lastName);
+    if (profile.gender) setGender(profile.gender);
+    if (profile.dateOfBirth) setDateOfBirth(formatDate(profile.dateOfBirth));
+    if (profile.nationality) setNationality(profile.nationality);
+    if (profile.cityOfResidence) setCity(profile.cityOfResidence);
+    if (profile.state) setState(profile.state);
+    if (profile.phone) setPhone(profile.phone);
+  }, [travellerId, asAccountHolder, profile]);
+
+  useEffect(() => {
+    if (isSelf && profile?.email) setEmail(profile.email);
+  }, [isSelf, profile?.email]);
 
   const handleSave = async () => {
     setSaveError('');
@@ -147,6 +170,7 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
           email: email.trim(),
           phone: phone.trim(),
           phoneCountryCode: '+91',
+          isAccountHolder: !travellerId && asAccountHolder ? true : undefined,
           passportNumber: passportEdited ? passportNumber : undefined,
           passportExpiryDate: passportEdited ? parseDisplayDate(passportExpiryDate) : undefined,
           passportIssueDate: passportEdited ? parseDisplayDate(passportIssueDate) : undefined,
@@ -171,7 +195,9 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
             <TouchableOpacity style={styles.backButton} onPress={onDone}>
               <ArrowLeft size={20} color="#ECEEF3" strokeWidth={1.2} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{travellerId ? 'Edit co-traveller' : 'Add new traveller'}</Text>
+            <Text style={styles.headerTitle}>
+              {isSelf ? (travellerId ? 'Edit your details' : 'Add yourself') : travellerId ? 'Edit co-traveller' : 'Add new traveller'}
+            </Text>
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -244,12 +270,14 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
             style={styles.input}
             value={email}
             onChangeText={setEmail}
+            editable={!isSelf}
             placeholder="name@example.com"
             placeholderTextColor="#697691"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
           />
+          {isSelf && <Text style={styles.label}>Your account email — your tickets are sent here.</Text>}
         </View>
         <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>Mobile number</Text>
