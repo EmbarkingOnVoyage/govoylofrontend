@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useFonts } from 'expo-font';
-import { AppProvider, LoginMobileFeature, OtpMobileFeature, authContextCache } from '@workspace/ui';
+import { AppProvider, LoginMobileFeature, OtpMobileFeature, authContextCache, clearAppQueryCache } from '@workspace/ui';
 import { useFlowNavigation, NavigationRule } from '@workspace/core';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -46,6 +46,8 @@ export default function App() {
 
   const handleNavigate = (rule: NavigationRule) => {
     if (rule === 'ON_OTP_VERIFIED') {
+      // Nothing cached from a guest checkout (or a previous account) carries over.
+      clearAppQueryCache();
       setIsLoggedIn(true);
       setIsGuest(false);
     }
@@ -69,6 +71,7 @@ export default function App() {
 
   const handleSignOut = () => {
     authContextCache.clearSession();
+    clearAppQueryCache();
     setIsLoggedIn(false);
     setIsGuest(false);
   };
