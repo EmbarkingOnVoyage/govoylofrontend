@@ -44,7 +44,8 @@
           }
         }
       ],
-      "./plugins/withBackCallbackOptOut"
+      "./plugins/withBackCallbackOptOut",
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {
