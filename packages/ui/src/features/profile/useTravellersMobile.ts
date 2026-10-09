@@ -14,6 +14,10 @@ export interface Traveler {
   city?: string | null;
   state?: string | null;
   autoAddTravelInsurance: boolean;
+  // Optional contact details; phoneCountryCode is "+91" when only a number is saved.
+  email?: string | null;
+  phone?: string | null;
+  phoneCountryCode?: string | null;
 }
 
 export interface TravelerPassport {
@@ -37,6 +41,9 @@ export interface TravelerPayload {
   city?: string;
   state?: string;
   autoAddTravelInsurance: boolean;
+  email?: string;
+  phone?: string;
+  phoneCountryCode?: string;
   passportNumber?: string;
   passportIssuingCountry?: string;
   passportExpiryDate?: string | null;
@@ -106,6 +113,9 @@ export function useSaveTravellerMobile() {
         city: payload.city,
         state: payload.state,
         autoAddTravelInsurance: payload.autoAddTravelInsurance,
+        email: payload.email,
+        phone: payload.phone,
+        phoneCountryCode: payload.phone ? payload.phoneCountryCode ?? "+91" : undefined,
       };
 
       let travelerId = id;
