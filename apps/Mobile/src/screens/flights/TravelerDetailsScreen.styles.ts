@@ -408,7 +408,12 @@ export const styles = StyleSheet.create({
   allTravelersList: {
     maxHeight: 360,
   },
-  // Contact details popup (Next with no mobile/email on the profile).
+  youBadge: {
+    fontSize: 13,
+    color: '#7C1AEE',
+    fontWeight: '600',
+  },
+  // Contact details popup (no email on the account, or no mobile at payment).
   contactNote: {
     fontSize: 13,
     lineHeight: 18,

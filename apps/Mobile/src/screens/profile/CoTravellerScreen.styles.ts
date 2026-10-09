@@ -66,6 +66,25 @@ export const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#182339',
   },
+  youBadge: {
+    fontSize: 13,
+    color: '#7C1AEE',
+    fontWeight: '600',
+  },
+  addSelfRow: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#7C1AEE',
+    borderRadius: 8,
+  },
+  addSelfText: {
+    fontSize: 15,
+    color: '#7C1AEE',
+    fontWeight: '500',
+  },
   rowMeta: {
     fontSize: 15,
     lineHeight: 24,

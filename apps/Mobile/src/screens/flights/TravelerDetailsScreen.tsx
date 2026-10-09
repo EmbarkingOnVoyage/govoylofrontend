@@ -97,7 +97,8 @@ interface TravelerDetailsScreenProps {
   // The search's trip type, for the convenience fee.
   searchTripType?: TripType;
   onBack: () => void;
-  onAddTraveler: () => void;
+  // asSelf: "Add yourself" (the signed-in customer isn't a saved traveller yet).
+  onAddTraveler: (asSelf?: boolean) => void;
   onEditTraveler: (id: string) => void;
 }
 
@@ -125,6 +126,9 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [contactError, setContactError] = useState('');
+  // 'email': Next with no email on the account (email required, mobile optional).
+  // 'mobile': Securely pay with no mobile on the account or any selected traveller.
+  const [contactMode, setContactMode] = useState<'email' | 'mobile'>('email');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   // Which type's full list the "More" modal is showing, if open.
   const [allTravelersType, setAllTravelersType] = useState<PaxType | null>(null);
@@ -314,7 +318,9 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
     }
   };
 
-  const contactMissing = !customerProfile?.phone || !customerProfile?.email;
+  // The account email is the booking's primary email (e-ticket goes there), so
+  // only a missing email stops Next; a missing mobile is handled at payment.
+  const contactMissing = !customerProfile?.email;
 
   // What still has to be filled in before payment, or '' when ready. Next asks
   // for a missing contact in a popup instead (ignoreContact).
@@ -326,7 +332,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       return `Please select ${missing.map((type) => paxCountText(type, requiredCounts[type])).join(', ')} for this booking.`;
     }
     if (!ignoreContact && contactMissing) {
-      return 'Please add a mobile number and email to your profile before booking.';
+      return 'Please add an email address to your profile before booking.';
     }
     if (useGst && (!GSTIN_PATTERN.test(gstNumber.trim().toUpperCase()) || !gstHolderName.trim() || !gstAddress.trim())) {
       return 'Please enter a valid 15-character GSTIN, company name and company address.';
@@ -339,46 +345,67 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
     setPaymentError(problem);
     if (problem) return;
     if (contactMissing) {
-      setContactEmail(customerProfile?.email ?? '');
-      setContactPhone(customerProfile?.phone ?? '');
-      setContactError('');
-      setContactOpen(true);
+      openContact('email');
       return;
     }
     setStep('payment');
   };
 
-  // Saves the contact to the profile, then carries on to Payment as Next would.
+  const openContact = (mode: 'email' | 'mobile') => {
+    setContactMode(mode);
+    setContactEmail(customerProfile?.email ?? '');
+    setContactPhone(customerProfile?.phone ?? '');
+    setContactError('');
+    setContactOpen(true);
+  };
+
+  // Saves the contact to the profile, then carries on: to Payment (email mode,
+  // as Next would) or straight into paying (mobile mode).
   const handleSaveContact = async () => {
     const email = contactEmail.trim();
     const phone = contactPhone.trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (contactMode === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setContactError('Please enter a valid email address.');
       return;
     }
-    if (!/^[6-9]\d{9}$/.test(phone)) {
+    if ((contactMode === 'mobile' || phone) && !/^[6-9]\d{9}$/.test(phone)) {
       setContactError('Please enter a valid 10-digit mobile number.');
       return;
     }
     setContactError('');
     try {
       await updateContactDetails.mutateAsync({
-        phone,
+        phone: phone || undefined,
         // The sign-in email can't change here, so it's only sent to fill one in.
         email: customerProfile?.email ? undefined : email,
       });
       setContactOpen(false);
       setPaymentError('');
-      setStep('payment');
+      if (contactMode === 'mobile') {
+        handlePayNow(phone);
+      } else {
+        setStep('payment');
+      }
     } catch (err: any) {
       setContactError(err?.message || 'Could not save your contact details. Please try again.');
     }
   };
 
-  const handlePayNow = async () => {
+  // mobileOverride: the number just entered in the mobile popup (the profile
+  // query hasn't refreshed into this render yet).
+  const handlePayNow = async (mobileOverride?: string) => {
     const problem = bookingProblem();
-    if (problem || !customerProfile?.phone || !customerProfile?.email) {
-      setPaymentError(problem);
+    if (problem || !customerProfile?.email) {
+      setPaymentError(problem || 'Please add an email address to your profile before booking.');
+      return;
+    }
+
+    // The airline needs a contact mobile: the account's, else the first selected
+    // traveller's; with neither, ask for one before anything is booked.
+    const passengerMobile =
+      mobileOverride || customerProfile.phone || selectedTravelers.find((t) => !!t.phone)?.phone || '';
+    if (!passengerMobile) {
+      openContact('mobile');
       return;
     }
 
@@ -422,7 +449,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       const booking = await createBooking.mutateAsync({
         legs: bookingLegs,
         travelers: bookingTravelers,
-        passengerMobile: customerProfile.phone,
+        passengerMobile,
         passengerEmail: customerProfile.email,
         ...(useGst && {
           gstNumber: gstNumber.trim().toUpperCase(),
@@ -540,6 +567,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           <View style={styles.travelerInfo}>
             <Text style={styles.travelerName}>
               {traveler.firstName} {traveler.lastName}
+              {traveler.isAccountHolder ? <Text style={styles.youBadge}>  (You)</Text> : null}
             </Text>
             <Text style={styles.travelerMeta}>
               {[traveler.gender, formatTravelerDob(traveler.dateOfBirth)].filter(Boolean).join(', ')}
@@ -767,7 +795,12 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
         {!!selectionHint && <Text style={styles.selectionHintText}>{selectionHint}</Text>}
 
-        <TouchableOpacity style={styles.addTravelerRow} onPress={onAddTraveler} activeOpacity={0.7}>
+        {!!travelers && !travelers.some((t) => t.isAccountHolder) && (
+          <TouchableOpacity style={styles.addTravelerRow} onPress={() => onAddTraveler(true)} activeOpacity={0.7}>
+            <Text style={styles.addTravelerText}>Add yourself as a traveller</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={styles.addTravelerRow} onPress={() => onAddTraveler()} activeOpacity={0.7}>
           <Text style={styles.addTravelerText}>Add new travellers</Text>
           <Plus size={20} color="#7C1AEE" strokeWidth={1.5} />
         </TouchableOpacity>
@@ -860,58 +893,6 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
         )}
       </ScrollView>
 
-      <Modal visible={contactOpen} animationType="slide" transparent onRequestClose={() => setContactOpen(false)}>
-        <KeyboardAvoidingView
-          style={styles.allTravelersBackdrop}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={styles.allTravelersSheet}>
-            <View style={styles.allTravelersHeader}>
-              <Text style={styles.allTravelersTitle}>Contact details</Text>
-            </View>
-            <Text style={styles.contactNote}>
-              These details will be saved as your primary contact details, and your ticket will be shared on this
-              email ID.
-            </Text>
-            <Text style={styles.contactLabel}>Email address</Text>
-            <TextInput
-              style={[styles.gstInput, !!customerProfile?.email && styles.contactInputLocked]}
-              value={contactEmail}
-              onChangeText={setContactEmail}
-              editable={!customerProfile?.email}
-              placeholder="name@example.com"
-              placeholderTextColor="#697691"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            <Text style={styles.contactLabel}>Mobile number</Text>
-            <TextInput
-              style={styles.gstInput}
-              value={contactPhone}
-              onChangeText={(text) => setContactPhone(text.replace(/[^0-9]/g, ''))}
-              placeholder="10-digit mobile number"
-              placeholderTextColor="#697691"
-              keyboardType="phone-pad"
-              maxLength={10}
-            />
-            {!!contactError && <Text style={[styles.paymentErrorText, styles.contactError]}>{contactError}</Text>}
-            <View style={styles.allTravelersFooter}>
-              <TouchableOpacity style={styles.closeButton} onPress={() => setContactOpen(false)} activeOpacity={0.7}>
-                <Text style={styles.closeButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.addButton, updateContactDetails.isPending && styles.contactButtonBusy]}
-                onPress={handleSaveContact}
-                disabled={updateContactDetails.isPending}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.addButtonText}>{updateContactDetails.isPending ? 'Saving...' : 'Save & continue'}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
 
       <Modal visible={allTravelersType !== null} animationType="slide" transparent onRequestClose={() => setAllTravelersType(null)}>
         <View style={styles.allTravelersBackdrop}>
@@ -955,6 +936,61 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
       <FareRulesModal visible={showFareRules} legs={fareRuleLegs} onClose={() => setShowFareRules(false)} />
     </View>
+      <Modal visible={contactOpen} animationType="slide" transparent onRequestClose={() => setContactOpen(false)}>
+        <KeyboardAvoidingView
+          style={styles.allTravelersBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.allTravelersSheet}>
+            <View style={styles.allTravelersHeader}>
+              <Text style={styles.allTravelersTitle}>{contactMode === 'mobile' ? 'Mobile number' : 'Contact details'}</Text>
+            </View>
+            <Text style={styles.contactNote}>
+              {contactMode === 'mobile'
+                ? 'The airline needs a mobile number for this booking. It will be saved as your primary contact number.'
+                : 'These details will be saved as your primary contact details, and your ticket will be shared on this email ID.'}
+            </Text>
+            <Text style={styles.contactLabel}>Email address</Text>
+            <TextInput
+              style={[styles.gstInput, !!customerProfile?.email && styles.contactInputLocked]}
+              value={contactEmail}
+              onChangeText={setContactEmail}
+              editable={!customerProfile?.email}
+              placeholder="name@example.com"
+              placeholderTextColor="#697691"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <Text style={styles.contactLabel}>{contactMode === 'mobile' ? 'Mobile number' : 'Mobile number (optional)'}</Text>
+            <TextInput
+              style={styles.gstInput}
+              value={contactPhone}
+              onChangeText={(text) => setContactPhone(text.replace(/[^0-9]/g, ''))}
+              placeholder="10-digit mobile number"
+              placeholderTextColor="#697691"
+              keyboardType="phone-pad"
+              maxLength={10}
+            />
+            {!!contactError && <Text style={[styles.paymentErrorText, styles.contactError]}>{contactError}</Text>}
+            <View style={styles.allTravelersFooter}>
+              <TouchableOpacity style={styles.closeButton} onPress={() => setContactOpen(false)} activeOpacity={0.7}>
+                <Text style={styles.closeButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.addButton, updateContactDetails.isPending && styles.contactButtonBusy]}
+                onPress={handleSaveContact}
+                disabled={updateContactDetails.isPending}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.addButtonText}>
+                  {updateContactDetails.isPending ? 'Saving...' : contactMode === 'mobile' ? 'Save & pay' : 'Save & continue'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 };
