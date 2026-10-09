@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Modal, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Modal, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { ArrowLeft, ArrowRight, ChevronRight, Clock3, MapPinPlus, Plus, Check, CheckCircle2, Share2 } from 'lucide-react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import RazorpayCheckout from 'react-native-razorpay';
@@ -8,6 +8,7 @@ import {
   useCreateRazorpayOrderMobile,
   useVerifyRazorpayPaymentMobile,
   useCustomerProfileMobile,
+  useUpdateContactDetailsMobile,
   useCreateBookingMobile,
   useReleaseHoldMobile,
   useConvenienceFeeRules,
@@ -117,6 +118,13 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
   const { data: travelers, isLoading } = useTravellersMobile();
   const { data: customerProfile } = useCustomerProfileMobile();
+  const updateContactDetails = useUpdateContactDetailsMobile();
+  // Opened by Next when the profile has no mobile number or email — the
+  // booking's contact, and where the e-ticket is emailed.
+  const [contactOpen, setContactOpen] = useState(false);
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [contactError, setContactError] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   // Which type's full list the "More" modal is showing, if open.
   const [allTravelersType, setAllTravelersType] = useState<PaxType | null>(null);
@@ -306,15 +314,18 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
     }
   };
 
-  // What still has to be filled in before payment, or '' when ready.
-  const bookingProblem = (): string => {
+  const contactMissing = !customerProfile?.phone || !customerProfile?.email;
+
+  // What still has to be filled in before payment, or '' when ready. Next asks
+  // for a missing contact in a popup instead (ignoreContact).
+  const bookingProblem = (ignoreContact = false): string => {
     // Exactly the searched number of each passenger type — the fare was priced
     // for that mix, and the supplier rejects a booking that doesn't match it.
     const missing = visiblePaxTypes.filter((type) => selectedCount(type) !== requiredCounts[type]);
     if (missing.length > 0) {
       return `Please select ${missing.map((type) => paxCountText(type, requiredCounts[type])).join(', ')} for this booking.`;
     }
-    if (!customerProfile?.phone || !customerProfile?.email) {
+    if (!ignoreContact && contactMissing) {
       return 'Please add a mobile number and email to your profile before booking.';
     }
     if (useGst && (!GSTIN_PATTERN.test(gstNumber.trim().toUpperCase()) || !gstHolderName.trim() || !gstAddress.trim())) {
@@ -324,10 +335,43 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   };
 
   const handleNext = () => {
-    const problem = bookingProblem();
+    const problem = bookingProblem(true);
     setPaymentError(problem);
-    if (!problem) {
+    if (problem) return;
+    if (contactMissing) {
+      setContactEmail(customerProfile?.email ?? '');
+      setContactPhone(customerProfile?.phone ?? '');
+      setContactError('');
+      setContactOpen(true);
+      return;
+    }
+    setStep('payment');
+  };
+
+  // Saves the contact to the profile, then carries on to Payment as Next would.
+  const handleSaveContact = async () => {
+    const email = contactEmail.trim();
+    const phone = contactPhone.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setContactError('Please enter a valid email address.');
+      return;
+    }
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      setContactError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+    setContactError('');
+    try {
+      await updateContactDetails.mutateAsync({
+        phone,
+        // The sign-in email can't change here, so it's only sent to fill one in.
+        email: customerProfile?.email ? undefined : email,
+      });
+      setContactOpen(false);
+      setPaymentError('');
       setStep('payment');
+    } catch (err: any) {
+      setContactError(err?.message || 'Could not save your contact details. Please try again.');
     }
   };
 
@@ -815,6 +859,59 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           </View>
         )}
       </ScrollView>
+
+      <Modal visible={contactOpen} animationType="slide" transparent onRequestClose={() => setContactOpen(false)}>
+        <KeyboardAvoidingView
+          style={styles.allTravelersBackdrop}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <View style={styles.allTravelersSheet}>
+            <View style={styles.allTravelersHeader}>
+              <Text style={styles.allTravelersTitle}>Contact details</Text>
+            </View>
+            <Text style={styles.contactNote}>
+              These details will be saved as your primary contact details, and your ticket will be shared on this
+              email ID.
+            </Text>
+            <Text style={styles.contactLabel}>Email address</Text>
+            <TextInput
+              style={[styles.gstInput, !!customerProfile?.email && styles.contactInputLocked]}
+              value={contactEmail}
+              onChangeText={setContactEmail}
+              editable={!customerProfile?.email}
+              placeholder="name@example.com"
+              placeholderTextColor="#697691"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <Text style={styles.contactLabel}>Mobile number</Text>
+            <TextInput
+              style={styles.gstInput}
+              value={contactPhone}
+              onChangeText={(text) => setContactPhone(text.replace(/[^0-9]/g, ''))}
+              placeholder="10-digit mobile number"
+              placeholderTextColor="#697691"
+              keyboardType="phone-pad"
+              maxLength={10}
+            />
+            {!!contactError && <Text style={[styles.paymentErrorText, styles.contactError]}>{contactError}</Text>}
+            <View style={styles.allTravelersFooter}>
+              <TouchableOpacity style={styles.closeButton} onPress={() => setContactOpen(false)} activeOpacity={0.7}>
+                <Text style={styles.closeButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.addButton, updateContactDetails.isPending && styles.contactButtonBusy]}
+                onPress={handleSaveContact}
+                disabled={updateContactDetails.isPending}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.addButtonText}>{updateContactDetails.isPending ? 'Saving...' : 'Save & continue'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       <Modal visible={allTravelersType !== null} animationType="slide" transparent onRequestClose={() => setAllTravelersType(null)}>
         <View style={styles.allTravelersBackdrop}>

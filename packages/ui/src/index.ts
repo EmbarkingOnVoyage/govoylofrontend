@@ -21,6 +21,7 @@ export { ProfileStep1 } from './features/profile/ProfileStep1';
 export {
   useCustomerProfileMobile,
   useUpdateCustomerProfileMobile,
+  useUpdateContactDetailsMobile,
   type CustomerProfile,
   type UpdateProfilePayload,
 } from './features/profile/useCustomerProfileMobile';
