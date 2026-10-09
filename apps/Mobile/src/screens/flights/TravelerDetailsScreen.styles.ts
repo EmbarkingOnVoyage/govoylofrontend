@@ -408,6 +408,31 @@ export const styles = StyleSheet.create({
   allTravelersList: {
     maxHeight: 360,
   },
+  // Contact details popup (Next with no mobile/email on the profile).
+  contactNote: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#3E4B64',
+    marginBottom: 12,
+  },
+  contactLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#182339',
+    marginTop: 8,
+    marginBottom: 6,
+  },
+  contactInputLocked: {
+    backgroundColor: '#F2F3F8',
+    color: '#697691',
+  },
+  contactError: {
+    marginTop: 10,
+    marginBottom: 0,
+  },
+  contactButtonBusy: {
+    opacity: 0.6,
+  },
   allTravelersFooter: {
     flexDirection: 'row',
     gap: 12,

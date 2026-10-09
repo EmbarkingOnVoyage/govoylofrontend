@@ -68,3 +68,19 @@ export function useUpdateCustomerProfileMobile() {
     },
   });
 }
+
+// The account's primary contact, saved from the Traveller Details popup when
+// the profile has no mobile (or, rarely, no email). The backend only fills in
+// a missing email; an existing sign-in email never changes.
+export function useUpdateContactDetailsMobile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: { phone: string; email?: string }): Promise<CustomerProfile> =>
+      postJson(`${AUTH_BASE_URL}/api/v1/customer/profile/contact`, payload),
+    onSuccess: (profile) => {
+      queryClient.setQueryData(["customer-profile"], profile);
+      queryClient.invalidateQueries({ queryKey: ["customer-profile"] });
+    },
+  });
+}
