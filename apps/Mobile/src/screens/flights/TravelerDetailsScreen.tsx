@@ -99,6 +99,8 @@ interface TravelerDetailsScreenProps {
   onBack: () => void;
   // asSelf: "Add yourself" (the signed-in customer isn't a saved traveller yet).
   onAddTraveler: (asSelf?: boolean) => void;
+  // Booking as a guest: no account, so no "Add yourself".
+  isGuest?: boolean;
   onEditTraveler: (id: string) => void;
 }
 
@@ -113,6 +115,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   searchTripType,
   onBack,
   onAddTraveler,
+  isGuest = false,
   onEditTraveler,
 }) => {
   useHardwareBack(() => onBack());
@@ -604,6 +607,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           paymentError={paymentError}
           bookingRefNo={bookingResult?.bookingRefNo}
           airlinePnr={bookingResult?.airlinePnr}
+          guestEmail={isGuest ? customerProfile?.email ?? undefined : undefined}
           onBack={() => setStep('details')}
           onPay={() => handlePayNow()}
         />
@@ -795,7 +799,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
         {!!selectionHint && <Text style={styles.selectionHintText}>{selectionHint}</Text>}
 
-        {!!travelers && !travelers.some((t) => t.isAccountHolder) && (
+        {!isGuest && !!travelers && !travelers.some((t) => t.isAccountHolder) && (
           <TouchableOpacity style={styles.addTravelerRow} onPress={() => onAddTraveler(true)} activeOpacity={0.7}>
             <Text style={styles.addTravelerText}>Add yourself as a traveller</Text>
           </TouchableOpacity>
