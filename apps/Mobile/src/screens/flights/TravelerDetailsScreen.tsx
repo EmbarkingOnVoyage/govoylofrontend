@@ -605,7 +605,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
           bookingRefNo={bookingResult?.bookingRefNo}
           airlinePnr={bookingResult?.airlinePnr}
           onBack={() => setStep('details')}
-          onPay={handlePayNow}
+          onPay={() => handlePayNow()}
         />
       ) : null}
     <View style={[styles.screen, step === 'payment' && { display: 'none' }]}>
