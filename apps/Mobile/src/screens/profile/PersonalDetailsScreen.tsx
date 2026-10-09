@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+//import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Platform } from 'react-native';
+import {
+  Platform,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Check } from 'lucide-react-native';
 import {
@@ -18,6 +27,7 @@ import {
 } from '@workspace/ui/src/data/selectOptions';
 import { styles } from './PersonalDetailsScreen.styles';
 import { useHardwareBack } from '../../navigation/useHardwareBack';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface PersonalDetailsScreenProps {
   onBack: () => void;
@@ -58,6 +68,8 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
   const [nationality, setNationality] = useState('India');
   const [maritalStatus, setMaritalStatus] = useState('');
   const [anniversary, setAnniversary] = useState('');
+  const [showDobPicker, setShowDobPicker] = useState(false);
+  const [showAnniversaryPicker, setShowAnniversaryPicker] = useState(false);
   const [cityOfResidence, setCityOfResidence] = useState('');
   const [state, setState] = useState('');
   const [phone, setPhone] = useState('');
@@ -70,6 +82,39 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
   const [panCardNumberEdited, setPanCardNumberEdited] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [showValidation, setShowValidation] = useState(false);
+
+  const parseDate = (value: string): Date => {
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (!match) {
+    return new Date();
+  }
+
+  const [, day, month, year] = match;
+
+  const date = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day)
+  );
+
+  if (
+    date.getFullYear() !== Number(year) ||
+    date.getMonth() !== Number(month) - 1 ||
+    date.getDate() !== Number(day)
+  ) {
+    return new Date();
+  }
+
+  return date;
+};
+
+const formatDateForDisplay = (date: Date): string => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+
+  return `${day}/${month}/${date.getFullYear()}`;
+};
 
   useEffect(() => {
     if (!profile) return;
@@ -228,7 +273,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
           </View>
           <View style={styles.fieldWrapperHalf}>
             <Text style={styles.label}>Date of birth</Text>
-            <DateField
+            {/* <DateField
               style={
                 showValidation && (!dateOfBirth.trim() || !isValidDateOfBirth(dateOfBirth))
                   ? styles.inputError
@@ -236,7 +281,58 @@ if (!isValidDateOfBirth(dateOfBirth)) {
               }
               value={dateOfBirth}
               onChangeText={setDateOfBirth}
-            />
+            /> */}
+
+            <TouchableOpacity
+              style={[
+                styles.inputDisplay,
+                showValidation &&
+                (!dateOfBirth.trim() || !isValidDateOfBirth(dateOfBirth))
+                  ? styles.inputError
+                  : undefined,
+              ]}
+              onPress={() => setShowDobPicker(true)}
+            >
+              <Text
+                style={
+                  dateOfBirth
+                    ? styles.inputDisplayText
+                    : styles.inputDisplayPlaceholder
+                }
+              >
+                {dateOfBirth || 'Select date of birth'}
+              </Text>
+            </TouchableOpacity>
+
+            {showDobPicker && (
+              <>
+                <DateTimePicker
+                  value={parseDate(dateOfBirth)}
+                  mode="date"
+                  maximumDate={new Date()}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  accentColor="#7C1AEE"
+                  themeVariant="light"
+                  onChange={(event, selectedDate) => {
+                    if (Platform.OS === 'android') {
+                      setShowDobPicker(false);
+                    }
+
+                    if (event.type === 'set' && selectedDate) {
+                      setDateOfBirth(formatDateForDisplay(selectedDate));
+                    }
+                  }}
+                />
+
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity onPress={() => setShowDobPicker(false)}>
+                    <Text>Done</Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+
+
           </View>
         </View>
         <View style={styles.fieldWrapperFull}>
@@ -261,7 +357,51 @@ if (!isValidDateOfBirth(dateOfBirth)) {
             </View>
             <View style={styles.fieldWrapperHalf}>
               <Text style={styles.label}>Anniversary</Text>
-              <DateField value={anniversary} onChangeText={setAnniversary} placeholder="Select" />
+              {/* <DateField value={anniversary} onChangeText={setAnniversary} placeholder="Select" /> */}
+             
+<TouchableOpacity
+  style={styles.inputDisplay}
+  onPress={() => setShowAnniversaryPicker(true)}
+>
+  <Text
+    style={
+      anniversary
+        ? styles.inputDisplayText
+        : styles.inputDisplayPlaceholder
+    }
+  >
+    {anniversary || 'Select anniversary'}
+  </Text>
+</TouchableOpacity>
+
+{showAnniversaryPicker && (
+  <>
+    <DateTimePicker
+      value={parseDate(anniversary)}
+      mode="date"
+      maximumDate={new Date()}
+      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+      onChange={(event, selectedDate) => {
+        if (Platform.OS === 'android') {
+          setShowAnniversaryPicker(false);
+        }
+
+        if (event.type === 'set' && selectedDate) {
+          setAnniversary(formatDateForDisplay(selectedDate));
+        }
+      }}
+    />
+
+    {Platform.OS === 'ios' && (
+      <TouchableOpacity
+        onPress={() => setShowAnniversaryPicker(false)}
+      >
+        <Text>Done</Text>
+      </TouchableOpacity>
+    )}
+  </>
+)}
+
             </View>
           </View>
         ) : (
