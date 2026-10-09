@@ -157,7 +157,11 @@ export { DashboardLayout } from './components/layout/Layout';
 export { MenuBar } from './components/layout/MenuBar';
 export { AuthProvider, useAuth } from './features/authentication/AuthContext';
 export { AuthModal } from './features/authentication/AuthModal.web';
-export { authContextCache } from './features/authentication/authContextCache';
+export {
+  authContextCache,
+  type AuthSession,
+  type SessionStorageAdapter,
+} from './features/authentication/authContextCache';
 export { AUTH_BASE_URL } from '@workspace/api';
 
 // Export mobile-specific styles
