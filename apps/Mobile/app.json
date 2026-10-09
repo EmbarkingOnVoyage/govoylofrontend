@@ -44,7 +44,8 @@
           }
         }
       ],
-      "./plugins/withBackCallbackOptOut"
+      "./plugins/withBackCallbackOptOut",
+      "@react-native-community/datetimepicker"
     ],
     "extra": {
       "eas": {
