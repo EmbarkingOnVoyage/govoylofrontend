@@ -84,6 +84,8 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
   const [activeTab, setActiveTab] = useState<TabKey>('Home');
   const [profileScreen, setProfileScreen] = useState<ProfileStackScreen>('Hub');
   const [editingTravellerId, setEditingTravellerId] = useState<string | null>(null);
+  // "Add yourself": the new traveller is the signed-in customer.
+  const [addingSelf, setAddingSelf] = useState(false);
   const [homeScreen, setHomeScreen] = useState<HomeStackScreen>('Buttons');
   const [flightOffers, setFlightOffers] = useState<FlightOffer[]>([]);
   const [flightSearchSummary, setFlightSearchSummary] = useState<FlightSearchSummary | null>(null);
@@ -167,12 +169,14 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
             passengerCounts={travelerPassengerCounts}
             searchTripType={travelerTripType}
             onBack={() => setHomeScreen('FlightResults')}
-            onAddTraveler={() => {
+            onAddTraveler={(asSelf) => {
               setEditingTravellerId(null);
+              setAddingSelf(!!asSelf);
               setHomeScreen('AddTraveler');
             }}
             onEditTraveler={(id) => {
               setEditingTravellerId(id);
+              setAddingSelf(false);
               setHomeScreen('AddTraveler');
             }}
           />,
@@ -181,6 +185,7 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
           'AddTraveler',
           <CoTravellerFormScreen
             travellerId={editingTravellerId}
+            asAccountHolder={addingSelf}
             onDone={() => setHomeScreen('TravelerDetails')}
           />,
         )}
@@ -196,12 +201,14 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
         return (
           <CoTravellerScreen
             onBack={() => setProfileScreen('Hub')}
-            onAdd={() => {
+            onAdd={(asSelf) => {
               setEditingTravellerId(null);
+              setAddingSelf(!!asSelf);
               setProfileScreen('CoTravellerForm');
             }}
             onEdit={(id) => {
               setEditingTravellerId(id);
+              setAddingSelf(false);
               setProfileScreen('CoTravellerForm');
             }}
           />
@@ -210,6 +217,7 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
         return (
           <CoTravellerFormScreen
             travellerId={editingTravellerId}
+            asAccountHolder={addingSelf}
             onDone={() => setProfileScreen('CoTraveller')}
           />
         );
