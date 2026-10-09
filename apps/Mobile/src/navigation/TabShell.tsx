@@ -9,6 +9,8 @@ import { CoTravellerFormScreen } from '../screens/profile/CoTravellerFormScreen'
 import { PlaceholderScreen } from '../screens/profile/PlaceholderScreen';
 import { PreferencesScreen } from '../screens/profile/PreferencesScreen';
 import { LoginRequiredScreen } from '../screens/LoginRequiredScreen';
+import { authContextCache } from '@workspace/ui';
+import { GuestCheckoutScreen } from '../screens/flights/GuestCheckoutScreen';
 import { HomeScreen } from '../screens/HomeScreen';
 import { FlightSearchFormScreen } from '../screens/flights/FlightSearchFormScreen';
 import { FlightResultsScreen } from '../screens/flights/FlightResultsScreen';
@@ -22,7 +24,7 @@ type TabKey = 'Home' | 'Deals' | 'MyTrips' | 'Profile';
 // The Home tab has its own internal stack (buttons -> flight search -> flight
 // results -> traveller details -> add/edit a traveller), separate from the
 // bottom-tab selection, mirroring the Profile tab's sub-stack pattern below.
-type HomeStackScreen = 'Buttons' | 'FlightSearch' | 'FlightResults' | 'TravelerDetails' | 'AddTraveler';
+type HomeStackScreen = 'Buttons' | 'FlightSearch' | 'FlightResults' | 'GuestCheckout' | 'TravelerDetails' | 'AddTraveler';
 
 // Position of each Home screen in the flight flow. Screens below the current
 // one stay mounted (hidden) so going back returns to them exactly as they were
@@ -31,8 +33,9 @@ const HOME_DEPTH: Record<HomeStackScreen, number> = {
   Buttons: 0,
   FlightSearch: 1,
   FlightResults: 2,
-  TravelerDetails: 3,
-  AddTraveler: 4,
+  GuestCheckout: 3,
+  TravelerDetails: 4,
+  AddTraveler: 5,
 };
 
 // The Profile tab has its own internal stack (hub -> Personal details -> ...)
@@ -84,6 +87,8 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
   const [activeTab, setActiveTab] = useState<TabKey>('Home');
   const [profileScreen, setProfileScreen] = useState<ProfileStackScreen>('Hub');
   const [editingTravellerId, setEditingTravellerId] = useState<string | null>(null);
+  // "Add yourself": the new traveller is the signed-in customer.
+  const [addingSelf, setAddingSelf] = useState(false);
   const [homeScreen, setHomeScreen] = useState<HomeStackScreen>('Buttons');
   const [flightOffers, setFlightOffers] = useState<FlightOffer[]>([]);
   const [flightSearchSummary, setFlightSearchSummary] = useState<FlightSearchSummary | null>(null);
@@ -155,10 +160,20 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
               setTravelerLegLabels(legLabels);
               setTravelerPassengerCounts(passengerCounts);
               setTravelerTripType(tripType);
-              setHomeScreen('TravelerDetails');
+              // A guest gives their contact first; that starts their guest session.
+              setHomeScreen(isGuest && !authContextCache.getAccessToken() ? 'GuestCheckout' : 'TravelerDetails');
             }}
           />,
         )}
+        {isGuest &&
+          layer(
+            'GuestCheckout',
+            <GuestCheckoutScreen
+              onBack={() => setHomeScreen('FlightResults')}
+              onContinue={() => setHomeScreen('TravelerDetails')}
+              onSignIn={onRequireLogin}
+            />,
+          )}
         {layer(
           'TravelerDetails',
           <TravelerDetailsScreen
@@ -166,13 +181,16 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
             legLabels={travelerLegLabels}
             passengerCounts={travelerPassengerCounts}
             searchTripType={travelerTripType}
+            isGuest={isGuest}
             onBack={() => setHomeScreen('FlightResults')}
-            onAddTraveler={() => {
+            onAddTraveler={(asSelf) => {
               setEditingTravellerId(null);
+              setAddingSelf(!!asSelf);
               setHomeScreen('AddTraveler');
             }}
             onEditTraveler={(id) => {
               setEditingTravellerId(id);
+              setAddingSelf(false);
               setHomeScreen('AddTraveler');
             }}
           />,
@@ -181,6 +199,7 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
           'AddTraveler',
           <CoTravellerFormScreen
             travellerId={editingTravellerId}
+            asAccountHolder={addingSelf}
             onDone={() => setHomeScreen('TravelerDetails')}
           />,
         )}
@@ -196,12 +215,14 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
         return (
           <CoTravellerScreen
             onBack={() => setProfileScreen('Hub')}
-            onAdd={() => {
+            onAdd={(asSelf) => {
               setEditingTravellerId(null);
+              setAddingSelf(!!asSelf);
               setProfileScreen('CoTravellerForm');
             }}
             onEdit={(id) => {
               setEditingTravellerId(id);
+              setAddingSelf(false);
               setProfileScreen('CoTravellerForm');
             }}
           />
@@ -210,6 +231,7 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
         return (
           <CoTravellerFormScreen
             travellerId={editingTravellerId}
+            asAccountHolder={addingSelf}
             onDone={() => setProfileScreen('CoTraveller')}
           />
         );

@@ -5,6 +5,7 @@ import { ArrowLeft, Check } from 'lucide-react-native';
 import {
   useTravellerDetailMobile,
   useSaveTravellerMobile,
+  useCustomerProfileMobile,
   type TravelerDetail,
 } from '@workspace/ui';
 import { SelectField } from '../../components/SelectField';
@@ -15,6 +16,8 @@ import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 interface CoTravellerFormScreenProps {
   travellerId: string | null;
+  // Adding the signed-in customer themselves: prefilled from their profile.
+  asAccountHolder?: boolean;
   onDone: () => void;
 }
 
@@ -26,6 +29,16 @@ function formatDate(isoDate: string | null | undefined): string {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   return `${day}/${month}/${date.getFullYear()}`;
+}
+
+// Same rules as the account's own number on Personal details: an Indian
+// 10-digit mobile starting 6-9, saved with +91.
+function isValidMobile(value: string): boolean {
+  return /^[6-9]\d{9}$/.test(value.trim());
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
 // Inverse of formatDate — parses DD/MM/YYYY back into an ISO date string.
@@ -40,7 +53,7 @@ function parseDisplayDate(display: string): string | null {
   return date.toISOString();
 }
 
-export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ travellerId, onDone }) => {
+export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ travellerId, asAccountHolder = false, onDone }) => {
   useHardwareBack(() => onDone());
 
   const {
@@ -51,6 +64,9 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
     isRefetching: isRetryingDetail,
   } = useTravellerDetailMobile(travellerId);
   const saveTraveller = useSaveTravellerMobile();
+  const { data: profile } = useCustomerProfileMobile();
+  // The customer's own traveller: their email is the account (primary) email.
+  const isSelf = travellerId ? !!detail?.isAccountHolder : asAccountHolder;
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -59,6 +75,8 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
   const [nationality, setNationality] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [passportNumber, setPassportNumber] = useState('');
   const [passportExpiryDate, setPassportExpiryDate] = useState('');
   const [passportIssueDate, setPassportIssueDate] = useState('');
@@ -77,6 +95,8 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
     if (d.nationality) setNationality(d.nationality);
     if (d.city) setCity(d.city);
     if (d.state) setState(d.state);
+    if (d.email) setEmail(d.email);
+    if (d.phone) setPhone(d.phone);
     setAutoAddTravelInsurance(d.autoAddTravelInsurance);
     if (d.passport) {
       setPassportNumber(d.passport.maskedPassportNumber);
@@ -87,6 +107,23 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
     setPassportEdited(false);
   }, [detail]);
 
+  // "Add yourself": start from what the profile already has.
+  useEffect(() => {
+    if (travellerId || !asAccountHolder || !profile) return;
+    if (profile.firstName) setFirstName(profile.firstName);
+    if (profile.lastName) setLastName(profile.lastName);
+    if (profile.gender) setGender(profile.gender);
+    if (profile.dateOfBirth) setDateOfBirth(formatDate(profile.dateOfBirth));
+    if (profile.nationality) setNationality(profile.nationality);
+    if (profile.cityOfResidence) setCity(profile.cityOfResidence);
+    if (profile.state) setState(profile.state);
+    if (profile.phone) setPhone(profile.phone);
+  }, [travellerId, asAccountHolder, profile]);
+
+  useEffect(() => {
+    if (isSelf && profile?.email) setEmail(profile.email);
+  }, [isSelf, profile?.email]);
+
   const handleSave = async () => {
     setSaveError('');
 
@@ -96,6 +133,14 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
     }
     if (!parseDisplayDate(dateOfBirth)) {
       setSaveError('Please enter a valid date of birth.');
+      return;
+    }
+    if (email.trim() && !isValidEmail(email)) {
+      setSaveError('Please enter a valid email address.');
+      return;
+    }
+    if (phone.trim() && !isValidMobile(phone)) {
+      setSaveError('Please enter a valid 10-digit mobile number.');
       return;
     }
     // The saved number only ever comes back masked — sending it unchanged would
@@ -122,6 +167,10 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
           city,
           state,
           autoAddTravelInsurance,
+          email: email.trim(),
+          phone: phone.trim(),
+          phoneCountryCode: '+91',
+          isAccountHolder: !travellerId && asAccountHolder ? true : undefined,
           passportNumber: passportEdited ? passportNumber : undefined,
           passportExpiryDate: passportEdited ? parseDisplayDate(passportExpiryDate) : undefined,
           passportIssueDate: passportEdited ? parseDisplayDate(passportIssueDate) : undefined,
@@ -146,7 +195,9 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
             <TouchableOpacity style={styles.backButton} onPress={onDone}>
               <ArrowLeft size={20} color="#ECEEF3" strokeWidth={1.2} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{travellerId ? 'Edit co-traveller' : 'Add new traveller'}</Text>
+            <Text style={styles.headerTitle}>
+              {isSelf ? (travellerId ? 'Edit your details' : 'Add yourself') : travellerId ? 'Edit co-traveller' : 'Add new traveller'}
+            </Text>
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -210,6 +261,35 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
         <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>State</Text>
           <SelectField value={state} options={INDIAN_STATE_OPTIONS} onSelect={setState} title="Select state" />
+        </View>
+
+        <Text style={styles.sectionHeading}>Contact details</Text>
+        <View style={styles.fieldWrapperFull}>
+          <Text style={styles.label}>Email address</Text>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            editable={!isSelf}
+            placeholder="name@example.com"
+            placeholderTextColor="#697691"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          {isSelf && <Text style={styles.label}>Your account email — your tickets are sent here.</Text>}
+        </View>
+        <View style={styles.fieldWrapperFull}>
+          <Text style={styles.label}>Mobile number</Text>
+          <TextInput
+            style={styles.input}
+            value={phone}
+            onChangeText={(text) => setPhone(text.replace(/[^0-9]/g, ''))}
+            placeholder="10-digit mobile number"
+            placeholderTextColor="#697691"
+            keyboardType="phone-pad"
+            maxLength={10}
+          />
         </View>
 
         <Text style={styles.sectionHeading}>Documents Details</Text>

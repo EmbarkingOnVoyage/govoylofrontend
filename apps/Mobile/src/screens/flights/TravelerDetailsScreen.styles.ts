@@ -408,6 +408,36 @@ export const styles = StyleSheet.create({
   allTravelersList: {
     maxHeight: 360,
   },
+  youBadge: {
+    fontSize: 13,
+    color: '#7C1AEE',
+    fontWeight: '600',
+  },
+  // Contact details popup (no email on the account, or no mobile at payment).
+  contactNote: {
+    fontSize: 13,
+    lineHeight: 18,
+    color: '#3E4B64',
+    marginBottom: 12,
+  },
+  contactLabel: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#182339',
+    marginTop: 8,
+    marginBottom: 6,
+  },
+  contactInputLocked: {
+    backgroundColor: '#F2F3F8',
+    color: '#697691',
+  },
+  contactError: {
+    marginTop: 10,
+    marginBottom: 0,
+  },
+  contactButtonBusy: {
+    opacity: 0.6,
+  },
   allTravelersFooter: {
     flexDirection: 'row',
     gap: 12,

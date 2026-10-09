@@ -29,6 +29,8 @@ export const TravellerFormWeb: React.FC<{
   const [gender, setGender] = useState(traveller?.gender ?? '');
   const [dateOfBirth, setDateOfBirth] = useState(dateInputValue(traveller?.dateOfBirth));
   const [nationality, setNationality] = useState(traveller?.nationality ?? 'India');
+  const [email, setEmail] = useState(traveller?.email ?? '');
+  const [phone, setPhone] = useState(traveller?.phone ?? '');
   const [passportNumber, setPassportNumber] = useState('');
   const [passportExpiry, setPassportExpiry] = useState('');
   const [passportCountry, setPassportCountry] = useState('');
@@ -42,6 +44,8 @@ export const TravellerFormWeb: React.FC<{
     if (!gender) return setError('Please select a gender.');
     if (!dateOfBirth) return setError('Please enter the date of birth.');
     if (dateOfBirth > today) return setError('Date of birth must be in the past.');
+    if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setError('Please enter a valid email address.');
+    if (phone.trim() && !/^[6-9]\d{9}$/.test(phone.trim())) return setError('Please enter a valid 10-digit mobile number.');
     const passportEdited = !!passportNumber.trim();
     if (passportEdited && (!passportExpiry || !passportCountry)) {
       return setError('Please enter the passport expiry date and issuing country.');
@@ -59,7 +63,13 @@ export const TravellerFormWeb: React.FC<{
           gender,
           dateOfBirth,
           nationality,
+          // Saving replaces every field, so send back what this form doesn't edit.
+          city: traveller?.city ?? undefined,
+          state: traveller?.state ?? undefined,
           autoAddTravelInsurance: traveller?.autoAddTravelInsurance ?? false,
+          email: email.trim(),
+          phone: phone.trim(),
+          phoneCountryCode: '+91',
           passportNumber: passportEdited ? passportNumber.trim().toUpperCase() : undefined,
           passportExpiryDate: passportEdited ? passportExpiry : undefined,
           passportIssuingCountry: passportEdited ? passportCountry : undefined,
@@ -112,6 +122,33 @@ export const TravellerFormWeb: React.FC<{
               </select>
             </Field>
           </div>
+        </div>
+      </div>
+      <Separator />
+
+      <div className="w-[703px] max-w-full flex flex-col gap-3">
+        <SubHeading>Contact details</SubHeading>
+        <div className="flex items-center gap-4">
+          <Field label="Email address" className="w-[343px]">
+            <input
+              type="email"
+              className={inputClass}
+              placeholder="name@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </Field>
+          <Field label="Mobile number" className="w-[343px]">
+            <input
+              type="tel"
+              inputMode="numeric"
+              maxLength={10}
+              className={inputClass}
+              placeholder="10-digit mobile number"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
+            />
+          </Field>
         </div>
       </div>
       <Separator />

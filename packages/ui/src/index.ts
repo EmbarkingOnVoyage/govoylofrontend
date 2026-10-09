@@ -17,10 +17,13 @@ export { LoginFeature as LoginMobileFeature } from './features/authentication/Lo
 export { LoginFeature as LoginWebFeature } from './features/authentication/LoginFeature.web';
 export { OtpFeature as OtpMobileFeature } from './features/authentication/OtpFeature';
 export { OtpFeature as OtpWebFeature } from './features/authentication/OtpFeature.web';
+export { useStartGuestSessionMobile } from './features/authentication/useStartGuestSessionMobile';
+export type { GuestSessionPayload } from './features/authentication/useStartGuestSessionMobile';
 export { ProfileStep1 } from './features/profile/ProfileStep1';
 export {
   useCustomerProfileMobile,
   useUpdateCustomerProfileMobile,
+  useUpdateContactDetailsMobile,
   type CustomerProfile,
   type UpdateProfilePayload,
 } from './features/profile/useCustomerProfileMobile';
@@ -157,7 +160,11 @@ export { DashboardLayout } from './components/layout/Layout';
 export { MenuBar } from './components/layout/MenuBar';
 export { AuthProvider, useAuth } from './features/authentication/AuthContext';
 export { AuthModal } from './features/authentication/AuthModal.web';
-export { authContextCache } from './features/authentication/authContextCache';
+export {
+  authContextCache,
+  type AuthSession,
+  type SessionStorageAdapter,
+} from './features/authentication/authContextCache';
 export { AUTH_BASE_URL } from '@workspace/api';
 
 // Export mobile-specific styles

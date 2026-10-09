@@ -33,6 +33,8 @@ interface PaymentScreenProps {
   paymentError: string;
   bookingRefNo?: string | null;
   airlinePnr?: string | null;
+  // Booked as a guest: where to sign in to find this trip again.
+  guestEmail?: string;
   onBack: () => void;
   onPay: () => void;
 }
@@ -127,6 +129,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   airlinePnr,
   onBack,
   onPay,
+  guestEmail,
 }) => {
   const [tripOpen, setTripOpen] = useState(false);
   const [fareOpen, setFareOpen] = useState(false);
@@ -227,6 +230,11 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
             </Text>
             {bookingRefNo ? <Text style={styles.successText}>Booking reference: {bookingRefNo}</Text> : null}
             {airlinePnr ? <Text style={styles.successText}>Airline PNR: {airlinePnr}</Text> : null}
+            {guestEmail ? (
+              <Text style={styles.successText}>
+                Your e-ticket is on its way to {guestEmail}. Sign in with this email to see this trip anytime.
+              </Text>
+            ) : null}
           </View>
         ) : (
           <>

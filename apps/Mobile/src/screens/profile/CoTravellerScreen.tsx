@@ -21,7 +21,8 @@ function formatDate(isoDate: string | null | undefined): string {
 
 interface CoTravellerScreenProps {
   onBack: () => void;
-  onAdd: () => void;
+  // asSelf: "Add yourself" (the signed-in customer isn't in the list yet).
+  onAdd: (asSelf?: boolean) => void;
   onEdit: (id: string) => void;
 }
 
@@ -55,6 +56,7 @@ export const CoTravellerScreen: React.FC<CoTravellerScreenProps> = ({ onBack, on
         <View style={styles.rowInfo}>
           <Text style={styles.rowName}>
             {item.firstName} {item.lastName}
+            {item.isAccountHolder ? <Text style={styles.youBadge}>  (You)</Text> : null}
           </Text>
           <Text style={styles.rowMeta}>
             {[item.gender, formatDate(item.dateOfBirth)].filter(Boolean).join(', ')}
@@ -64,9 +66,12 @@ export const CoTravellerScreen: React.FC<CoTravellerScreenProps> = ({ onBack, on
           <TouchableOpacity style={styles.actionButton} onPress={() => onEdit(item.id)}>
             <Pencil size={20} color="#182339" strokeWidth={1.2} />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
-            <Trash2 size={20} color="#182339" strokeWidth={1.2} />
-          </TouchableOpacity>
+          {/* The account holder can't be removed — they're always a traveller. */}
+          {!item.isAccountHolder && (
+            <TouchableOpacity style={styles.actionButton} onPress={() => handleDelete(item)}>
+              <Trash2 size={20} color="#182339" strokeWidth={1.2} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     </View>
@@ -98,8 +103,15 @@ export const CoTravellerScreen: React.FC<CoTravellerScreenProps> = ({ onBack, on
           ) : null
         }
         ListFooterComponentStyle={styles.footer}
+        ListHeaderComponent={
+          !isLoading && travellers && !travellers.some((t) => t.isAccountHolder) ? (
+            <TouchableOpacity style={styles.addSelfRow} onPress={() => onAdd(true)} activeOpacity={0.8}>
+              <Text style={styles.addSelfText}>+ Add yourself as a traveller</Text>
+            </TouchableOpacity>
+          ) : null
+        }
         ListFooterComponent={
-          <TouchableOpacity style={styles.addButton} onPress={onAdd} activeOpacity={0.8}>
+          <TouchableOpacity style={styles.addButton} onPress={() => onAdd()} activeOpacity={0.8}>
             <Text style={styles.addButtonText}>Add Co-Traveller</Text>
           </TouchableOpacity>
         }

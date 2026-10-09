@@ -12,6 +12,12 @@ const queryClient = new QueryClient({
   },
 });
 
+// Drops every cached query, e.g. when a different account (or a guest) signs
+// in, so nothing from the previous session shows up in the next one.
+export function clearAppQueryCache() {
+  queryClient.clear();
+}
+
 interface IAppProviderProps {
   children: React.ReactNode;
   contextName?: string;

@@ -16,7 +16,7 @@
     },
     "android": {
       "package": "com.govoylo.app",
-      "versionCode": 5,
+      "versionCode": 6,
       "adaptiveIcon": {
         "backgroundColor": "#7C1AEE",
         "foregroundImage": "../../assets/android-icon-foreground.png",
@@ -45,7 +45,8 @@
         }
       ],
       "./plugins/withBackCallbackOptOut",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-secure-store"
     ],
     "extra": {
       "eas": {
