@@ -17,6 +17,8 @@ export { LoginFeature as LoginMobileFeature } from './features/authentication/Lo
 export { LoginFeature as LoginWebFeature } from './features/authentication/LoginFeature.web';
 export { OtpFeature as OtpMobileFeature } from './features/authentication/OtpFeature';
 export { OtpFeature as OtpWebFeature } from './features/authentication/OtpFeature.web';
+export { useStartGuestSessionMobile } from './features/authentication/useStartGuestSessionMobile';
+export type { GuestSessionPayload } from './features/authentication/useStartGuestSessionMobile';
 export { ProfileStep1 } from './features/profile/ProfileStep1';
 export {
   useCustomerProfileMobile,

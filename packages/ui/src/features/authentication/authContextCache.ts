@@ -55,6 +55,9 @@ function loadSync(): AuthSession | null {
 
 let sessionCache: AuthSession | null = loadSync();
 
+// A guest checkout's token (see setGuestSession): memory-only, never refreshed.
+let guestSession = false;
+
 // Told when the session ends (sign out, or a refresh token the server rejects),
 // so the app can leave the signed-in screens.
 const sessionClearedListeners = new Set<() => void>();
@@ -103,9 +106,20 @@ export const authContextCache = {
     return sessionCache !== null;
   },
   setSession(accessToken: string, refreshToken: string) {
+    guestSession = false;
     sessionCache = { accessToken, refreshToken };
     const session = sessionCache;
     persist(() => storage.save(session));
+  },
+  // Guest checkout: lets a guest book without an account. Not persisted — the
+  // guest starts over after an app restart — and there's no refresh token, so
+  // an expired one just fails its request instead of ending a session.
+  setGuestSession(accessToken: string) {
+    guestSession = true;
+    sessionCache = { accessToken, refreshToken: "" };
+  },
+  isGuestSession(): boolean {
+    return guestSession && sessionCache !== null;
   },
   getAccessToken(): string | null {
     return sessionCache?.accessToken ?? null;
@@ -119,6 +133,7 @@ export const authContextCache = {
   clearSession() {
     const hadSession = sessionCache !== null;
     sessionCache = null;
+    guestSession = false;
     persist(() => storage.clear());
     if (hadSession) {
       sessionClearedListeners.forEach((listener) => listener());
