@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from 'react';
+import { Check, ChevronDown } from 'lucide-react';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
 import { useUpdateCustomerProfile, type CustomerProfile } from './useCustomerProfile';
+
+// 20x11 India flag for the phone code (an emoji flag doesn't render on Windows).
+const IndiaFlag: React.FC = () => (
+  <svg width="20" height="12" viewBox="0 0 30 18" aria-hidden="true" className="shrink-0 rounded-[2px] border border-[rgba(37,42,49,0.15)]">
+    <rect width="30" height="6" fill="#FF9933" />
+    <rect y="6" width="30" height="6" fill="#FFFFFF" />
+    <rect y="12" width="30" height="6" fill="#138808" />
+    <circle cx="15" cy="9" r="2.2" fill="none" stroke="#000080" strokeWidth="0.8" />
+  </svg>
+);
 
 interface PersonalDetailsContentProps {
   profile?: CustomerProfile;
@@ -158,7 +169,7 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
               onChange={(e) => setLastName(e.target.value)}
             />
           </div>
-          <div className="grid grid-cols-2 gap-4 col-span-1">
+          <div className="grid grid-cols-[124px_1fr] gap-4">
             <div className={s.inputWrapper}>
               <label className={s.label}>Gender</label>
               <select className={s.select} value={gender} onChange={(e) => setGender(e.target.value)}>
@@ -199,6 +210,13 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
             </select>
           </div>
           <div className={s.inputWrapper}>
+            <label className={s.label}>State</label>
+            <select className={s.select} value={state} onChange={(e) => setState(e.target.value)}>
+              <option value="">Select</option>
+              {withValueOption(state)}
+            </select>
+          </div>
+          <div className={s.inputWrapper}>
             <label className={s.label}>City of residents</label>
             <select
               className={s.select}
@@ -207,13 +225,6 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
             >
               <option value="">Select</option>
               {withValueOption(cityOfResidence)}
-            </select>
-          </div>
-          <div className={s.inputWrapper}>
-            <label className={s.label}>State</label>
-            <select className={s.select} value={state} onChange={(e) => setState(e.target.value)}>
-              <option value="">Select</option>
-              {withValueOption(state)}
             </select>
           </div>
         </div>
@@ -232,16 +243,16 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <span className={s.successIcon}>✔</span>
+              <span className={s.successIcon}><Check size={16} strokeWidth={1.5} /></span>
             </div>
           </div>
           <div className={s.inputWrapperDouble}>
             <label className={s.label}>Phone number</label>
             <div className={s.phoneGroup}>
               <div className={s.phoneLeft}>
-                <span className="text-sm leading-none">🇮🇳</span>
-                <span className="text-sm font-medium leading-none">+91</span>
-                <span className="text-[10px] text-gray-400 leading-none">▼</span>
+                <IndiaFlag />
+                <span className="flex-1">+91</span>
+                <ChevronDown size={16} strokeWidth={1.5} />
               </div>
               <div className="relative flex-1 flex items-center">
                 <input
@@ -250,7 +261,7 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                 />
-                <span className="absolute right-3 text-green-500 text-sm">✔</span>
+                <span className={s.successIcon}><Check size={16} strokeWidth={1.5} /></span>
               </div>
             </div>
           </div>
@@ -260,7 +271,7 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
         {/* Document Details Section */}
         <div className={s.sectionOuter}>
         <h2 className={s.formHeading}>Documents Details</h2>
-        <div className={s.gridForm}>
+        <div className={`${s.gridForm} gap-y-[11px]`}>
           <div className={s.inputWrapper}>
             <label className={s.label}>Passport number</label>
             <input
@@ -309,7 +320,7 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
             />
           </div>
           <p className={s.noticeText}>
-            <span className="text-orange-500">NOTE:</span> Your PAN No. will only be used for international bookings as per RBI Guidelines
+            <span className="font-semibold text-[#CE6400]">NOTE:</span> Your PAN No. will only be used for international bookings as per RBI Guidelines
           </p>
         </div>
         </div>
