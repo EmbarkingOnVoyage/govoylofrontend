@@ -13,6 +13,8 @@ import {
   getLayoverCities,
   initialFilters,
   isStandaloneFare,
+  getTotalDurationMinutes,
+  parseDurationMinutes,
   pickFeaturedFlights,
   pinFare,
   resolveSelectedFare,
@@ -226,5 +228,42 @@ describe('display helpers', () => {
     expect(ids({ checkedBags: 2 })).toEqual(['two']);
     expect(ids({ cabinBags: 1 })).toEqual(['one', 'two']);
     expect(ids({})).toEqual(['one', 'two', 'none']);
+  });
+});
+
+describe('journey time and "Best"', () => {
+  // A flight leg: local departure/arrival times and the supplier's duration.
+  const leg = (origin: string, destination: string, dep: string, arr: string, duration: string) => ({
+    origin,
+    destination,
+    airlineCode: '6E',
+    airlineName: 'IndiGo',
+    flightNumber: '1',
+    departureDateTime: `2026-11-20T${dep}:00`,
+    arrivalDateTime: `2026-11-20T${arr}:00`,
+    duration,
+  });
+
+  test('durations parse from both supplier formats', () => {
+    expect(parseDurationMinutes('02:10')).toBe(130);
+    expect(parseDurationMinutes('130')).toBe(130);
+    expect(parseDurationMinutes('')).toBe(0);
+  });
+
+  test('journey time is door to door, layovers included', () => {
+    const connecting = offer('c', { segments: [leg('DEL', 'JAI', '06:00', '07:00', '60'), leg('JAI', 'BOM', '12:00', '14:00', '02:00')] });
+    expect(getTotalDurationMinutes(connecting)).toBe(60 + 5 * 60 + 120);
+  });
+
+  test('a long layover no longer looks fast, and stops cost extra', () => {
+    const nonStop = offer('nonstop', { totalAmount: 5400, segments: [leg('DEL', 'BOM', '08:00', '10:15', '135')] });
+    const longLayover = offer('layover', {
+      totalAmount: 5000,
+      segments: [leg('DEL', 'JAI', '06:00', '07:00', '60'), leg('JAI', 'BOM', '16:00', '17:30', '90')],
+    });
+    const pricey = offer('pricey', { totalAmount: 9000, segments: [leg('DEL', 'BOM', '09:00', '11:00', '120')] });
+
+    expect(sortOffers([longLayover, pricey, nonStop], 'best', 1)[0].offerId).toBe('nonstop');
+    expect(sortOffers([longLayover, nonStop], 'totalJourneyTime', 1)[0].offerId).toBe('nonstop');
   });
 });
