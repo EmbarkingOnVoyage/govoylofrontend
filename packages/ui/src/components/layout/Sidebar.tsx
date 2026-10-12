@@ -24,7 +24,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ tabs, activeTab, setActiveTab 
             onClick={() => setActiveTab(tab.name)}
             className={s.sidebarItem(activeTab === tab.name)}
           >
-            <Icon size={20} strokeWidth={2} />
+            <Icon size={20} strokeWidth={1.25} />
             <span>{tab.name}</span>
           </div>
         );

@@ -1,11 +1,16 @@
 import React, { useState } from 'react';
+import { CreditCard, Trash2 } from 'lucide-react';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
+import { ProfileConfirmModal } from './ProfileConfirmModal';
 
 interface SavedCard {
   name: string;
   last4: string;
 }
 
+// Payment methods (Web Dev Payment methods frames): empty, add card, saved
+// card. There's no saved-cards API yet, so this only keeps the card for the
+// session — Razorpay takes the card at checkout.
 export const PaymentMethodsContent: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [savedCard, setSavedCard] = useState<SavedCard | null>(null);
@@ -34,11 +39,6 @@ export const PaymentMethodsContent: React.FC = () => {
     setIsAdding(true);
   };
 
-  const handleConfirmDelete = () => {
-    setSavedCard(null);
-    setShowDeleteConfirm(false);
-  };
-
   return (
     <>
       <div className={s.headerRow}>
@@ -47,17 +47,21 @@ export const PaymentMethodsContent: React.FC = () => {
           <p className={s.sectionSub}>Securely add or remove payment methods to make it easier when you book.</p>
         </div>
         {!isAdding && (
-          <button className={s.saveBtn} onClick={handleAddCard}>Add Card</button>
+          <button type="button" className={`${s.saveBtn} w-[100px] px-0`} onClick={handleAddCard}>
+            Add Card
+          </button>
         )}
       </div>
-      <div className={s.sectionDivider} />
 
       {isAdding && (
-        <>
-          <div className="mt-6 mb-4">
-            <h2 className={s.subHeading}>Payment methods</h2>
+        <div className={s.sectionOuter}>
+          <div className={`${s.formHeading} flex items-center`}>
+            <span className="w-[430px]">Payment methods</span>
+            <button type="button" className="translate-y-[9.5px] text-[15px] leading-5 font-medium text-[#7C1AEE]" onClick={() => setIsAdding(false)}>
+              Cancel
+            </button>
           </div>
-          <div className="grid grid-cols-[20rem_auto] gap-x-8 gap-y-4">
+          <div className="mt-[11.4px] grid grid-cols-[343px_auto] gap-x-[70px] gap-y-[15px] items-end">
             <div className={s.inputWrapper}>
               <label className={s.label}>Cardholder's name</label>
               <input
@@ -68,16 +72,22 @@ export const PaymentMethodsContent: React.FC = () => {
                 onChange={(e) => setCardholderName(e.target.value)}
               />
             </div>
-            <button className={`${s.cancelBtn} self-start justify-self-start`} onClick={() => setIsAdding(false)}>Cancel</button>
+            <div />
 
             <div className={s.inputWrapper}>
               <label className={s.label}>Card number</label>
               <div className="relative">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm" aria-hidden="true">💳</span>
+                <CreditCard
+                  size={20}
+                  strokeWidth={1.25}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-[#182339]"
+                  aria-hidden="true"
+                />
                 <input
                   type="text"
+                  inputMode="numeric"
                   placeholder="Text"
-                  className={`${s.input} pl-9`}
+                  className={`${s.input} pl-10`}
                   value={cardNumber}
                   onChange={(e) => setCardNumber(e.target.value)}
                 />
@@ -85,62 +95,53 @@ export const PaymentMethodsContent: React.FC = () => {
             </div>
             <div />
 
-            <div className={`${s.inputWrapper} max-w-[60%]`}>
+            <div className={`${s.inputWrapper} w-[204px]`}>
               <label className={s.label}>Expiration date</label>
-              <select className={s.select}>
-                <option>MM/YYYY</option>
+              <select className={s.select} defaultValue="">
+                <option value="">MM/YYYY</option>
               </select>
             </div>
-            <button className={`${s.saveBtn} self-end justify-self-start`} onClick={handleSave}>Save</button>
+            <button type="button" className={`${s.saveBtn} mt-0 -mb-[4px] justify-self-start`} onClick={handleSave}>
+              Save
+            </button>
           </div>
-          <div className={`${s.sectionDivider} mt-6`} />
-        </>
+        </div>
       )}
 
       {!isAdding && savedCard && (
-        <div className="flex items-center justify-between py-4 border-b border-gray-100">
-          <div className="flex items-center gap-6">
-            <div>
-              <div className="text-sm font-semibold text-gray-900">{savedCard.name}</div>
-              <div className="text-sm text-gray-500 mt-1">**** **** **** {savedCard.last4}</div>
+        <div className={`${s.formHeading} pt-[19px] pb-[18px] flex items-start justify-between font-normal`}>
+          <div className="flex items-start">
+            <div className="w-[238px]">
+              <div className="text-[15px] leading-5 font-medium text-[#182339]">{savedCard.name}</div>
+              <div className="mt-3 text-[15px] leading-5 text-[#182339]">**** **** **** {savedCard.last4}</div>
             </div>
-            <button className={s.cancelBtn} onClick={handleEdit}>Edit</button>
+            <button type="button" className="mt-[10px] text-[15px] leading-5 font-medium text-[#7C1AEE]" onClick={handleEdit}>
+              Edit
+            </button>
           </div>
           <button
-            className="text-gray-400 hover:text-red-500 transition-colors"
+            type="button"
+            className="mr-[1px] w-11 h-11 rounded-lg bg-white flex items-center justify-center text-[#697691] hover:bg-[#F8F9FB]"
             onClick={() => setShowDeleteConfirm(true)}
             aria-label="Delete card"
           >
-            🗑
+            <Trash2 size={20} strokeWidth={2} />
           </button>
         </div>
       )}
+      <div className={s.sectionDivider} />
 
       {showDeleteConfirm && savedCard && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-lg w-full max-w-md p-6 relative">
-            <button
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-              onClick={() => setShowDeleteConfirm(false)}
-              aria-label="Close"
-            >
-              ✕
-            </button>
-            <h2 className="text-lg font-bold text-gray-900 mb-2">Delete card details?</h2>
-            <p className="text-sm text-gray-500 mb-6">
-              Are you sure you want to delete the saved card ending in •••• {savedCard.last4}?
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium text-sm px-6 py-2.5 rounded-lg transition-all"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                Cancel
-              </button>
-              <button className={s.saveBtn} onClick={handleConfirmDelete}>Delete Card</button>
-            </div>
-          </div>
-        </div>
+        <ProfileConfirmModal
+          title="Delete card details?"
+          text={`Are you sure you want to delete the saved card ending in •••• ${savedCard.last4}?`}
+          confirmLabel="Delete Card"
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={() => {
+            setSavedCard(null);
+            setShowDeleteConfirm(false);
+          }}
+        />
       )}
     </>
   );

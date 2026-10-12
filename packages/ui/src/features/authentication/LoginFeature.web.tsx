@@ -1,3 +1,5 @@
+import { X } from "lucide-react";
+import govoyloLogo from "../../assets/images/govoylo-logo.svg";
 import React, { useState } from "react";
 import { DashboardLayout } from '../../components/layout/Layout'; 
 import { useRequestOtpMutation } from "@workspace/api";
@@ -66,10 +68,10 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate, variant 
           className={s.closeButton}
           onClick={() => (onCloseModal ? onCloseModal() : console.log("Close Clicked"))}
         >
-          &times;
+          <X size={20} strokeWidth={2} />
         </button>
         <div className={s.logoWrapper}>
-          <span className={s.logoText}>⚛️</span>
+          <img src={govoyloLogo} alt="goVoylo" className={s.logoText} />
         </div>
         {/* Heading Typography */}
         <h2 className={s.title}>Log in or sign up</h2>

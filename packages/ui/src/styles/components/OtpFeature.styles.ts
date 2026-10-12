@@ -155,33 +155,34 @@ export const mobile: IOtpMobileStyles = {
 // ==========================================
 
 export const web: IOtpWebStyles = {
-  backdrop: "fixed inset-0 z-50 flex items-center justify-center bg-gray-500/50 backdrop-blur-sm p-4",
-  container: "relative w-full max-w-[430px] bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center border border-gray-100",
-  backArrow: "absolute top-5 left-6 text-gray-800 hover:text-gray-600 transition-colors text-xl cursor-pointer outline-none",
-  closeButton: "absolute top-5 right-6 text-gray-800 hover:text-gray-600 transition-colors text-2xl font-light cursor-pointer outline-none",
-  logoWrapper: "w-11 h-11 bg-[#7F1DFF] text-white rounded-xl flex items-center justify-center mb-4 shadow-md",
-  logoText: "text-xl text-white",
-  title: "text-2xl font-bold text-gray-900 mb-6 tracking-tight text-center subpixel-antialiased",
-  contentWrapper: "w-full flex flex-col items-center",
-  headingText: "text-xl font-bold text-gray-900 text-center mb-2 subpixel-antialiased",
-  subText: "text-sm text-gray-500 text-center leading-relaxed mb-6 px-2",
-  emailHighlight: "font-semibold text-gray-900",
-  otpGrid: "flex w-full justify-between gap-2 mb-4",
+  // Web Dev "Login web" (verify step): 440px card, content in a 343px column.
+  backdrop: "fixed inset-0 z-50 flex items-center justify-center bg-[rgba(24,35,57,0.4)] p-4 font-['Inter',sans-serif]",
+  container: "relative w-full max-w-[440px] bg-white rounded-2xl px-12 pt-[37px] pb-8 flex flex-col items-center shadow-[0px_60px_40px_rgba(79,94,113,0.05),0px_40px_30px_rgba(79,94,113,0.08),0px_24px_24px_rgba(79,94,113,0.14),0px_5px_16px_rgba(79,94,113,0.15),0px_2px_6px_-1px_rgba(79,94,113,0.14),0px_-1px_2px_-1px_rgba(79,94,113,0.15)]",
+  backArrow: "absolute top-[21px] left-[21px] w-5 h-5 flex items-center justify-center text-black cursor-pointer outline-none",
+  closeButton: "absolute top-4 right-4 w-5 h-5 flex items-center justify-center text-black cursor-pointer outline-none",
+  logoWrapper: "w-8 h-8 rounded-full overflow-hidden shrink-0",
+  logoText: "h-8 w-auto max-w-none",
+  title: "mt-[6px] text-[24px] leading-[30px] font-bold text-[#182339] text-center",
+  contentWrapper: "w-full mt-[38px] flex flex-col items-start",
+  headingText: "text-[24px] leading-[30px] font-bold text-[#182339]",
+  subText: "mt-[7.5px] text-[13px] leading-4 text-[#4C5973]",
+  emailHighlight: "font-medium text-[#182339]",
+  otpGrid: "w-full mt-[26px] flex justify-between",
   otpInput: (isFilled: boolean, hasError: boolean): string => `
-    w-12 h-12 border rounded-xl text-center text-lg font-semibold text-gray-900 outline-none transition-all duration-200
-    ${hasError 
-      ? "border-red-500 bg-red-50/30 focus:ring-1 focus:ring-red-500" 
-      : isFilled 
-        ? "border-[#7F1DFF] bg-[#F9F5FF] focus:border-[#7F1DFF]" 
-        : "border-[#A9B6CE] bg-white focus:border-[#7F1DFF] focus:ring-1 focus:ring-purple-200"
+    w-[47px] h-[47px] rounded-xl border-[1.5px] text-center text-[24px] font-semibold outline-none bg-white placeholder:text-[#B3B3B3]
+    ${hasError
+      ? "border-[#E53935] bg-[#FFF5F5] text-[#E53935]"
+      : isFilled
+        ? "border-[#182339] text-[#182339]"
+        : "border-[#7C8CAD] text-[#182339] focus:border-[#7C1AEE]"
     }
   `.replace(/\s+/g, ' ').trim(),
-  errorText: "text-red-500 text-xs font-medium self-start mb-3 ml-1",
-  submitButton: "w-full h-[54px] text-white font-semibold rounded-xl transition-all duration-200 shadow-md flex items-center justify-center text-base cursor-pointer mb-6 active:scale-[0.99]",
-  submitButtonReady: "bg-[#7F1DFF] hover:bg-[#6A14D9]",
-  submitButtonIncomplete: "bg-[#CEAAFF] hover:bg-[#bfa2f0]",
-  disabledButton: "bg-gray-200 text-gray-400 opacity-60 cursor-not-allowed active:scale-100 shadow-none",
-  submitButtonText: "text-white text-base font-semibold",
-  spamText: "text-xs text-gray-500 text-center leading-relaxed px-3",
-  timerHighlight: "font-medium text-gray-900"
+  errorText: "mt-2 self-start text-[13px] leading-4 text-[#E53935]",
+  submitButton: "w-full h-11 mt-3 rounded-xl flex items-center justify-center cursor-pointer",
+  submitButtonReady: "bg-[#7C1AEE] hover:bg-[#6A16D9]",
+  submitButtonIncomplete: "bg-[#CEAAFF]",
+  disabledButton: "opacity-60 cursor-not-allowed",
+  submitButtonText: "text-white text-[15px] leading-5 font-medium",
+  spamText: "mt-6 self-start text-[13px] leading-4 text-[#4C5973]",
+  timerHighlight: "text-[#4C5973]"
 };

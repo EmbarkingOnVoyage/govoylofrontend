@@ -1,76 +1,85 @@
 // packages/ui/src/components/ProfileStep1.styles.ts
+//
+// Web Dev profile frames (Personal details, Co-Traveller, Customization
+// preferences, Payment methods, Privacy & data management) at 1440:
+// 236px banner inset 32px, then one 12px-radius card with a 275px menu,
+// a 1px divider and the content column (343px fields, 2 columns 16px apart).
 
 export const profileStyles = {
-  container: "min-h-screen bg-[#F4F4F6] font-sans antialiased text-[#1A1A1A]",
+  container: "min-h-screen bg-[#F8F9FB] font-['Inter',sans-serif] antialiased text-[#182339]",
   navbar: "h-16 bg-white border-b border-gray-100 shadow-sm flex items-center",
-  // Shared with heroInner/mainLayout so the navbar, banner, and page content
-  // below all line up on the same left/right edges at any viewport width —
-  // a plain px-N on each section only coincidentally aligns them.
   navInner: "flex items-center justify-between w-full max-w-7xl mx-auto px-6",
   navLeft: "flex items-center space-x-6",
   logo: "h-10 w-auto",
   navLinks: "flex space-x-4 text-[15px] font-medium text-[#182339]",
   navLink: "hover:text-[#5113A3] transition-colors cursor-pointer",
   navRight: "flex items-center space-x-3 text-[15px] text-[#182339] font-medium",
-  
-  heroBanner: "relative bg-gradient-to-r from-[#6A16CB] to-[#350B65] h-[220px] w-full overflow-hidden",
-  heroBackground: "absolute inset-0 bg-cover bg-center",
-  heroInner: "relative z-10 max-w-7xl mx-auto px-6 h-full flex items-end pb-6",
-  profileCard: "flex flex-col items-start bg-transparent",
-  avatarWrapper: "relative w-[120px] h-[120px] rounded-full border-4 border-white bg-white shadow-md overflow-hidden",
-  avatarImg: "w-full h-full object-cover",
-  avatarPlaceholder: "w-full h-full flex items-center justify-center bg-[#7B2CBF] text-white text-2xl font-bold uppercase",
-  progressBadge: "absolute bottom-1.5 left-1/2 -translate-x-1/2 text-[13px] font-bold text-black/50",
-  profileMeta: "text-white mt-3",
-  profileEmail: "flex items-center space-x-2 text-[13px] font-normal text-white",
-  profilePhone: "flex items-center space-x-2 text-[13px] font-normal text-white mt-1",
-  verifiedIcon: "w-4 h-4 text-green-400 fill-current",
 
-  mainLayout: "max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 md:grid-cols-4 gap-8",
-  sidebar: "space-y-1 bg-white p-3 rounded-xl border border-gray-100 shadow-sm h-fit",
+  // Banner: x 32–1408, y 64–300, 8px radius.
+  pageInner: "max-w-[1440px] mx-auto px-8 pb-[30px]",
+  heroBanner: "relative h-[236px] rounded-lg overflow-hidden bg-gradient-to-r from-[#6A16CB] to-[#350B65]",
+  heroBackground: "absolute inset-0 bg-cover bg-center",
+  heroInner: "absolute inset-0",
+  profileCard: "absolute left-16 top-8",
+  avatarWrapper: "relative w-[120px] h-[120px]",
+  avatarImg: "absolute inset-[3px] w-[114px] h-[114px] rounded-full object-cover bg-white",
+  avatarPlaceholder:
+    "absolute inset-[3px] rounded-full flex items-center justify-center bg-[#F3E8FF] text-[#7C1AEE] text-[32px] font-bold uppercase",
+  progressBadge:
+    "absolute left-[37px] top-[89px] w-[45px] h-5 rounded-full bg-[#BFBFBF80] flex items-center justify-center text-[13px] leading-4 font-semibold text-black/50",
+  // Email and phone, centred on x=165.6 like the design.
+  // Centred on x=133.6 (16 + 235.2 / 2); a long email starts 16px in rather than clipping.
+  profileMeta: "absolute top-[165px] left-4 w-[235.2px] flex flex-col items-[safe_center] gap-1 text-white",
+  profileEmail: "flex items-center gap-[9px] text-[13px] leading-4 font-medium whitespace-nowrap",
+  profilePhone: "flex items-center gap-[9px] text-[13px] leading-4 font-medium whitespace-nowrap",
+  verifiedIcon: "w-4 h-4 rounded-full bg-[#007F20] text-white flex items-center justify-center shrink-0",
+
+  // Card: x 35–1408 (Figma draws it to 1418), y 327, 919px tall.
+  mainLayout:
+    "mt-[27px] ml-[3px] min-h-[919px] flex rounded-xl border border-[#ECEEF3] bg-white overflow-hidden",
+  sidebar: "w-[293px] shrink-0 pl-[18px] pt-[33px] border-r border-[#CCD3E0]",
   sidebarItem: (isActive: boolean) =>
-    `flex items-center space-x-3 px-4 py-3 rounded-lg text-[15px] font-medium text-[#182339] transition-colors cursor-pointer ${
-      isActive
-        ? "bg-[#ECEEF3]"
-        : "hover:bg-gray-50"
+    `w-[275px] h-[45px] flex items-center gap-2 pl-4 pb-[3px] border-b border-[#CCD3E0] text-[15px] leading-5 font-medium text-[#182339] cursor-pointer ${
+      isActive ? "bg-[#ECEEF3]" : "hover:bg-[#F8F9FB]"
     }`,
 
-  contentArea: "md:col-span-3 bg-white rounded-xl border border-gray-100 shadow-sm p-8 relative min-h-[70vh]",
-  headerRow: "flex justify-between items-start mb-1",
-  sectionDivider: "border-t-2 border-gray-200",
-  // Same typography as formHeading, without its own top border/divider —
-  // for sub-headings that sit under a divider that's already been drawn.
-  subHeading: "text-lg font-bold text-black",
-  sectionTitle: "text-2xl font-bold text-black",
-  sectionSub: "text-md text-gray-500 mt-1",
-  saveBtn: "bg-[#7C1AEE] hover:bg-[#6B17CC] text-white font-medium text-[15px] px-6 py-2.5 rounded-lg shadow-sm transition-all",
-  cancelBtn: "text-[#7C1AEE] hover:text-[#6B17CC] font-medium text-sm px-2 transition-all",
-  headerActions: "flex items-center gap-4",
+  contentArea: "flex-1 min-w-0 pl-[18px] pr-1 pt-4 pb-3 relative",
+  headerRow: "flex justify-between items-start pr-[66px] pb-[9px]",
+  sectionDivider: "-mr-1 border-t border-[#CCD3E0]",
+  subHeading: "text-[18px] leading-6 font-bold text-black",
+  sectionTitle: "text-[24px] leading-[30px] font-bold text-black",
+  sectionSub: "mt-[3.7px] text-[15px] leading-5 text-black",
+  saveBtn:
+    "mt-[5px] h-11 shrink-0 whitespace-nowrap px-[16.8px] rounded-xl bg-[#7C1AEE] hover:bg-[#6B17CC] text-white text-[15px] leading-5 font-medium disabled:opacity-60",
+  cancelBtn: "mt-[5px] h-11 px-1 text-[#7C1AEE] hover:text-[#6B17CC] text-[15px] leading-5 font-medium",
+  headerActions: "flex items-start gap-[33px]",
 
-  // Outer wrapper: 3 equal columns on large screens. The form content
-  // (gridForm below) only occupies the first 2 of those 3 columns, so the
-  // 3rd stays intentionally blank as breathing room / a reserved future
-  // panel. Collapses to a single full-width column below the lg breakpoint.
-  sectionOuter: "grid grid-cols-1 lg:grid-cols-3 gap-x-5 mb-8",
-  gridForm: "lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4",
-  formHeading: "text-lg font-bold text-black border-t-2 border-gray-200 pt-4 mb-4 col-span-full",
+  // A section: divider, 18px heading, then the 343px two-column grid.
+  sectionOuter: "pb-4",
+  gridForm: "mt-[11.4px] grid grid-cols-[343px_343px] gap-x-4 gap-y-[15px]",
+  formHeading: "-mr-1 border-t border-[#CCD3E0] pt-[17.7px] text-[18px] leading-6 font-bold text-black",
 
-  inputWrapper: "flex flex-col space-y-1.5",
-  inputWrapperDouble: "flex flex-col space-y-1.5 lg:col-span-1 sm:col-span-2",
-  label: "text-[15px] font-medium text-[#182339]",
-  input: "w-full border border-[#ADB8CD] rounded-lg px-3 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#7C1AEE] focus:ring-1 focus:ring-[#7C1AEE] transition-all bg-white",
-  select: "w-full border border-[#ADB8CD] rounded-lg px-3 py-2.5 text-sm text-gray-700 bg-white focus:outline-none focus:border-[#7C1AEE] focus:ring-1 focus:ring-[#7C1AEE] transition-all cursor-pointer",
+  inputWrapper: "flex flex-col gap-[5px]",
+  inputWrapperDouble: "flex flex-col gap-[5px]",
+  label: "text-[15px] leading-5 font-medium text-[#182339]",
+  input:
+    "w-full h-10 border border-[#ADB8CD] rounded-lg px-3 text-[16px] leading-5 text-[#182339] placeholder:text-[#697691] bg-white focus:outline-none focus:border-[#7C1AEE]",
+  select:
+    "gv-select w-full h-10 border border-[#ADB8CD] rounded-lg pl-3 pr-10 text-[16px] leading-5 text-[#697691] bg-white focus:outline-none focus:border-[#7C1AEE] cursor-pointer",
 
-  phoneGroup: "flex border border-[#ADB8CD] rounded-lg overflow-hidden focus-within:border-[#7C1AEE] focus-within:ring-1 focus-within:ring-[#7C1AEE] bg-white transition-all",
-  phoneLeft: "flex items-center gap-1.5 bg-gray-50 border-r border-gray-200 px-3 py-2 text-sm text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors",
-  phoneInput: "w-full px-3 py-2 text-sm text-gray-900 focus:outline-none",
-  
+  phoneGroup: "flex gap-2",
+  phoneLeft:
+    "w-[123px] h-10 shrink-0 flex items-center gap-2 pl-3 pr-4 border border-[#ADB8CD] rounded-lg bg-white text-[16px] leading-5 text-[#182339] cursor-pointer",
+  phoneInput:
+    "w-full h-10 border border-[#ADB8CD] rounded-lg pl-3 pr-10 text-[16px] leading-5 text-[#182339] placeholder:text-[#697691] bg-white focus:outline-none focus:border-[#7C1AEE]",
+
   successWrapper: "relative flex items-center",
-  successInput: "w-full border border-green-500 rounded-lg pl-3 pr-10 py-2 text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-green-500 bg-white",
-  successIcon: "absolute right-3 text-green-500 w-4 h-4",
+  successInput:
+    "w-full h-10 border border-[#ADB8CD] rounded-lg pl-3 pr-10 text-[16px] leading-5 text-[#182339] placeholder:text-[#697691] bg-white focus:outline-none focus:border-[#7C1AEE]",
+  successIcon: "absolute right-[15px] text-[#007F20] flex items-center",
 
-  noticeText: "text-[15px] text-gray-600 font-medium mt-2 col-span-full",
-  checkboxRow: "flex items-center space-x-3 py-6 border-t-2 border-b-2 border-gray-200 mt-6",
-  checkbox: "w-4 h-4 text-[#7C1AEE] border-[#ADB8CD] rounded focus:ring-[#7C1AEE] cursor-pointer",
-  checkboxLabel: "text-[15px] font-medium text-[#182339] cursor-pointer"
+  noticeText: "-mt-[3px] mb-[8.6px] text-[15px] leading-5 text-[#182339] col-span-full",
+  checkboxRow: "-mr-1 h-[63px] pb-[5px] flex items-center gap-[10px] border-t border-b border-[#CCD3E0]",
+  checkbox: "w-[17px] h-[17px] ml-[1.5px] rounded-[3px] accent-[#182339] cursor-pointer",
+  checkboxLabel: "text-[15px] leading-5 text-[#182339] cursor-pointer",
 };

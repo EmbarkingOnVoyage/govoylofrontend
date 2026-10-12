@@ -100,7 +100,9 @@ const DateFareStripWeb: React.FC<{
   return (
     <div className="flex items-center gap-2 h-[59px]">
       {arrow(-1)}
-      <div className="flex-1 min-w-0 flex items-center gap-2">
+      {/* Desktop-15 date strip: 109.46 x 48.76 boxes, 6.76px apart. Narrower
+          windows shrink the boxes instead of pushing the page sideways. */}
+      <div className="flex-1 min-w-0 flex items-center gap-[6.76px]">
         {days.map((d, index) => {
           const fare = fareByDate.get(dateKey(d));
           const isSelected = index === 3;
@@ -117,7 +119,7 @@ const DateFareStripWeb: React.FC<{
               type="button"
               disabled={isSelected || isPast}
               onClick={() => onSelectDate(toIso(d))}
-              className="flex-1 min-w-0 h-[47px] p-[2.7px] bg-white rounded-[2.7px] flex flex-col items-center justify-center disabled:cursor-default"
+              className="flex-1 min-w-0 max-w-[109.46px] h-[48.76px] p-[2.7px] bg-white rounded-[3.38px] flex flex-col items-center justify-center disabled:cursor-default"
               style={{ border: `1.35px solid ${isSelected ? '#114BFF' : '#D7DCE7'}` }}
             >
               <span className="text-[14.86px] leading-[22px] font-medium text-[#182339] whitespace-nowrap">{stripLabel(d)}</span>
@@ -407,9 +409,9 @@ export const FlightResultsPageWeb: React.FC<FlightResultsPageWebProps> = ({
             </div>
           )}
 
-          <div className="mt-3 ml-[9px] max-w-[960px] min-h-[73px] flex items-center gap-2.5 px-4 py-2.5 bg-[#ECEEF3] border-b border-[#CCD3E0]">
+          <div className="mt-3 ml-[9px] max-w-[960px] h-[73px] flex items-center gap-2.5 px-4 py-[9px] bg-[#ECEEF3] border-b border-[#CCD3E0]">
             <span className="text-[12px] leading-[18px] text-[#697691] shrink-0">Sort by</span>
-            <div className="flex-1 flex items-start gap-1">
+            <div className="flex-1 flex items-start gap-[2px]">
               {SORT_TABS.map((tab) => {
                 const active = flow.sortId === tab.id;
                 return (
@@ -417,7 +419,7 @@ export const FlightResultsPageWeb: React.FC<FlightResultsPageWebProps> = ({
                     key={tab.id}
                     type="button"
                     onClick={() => flow.setSortId(tab.id)}
-                    className={`flex-1 h-[52px] flex flex-col items-center justify-center gap-px px-2 py-[7px] rounded-lg border ${
+                    className={`w-[187.25px] shrink-0 h-[54px] flex flex-col items-center justify-center gap-px px-2 py-[7px] rounded-lg border ${
                       active ? 'bg-[#F3E8FF] border-[#7C1AEE]' : 'bg-white border-[#CCD3E0]'
                     }`}
                   >

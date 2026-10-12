@@ -84,6 +84,22 @@ const Price: React.FC<{ amount: number; currency: string }> = ({ amount, currenc
   <div className="text-right text-[13px] leading-5 font-bold text-[#FF8011] whitespace-nowrap">{formatPrice(amount, currency)}</div>
 );
 
+const DetailsLink: React.FC<{ onDetails: () => void }> = ({ onDetails }) => (
+  <button type="button" onClick={onDetails} className="flex items-center gap-2 p-2 rounded-lg text-[13px] leading-4 font-medium text-[#7C1AEE]">
+    Flight Details <ChevronRight size={16} />
+  </button>
+);
+
+const BookButton: React.FC<{ onBook: () => void; bookLabel: string }> = ({ onBook, bookLabel }) => (
+  <button
+    type="button"
+    onClick={onBook}
+    className="h-[26px] min-w-[76px] flex items-center justify-center gap-1 px-2 rounded-lg bg-[#7C1AEE] text-[13px] leading-4 font-medium text-white"
+  >
+    {bookLabel} <ChevronRight size={16} />
+  </button>
+);
+
 // "Flight Details >" link and the small "Book >" button (Frame 424).
 const Actions: React.FC<{ onDetails: () => void; onBook: () => void; bookLabel: string }> = ({ onDetails, onBook, bookLabel }) => (
   <div className="flex items-center justify-end gap-6">
@@ -127,12 +143,17 @@ export const FlightOfferCardWeb: React.FC<{
         <div className="absolute right-[23px] top-[30px]">
           <Price amount={offer.totalAmount} currency={offer.currencyCode} />
         </div>
-        <div className="absolute left-2 right-2 top-[66px] border-t border-dashed border-[#E1E5ED]" />
-        <div className="absolute left-[29px] top-[75px]">
+        {/* Desktop-15 card footer: solid divider from the strip to the edge;
+            layover note, "Flight Details" at a fixed column, Book on the right. */}
+        <div className="absolute left-4 right-0 top-[69px] border-t border-[#E1E5ED]" />
+        <div className="absolute left-[29px] top-[74px]">
           <LayoverNote segments={offer.segments} cityFor={cityFor} />
         </div>
-        <div className="absolute right-[23px] top-[71px]">
-          <Actions onDetails={onDetails} onBook={onBook} bookLabel={bookLabel} />
+        <div className="absolute left-[293px] top-[70px]">
+          <DetailsLink onDetails={onDetails} />
+        </div>
+        <div className="absolute right-[22px] top-[73px]">
+          <BookButton onBook={onBook} bookLabel={bookLabel} />
         </div>
       </div>
     </CardShell>
