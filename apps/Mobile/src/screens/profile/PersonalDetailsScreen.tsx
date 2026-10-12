@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+//import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Platform } from 'react-native';
+import {
+  Platform,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+} from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Check } from 'lucide-react-native';
-import {
+import { Calendar, ChevronDown } from 'lucide-react-native';import {
   useCustomerProfileMobile,
   useUpdateCustomerProfileMobile,
   type CustomerProfile,
@@ -18,6 +27,7 @@ import {
 } from '@workspace/ui/src/data/selectOptions';
 import { styles } from './PersonalDetailsScreen.styles';
 import { useHardwareBack } from '../../navigation/useHardwareBack';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface PersonalDetailsScreenProps {
   onBack: () => void;
@@ -58,6 +68,8 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
   const [nationality, setNationality] = useState('India');
   const [maritalStatus, setMaritalStatus] = useState('');
   const [anniversary, setAnniversary] = useState('');
+  const [showDobPicker, setShowDobPicker] = useState(false);
+  const [showAnniversaryPicker, setShowAnniversaryPicker] = useState(false);
   const [cityOfResidence, setCityOfResidence] = useState('');
   const [state, setState] = useState('');
   const [phone, setPhone] = useState('');
@@ -70,6 +82,40 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
   const [panCardNumberEdited, setPanCardNumberEdited] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [showValidation, setShowValidation] = useState(false);
+  const [showPassportExpiryPicker, setShowPassportExpiryPicker] = useState(false);
+
+  const parseDate = (value: string): Date => {
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
+  if (!match) {
+    return new Date();
+  }
+
+  const [, day, month, year] = match;
+
+  const date = new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day)
+  );
+
+  if (
+    date.getFullYear() !== Number(year) ||
+    date.getMonth() !== Number(month) - 1 ||
+    date.getDate() !== Number(day)
+  ) {
+    return new Date();
+  }
+
+  return date;
+};
+
+const formatDateForDisplay = (date: Date): string => {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+
+  return `${day}/${month}/${date.getFullYear()}`;
+};
 
   useEffect(() => {
     if (!profile) return;
@@ -208,14 +254,18 @@ if (!isValidDateOfBirth(dateOfBirth)) {
         <Text style={[styles.sectionHeading, styles.firstSectionHeading]}>General information</Text>
 
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>First name</Text>
+          <Text style={styles.label}>
+            First name<Text style={{ color: 'red' }}>*</Text>
+          </Text>
           <TextInput  style={[
     styles.input,
     showValidation && !firstName.trim() && styles.inputError,
   ]} value={firstName} onChangeText={setFirstName} placeholder="Text" placeholderTextColor="#697691" />
         </View>
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>Last name</Text>
+          <Text style={styles.label}>
+            Last name<Text style={{ color: 'red' }}>*</Text>
+          </Text>
           <TextInput  style={[
     styles.input,
     showValidation && !lastName.trim() && styles.inputError,
@@ -223,24 +273,75 @@ if (!isValidDateOfBirth(dateOfBirth)) {
         </View>
         <View style={styles.row}>
           <View style={styles.fieldWrapperGender}>
-            <Text style={styles.label}>Gender</Text>
+            <Text style={styles.label}>
+              Gender<Text style={{ color: 'red' }}>*</Text>
+            </Text>
             <SelectField value={gender} options={GENDER_OPTIONS} onSelect={setGender} title="Select gender"  style={showValidation && !gender.trim() ? styles.inputError : undefined} />
           </View>
           <View style={styles.fieldWrapperHalf}>
-            <Text style={styles.label}>Date of birth</Text>
-            <DateField
-              style={
-                showValidation && (!dateOfBirth.trim() || !isValidDateOfBirth(dateOfBirth))
+            <Text style={styles.label}>
+              Date of birth<Text style={{ color: 'red' }}>*</Text>
+            </Text>
+
+            <TouchableOpacity
+              style={[
+                styles.inputDisplay,
+                showValidation &&
+                (!dateOfBirth.trim() || !isValidDateOfBirth(dateOfBirth))
                   ? styles.inputError
-                  : undefined
-              }
-              value={dateOfBirth}
-              onChangeText={setDateOfBirth}
-            />
-          </View>
+                  : undefined,
+              ]}
+              onPress={() => setShowDobPicker(true)}
+            >
+              <View style={styles.dateRow}></View>
+               {/* Calendar icon on the left */}
+              <Calendar size={20} color="#182339" strokeWidth={1.6} />
+              <Text
+                style={
+                  dateOfBirth
+                    ? styles.inputDisplayText
+                    : styles.inputDisplayPlaceholder
+                }
+              >
+                {dateOfBirth || 'DD/MM/YYYY'}
+              </Text>
+              
+            </TouchableOpacity>
+
+              {showDobPicker && (
+              <>
+                <DateTimePicker
+                  value={parseDate(dateOfBirth)}
+                  mode="date"
+                  maximumDate={new Date()}
+                  display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                  accentColor="#7C1AEE"
+                  themeVariant="light"
+                  onChange={(event, selectedDate) => {
+                    if (Platform.OS === 'android') {
+                      setShowDobPicker(false);
+                    }
+
+                    if (event.type === 'set' && selectedDate) {
+                      setDateOfBirth(formatDateForDisplay(selectedDate));
+                    }
+                    
+                  }}
+                />
+
+                {Platform.OS === 'ios' && (
+                  <TouchableOpacity onPress={() => setShowDobPicker(false)}>
+                    <Text>Done</Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+        </View>
         </View>
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>Nationality</Text>
+          <Text style={styles.label}>
+            Nationality<Text style={{ color: 'red' }}>*</Text>
+          </Text>
           <SelectField
             value={nationality}
             options={COUNTRY_OPTIONS}
@@ -261,7 +362,53 @@ if (!isValidDateOfBirth(dateOfBirth)) {
             </View>
             <View style={styles.fieldWrapperHalf}>
               <Text style={styles.label}>Anniversary</Text>
-              <DateField value={anniversary} onChangeText={setAnniversary} placeholder="Select" />
+              {/* <DateField value={anniversary} onChangeText={setAnniversary} placeholder="Select" /> */}
+             
+              <TouchableOpacity
+                style={styles.inputDisplay}
+                onPress={() => setShowAnniversaryPicker(true)}
+              >
+                {/* Calendar icon on the left */}
+                  <Calendar size={20} color="#182339" strokeWidth={1.6} />
+                <Text
+                  style={
+                    anniversary
+                      ? styles.inputDisplayText
+                      : styles.inputDisplayPlaceholder
+                  }
+                >
+                  {anniversary || 'DD/MM/YYYY'}
+                </Text>
+              </TouchableOpacity>
+
+              {showAnniversaryPicker && (
+                <>
+                  <DateTimePicker
+                    value={parseDate(anniversary)}
+                    mode="date"
+                    maximumDate={new Date()}
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(event, selectedDate) => {
+                      if (Platform.OS === 'android') {
+                        setShowAnniversaryPicker(false);
+                      }
+
+                      if (event.type === 'set' && selectedDate) {
+                        setAnniversary(formatDateForDisplay(selectedDate));
+                      }
+                    }}
+                  />
+
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity
+                      onPress={() => setShowAnniversaryPicker(false)}
+                    >
+                      <Text>Done</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+
             </View>
           </View>
         ) : (
@@ -276,7 +423,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
           </View>
         )}
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>City of residents</Text>
+          <Text style={styles.label}>City of Residence</Text>
           <SelectField
             value={cityOfResidence}
             options={INDIAN_CITY_OPTIONS}
@@ -308,7 +455,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
             placeholder="Text" placeholderTextColor="#697691"
           />
         </View>
-        <View style={styles.fieldWrapperFull}>
+        {/* <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>Expiry date</Text>
           <TextInput
             style={styles.input}
@@ -316,7 +463,62 @@ if (!isValidDateOfBirth(dateOfBirth)) {
             onChangeText={setPassportExpiryDate}
             placeholder="DD/MM/YYYY" placeholderTextColor="#697691"
           />
-        </View>
+        </View> */}
+        
+<View style={styles.fieldWrapperFull}>
+  <Text style={styles.label}>Expiry date</Text>
+
+  <TouchableOpacity
+    style={styles.inputDisplay}
+    onPress={() => setShowPassportExpiryPicker(true)}
+  >
+    <View style={styles.dateRow}>
+      <Calendar size={20} color="#182339" strokeWidth={1.6} />
+
+      <Text
+        style={
+          passportExpiryDate
+            ? styles.inputDisplayText
+            : styles.inputDisplayPlaceholder
+        }
+      >
+        {passportExpiryDate || 'DD/MM/YYYY'}
+      </Text>
+    </View>
+
+  </TouchableOpacity>
+
+  {showPassportExpiryPicker && (
+    <>
+      <DateTimePicker
+        value={parseDate(passportExpiryDate)}
+        mode="date"
+        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+        accentColor="#7C1AEE"
+        themeVariant="light"
+        onChange={(event, selectedDate) => {
+          if (Platform.OS === 'android') {
+            setShowPassportExpiryPicker(false);
+          }
+
+          if (event.type === 'set' && selectedDate) {
+            setPassportExpiryDate(formatDateForDisplay(selectedDate));
+            setPassportNumberEdited(true);
+          }
+        }}
+      />
+
+      {Platform.OS === 'ios' && (
+        <TouchableOpacity
+          onPress={() => setShowPassportExpiryPicker(false)}
+        >
+          <Text>Done</Text>
+        </TouchableOpacity>
+      )}
+    </>
+  )}
+</View>
+
         <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>Issuing country</Text>
           <SelectField
