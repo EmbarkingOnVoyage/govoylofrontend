@@ -7,6 +7,7 @@ import {
   cabinTierForFare,
   cheapestFareSelection,
   fareDisplayName,
+  fareTagline,
   formatPrice,
   formatTime24,
   formatTotalDuration,
@@ -349,7 +350,7 @@ export const FlightDetailsDrawerWeb: React.FC<{
                             {fareDisplayName(fare)} | {formatPrice(fare.totalAmount, fare.currencyCode)}/adult
                           </span>
                           <span className="text-[13px] leading-4 text-[#3E4B64]">
-                            {fare.refundable ? 'Flexible, refundable fare' : 'Fly smart, pay less'}
+                            {fareTagline(fare)}
                           </span>
                         </div>
                         <div className="flex flex-col gap-4 p-4 bg-white rounded-b">

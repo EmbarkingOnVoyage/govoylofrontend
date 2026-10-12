@@ -130,17 +130,32 @@ export const CABIN_TIER_LABELS: Record<CabinTierId, string> = {
   business: 'Business',
 };
 
+// Fare-type codes that are abbreviations stay in capitals ("SME Fare").
+const FARE_NAME_ACRONYMS = new Set(['SME', 'LCC', 'NDC', 'GDS']);
+
 // A customer-facing name for a supplier fare type — same labels as the
 // e-ticket (PUBLISHED -> "Regular Fare", OFFER_FARE_WITH(OUT)_PNR -> "Offer
-// Fare"); anything else is title-cased.
+// Fare", TJ_FLEX -> "Flex Fare"); anything else is title-cased. These are the
+// supplier's fare types, not airline brand names (Saver, Flexi, ...), which
+// neither supplier sends.
 export function fareDisplayName(fare: FareOption): string {
-  const id = fare.fareIdentifier?.trim();
+  const id = fare.fareIdentifier?.trim().toUpperCase();
   if (!id) return 'Regular Fare';
   if (id === 'PUBLISHED') return 'Regular Fare';
   if (id.startsWith('OFFER_FARE')) return 'Offer Fare';
-  const words = id.toLowerCase().split(/[_\s]+/).filter(Boolean);
-  const name = words.map((w) => w[0].toUpperCase() + w.slice(1)).join(' ');
+  // Tripjack's own zero-cancellation-fee fare.
+  if (id === 'TJ_FLEX') return 'Flex Fare';
+  const words = id.split(/[_\s]+/).filter(Boolean);
+  const name = words
+    .map((w) => (FARE_NAME_ACRONYMS.has(w) ? w : w[0] + w.slice(1).toLowerCase()))
+    .join(' ');
   return /fare$/i.test(name) ? name : `${name} Fare`;
+}
+
+// The line under a fare card's name.
+export function fareTagline(fare: FareOption): string {
+  if (fare.fareIdentifier?.trim().toUpperCase() === 'TJ_FLEX') return 'Zero cancellation fee';
+  return fare.refundable ? 'Flexible, refundable fare' : 'Fly smart, pay less';
 }
 
 export function cabinTierForFare(fare: FareOption): CabinTierId {

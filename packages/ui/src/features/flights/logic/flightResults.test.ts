@@ -192,7 +192,11 @@ describe('display helpers', () => {
     expect(fareDisplayName(fare({ fareIdentifier: 'PUBLISHED' }))).toBe('Regular Fare');
     expect(fareDisplayName(fare({ fareIdentifier: null }))).toBe('Regular Fare');
     expect(fareDisplayName(fare({ fareIdentifier: 'OFFER_FARE_WITH_PNR' }))).toBe('Offer Fare');
-    expect(fareDisplayName(fare({ fareIdentifier: 'SME_FARE' }))).toBe('Sme Fare');
+    expect(fareDisplayName(fare({ fareIdentifier: 'SME_FARE' }))).toBe('SME Fare');
+    expect(fareDisplayName(fare({ fareIdentifier: 'SME' }))).toBe('SME Fare');
+    expect(fareDisplayName(fare({ fareIdentifier: 'TJ_FLEX' }))).toBe('Flex Fare');
+    expect(fareDisplayName(fare({ fareIdentifier: 'PROMO' }))).toBe('Promo Fare');
+    expect(fareDisplayName(fare({ fareIdentifier: 'corporate' }))).toBe('Corporate Fare');
     expect(fareDisplayName(fare({ fareIdentifier: 'CORPORATE' }))).toBe('Corporate Fare');
   });
 
