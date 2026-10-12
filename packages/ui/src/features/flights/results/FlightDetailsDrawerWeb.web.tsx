@@ -15,7 +15,8 @@ import {
   stopsLabel,
   type FareSelection,
 } from '../logic/flightResults';
-import type { FareRulesLeg } from '../logic/fareRules';
+import { fareRuleSummary, type FareRulesLeg } from '../logic/fareRules';
+import { useFareRulesMobile } from '../useFareRulesMobile';
 import { baggageText } from '../logic/addOns';
 import { AirlineLogoWeb } from './AirlineLogoWeb.web';
 import { FareRulesPanelWeb } from './FareRulesPanelWeb.web';
@@ -75,6 +76,30 @@ const Feature: React.FC<{ tone: keyof typeof FEATURE_COLORS; text: string }> = (
     <span className="py-px text-[13px] leading-4 text-[#3E4B64]">{text}</span>
   </li>
 );
+
+// Cancellation and date change lines from the fare's real rules (the same
+// request as the Fare Rule tab, cached per fare). Until they load — or if
+// there are none — the card says what the fare itself tells us.
+const FareRuleFeatures: React.FC<{ offerId: string; fareId: string; refundable: boolean; fareAmount: number }> = ({
+  offerId,
+  fareId,
+  refundable,
+  fareAmount,
+}) => {
+  const { data } = useFareRulesMobile([offerId], [fareId]);
+  const rules = data?.legs.find((l) => l.offerId === offerId) ?? data?.legs[0];
+  const cancellation = fareRuleSummary(rules, 'Cancellation', refundable, fareAmount) ?? {
+    text: refundable ? 'Cancellation: refundable' : 'Cancellation: non-refundable',
+    tone: refundable ? 'included' : 'na',
+  };
+  const dateChange = fareRuleSummary(rules, 'DateChange', refundable) ?? { text: 'Date change: as per fare rules', tone: 'pay' };
+  return (
+    <>
+      <Feature tone={cancellation.tone} text={cancellation.text} />
+      <Feature tone={dateChange.tone} text={dateChange.text} />
+    </>
+  );
+};
 
 // Itinerary endpoint row: time/date | dot | city/airport.
 const EndpointRow: React.FC<{ iso: string; code: string; cityFor: (c: string) => string; nameFor: (c: string) => string; position: 'start' | 'end' }> = ({
@@ -333,8 +358,7 @@ export const FlightDetailsDrawerWeb: React.FC<{
                               tone={fare.handBaggage ? 'included' : 'na'}
                               text={fare.handBaggage ? `Cabin bag: ${baggageText(fare.handBaggage)}` : 'Cabin bag: not stated'}
                             />
-                            <Feature tone={fare.refundable ? 'included' : 'na'} text={fare.refundable ? 'Cancellation: refundable' : 'Cancellation: non-refundable'} />
-                            <Feature tone="pay" text="Date change: as per fare rules" />
+                            <FareRuleFeatures offerId={activeOffer.offerId} fareId={fare.fareId} refundable={fare.refundable} fareAmount={fare.totalAmount} />
                             <Feature
                               tone={hasCheckIn ? 'included' : 'na'}
                               text={hasCheckIn ? `Check-in Baggage: ${baggageText(fare.checkInBaggage!)} / Adult` : 'No check-in baggage'}
