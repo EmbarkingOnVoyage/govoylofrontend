@@ -101,12 +101,15 @@ const DateFareStripWeb: React.FC<{
     <div className="flex items-center gap-2 h-[59px]">
       {arrow(-1)}
       {/* Desktop-15 date strip: 109.46 x 48.76 boxes, 6.76px apart. Narrower
-          windows shrink the boxes instead of pushing the page sideways. */}
+          windows shrink the boxes, and below 1280 show five days, instead of
+          pushing the page sideways. */}
       <div className="flex-1 min-w-0 flex items-center gap-[6.76px]">
         {days.map((d, index) => {
           const fare = fareByDate.get(dateKey(d));
           const isSelected = index === 3;
           const isPast = d < today;
+          // Below 1280 only the selected day ±2 fit with readable labels.
+          const outer = index < 1 || index > 5;
           const priceColor =
             fare === undefined || isPast
               ? '#697691'
@@ -119,10 +122,10 @@ const DateFareStripWeb: React.FC<{
               type="button"
               disabled={isSelected || isPast}
               onClick={() => onSelectDate(toIso(d))}
-              className="flex-1 min-w-0 max-w-[109.46px] h-[48.76px] p-[2.7px] bg-white rounded-[3.38px] flex flex-col items-center justify-center disabled:cursor-default"
+              className={`${outer ? 'hidden xl:flex' : 'flex'} flex-1 min-w-0 max-w-[109.46px] h-[48.76px] p-[2.7px] bg-white rounded-[3.38px] flex-col items-center justify-center disabled:cursor-default`}
               style={{ border: `1.35px solid ${isSelected ? '#114BFF' : '#D7DCE7'}` }}
             >
-              <span className="text-[14.86px] leading-[22px] font-medium text-[#182339] whitespace-nowrap">{stripLabel(d)}</span>
+              <span className="max-w-full truncate text-[14.86px] leading-[22px] font-medium text-[#182339]">{stripLabel(d)}</span>
               <span className="flex items-end gap-0.5 text-[16.2px] leading-5" style={{ color: priceColor }}>
                 <IndianRupee size={17} className="mb-px" />
                 {fare !== undefined ? Math.round(fare).toLocaleString('en-IN') : '—'}
