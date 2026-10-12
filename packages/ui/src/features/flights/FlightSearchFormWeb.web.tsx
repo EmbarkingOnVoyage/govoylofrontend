@@ -542,8 +542,9 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
       </div>
     );
 
+    // Desktop-15: the bar sits 4px inside the header's 32px padding (x=36).
     return (
-      <div className="flex flex-col gap-3">
+      <div className="mx-1 flex flex-col gap-3">
         {tripType !== 'MultiCity' ? (
           <div className="flex items-center gap-4 bg-[#DDDDDD] rounded-lg p-2">
             <div className="flex-1 min-w-0 flex items-center gap-px">

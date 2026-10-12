@@ -88,7 +88,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate, showProductLinks =
 
   return (
     <header className="relative z-30 bg-white shadow-[0px_2px_12px_rgba(27,50,73,0.08)] font-['Inter',sans-serif]">
-      <div className="max-w-[1440px] mx-auto px-8 py-3 flex flex-col gap-4">
+      <div className="max-w-[1440px] mx-auto px-8 py-3 flex flex-col gap-5">
         <div className="h-10 flex items-center justify-between gap-6">
           <div className="flex items-center gap-6 min-w-0">
             <button type="button" onClick={() => handleAction("FLIGHTS")} aria-label="GoVoylo home" className="shrink-0">
