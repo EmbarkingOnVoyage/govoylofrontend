@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, SafeAreaView, ScrollView, ActivityIndicator, Modal, Image } from 'react-native';
-import { ArrowLeft, ArrowLeftRight, ArrowRight, Pencil, Plane, Info, ChevronDown, ListFilter, Check, Minus, Plus, X, MapPin, UserRound, MoveRight } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, FlatList, SafeAreaView, ScrollView, ActivityIndicator, Modal, Image, StyleSheet } from 'react-native';
+import { ArrowLeft, ArrowLeftRight, ArrowRight, Pencil, Plane, Info, ChevronDown, ListFilter, Check, Minus, Plus, X, MapPin, UserRound, MoveRight, ChevronUp } from 'lucide-react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SvgXml } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -55,6 +55,7 @@ import {
   airlinesForSegments,
   selectableFares,
   fareDisplayName,
+  fareTagline,
   cheapestFareSelection,
   resolveSelectedFare,
   initialFilters,
@@ -1375,33 +1376,60 @@ const FlightDetailsModal: React.FC<{
               ))}
             </View>
 
-            <Text style={[styles.modalSectionLabel, styles.detailsFareSectionLabel]}>Select Your Fare</Text>
+            <Text style={styles.detailsFareSectionLabel}>Select Your Fare</Text>
+
+            {/* Phone Dev "Select Your Fare": airline · route, cabin chips, then
+                one expandable card per fare. */}
+            <View style={styles.fareAirlineRow}>
+              <AirlineLogo airlineCode={activeOffer.airlineCode} size={16} />
+              <Text style={styles.fareAirlineText} numberOfLines={1}>
+                {activeOffer.airlineName}  {airportForCode(first.origin).city} - {airportForCode(last.destination).city}
+              </Text>
+            </View>
 
             <View style={styles.cabinTierRow}>
               {tierSummaries.map(({ tier, cheapestInTier }) => {
                 const isSelected = tier === activeSelection.tier;
-                return (
-                  <TouchableOpacity
-                    key={tier}
-                    style={[styles.cabinTierCard, isSelected && styles.cabinTierCardSelected]}
-                    onPress={() => setActiveSelection({ tier, fareId: cheapestInTier?.fareId ?? null })}
-                  >
+                const content = (
+                  <View style={[styles.cabinTierInner, isSelected && styles.cabinTierInnerSelected]}>
                     <Text style={[styles.cabinTierLabel, isSelected && styles.cabinTierLabelSelected]}>
                       {CABIN_TIER_LABELS[tier]}
                     </Text>
                     <Text style={styles.cabinTierPrice}>
                       From {formatPrice(cheapestInTier!.totalAmount, cheapestInTier!.currencyCode)}
                     </Text>
+                  </View>
+                );
+                return (
+                  <TouchableOpacity
+                    key={tier}
+                    onPress={() => setActiveSelection({ tier, fareId: cheapestInTier?.fareId ?? null })}
+                    activeOpacity={0.8}
+                  >
+                    {isSelected ? (
+                      // The picked chip's 1px border runs purple → orange.
+                      <LinearGradient
+                        colors={['#7C1AEE', '#D68400']}
+                        start={{ x: 1, y: 0 }}
+                        end={{ x: 0.04, y: 0.91 }}
+                        style={styles.cabinTierBorder}
+                      >
+                        {content}
+                      </LinearGradient>
+                    ) : (
+                      <View style={[styles.cabinTierBorder, styles.cabinTierBorderIdle]}>{content}</View>
+                    )}
                   </TouchableOpacity>
                 );
               })}
             </View>
 
-            {sortedFares.map((fare) => (
+            {sortedFares.map((fare, index) => (
               <FareOptionCard
                 key={fare.fareId}
                 offerId={activeOffer.offerId}
                 fare={fare}
+                index={index}
                 selected={fare.fareId === selectedFare?.fareId}
                 onSelect={() => setActiveSelection((prev) => ({ ...prev, fareId: fare.fareId }))}
               />
@@ -1629,56 +1657,115 @@ interface FlightResultsScreenProps {
   ) => void;
 }
 
-const RULE_TONE_COLORS: Record<FareRuleSummary['tone'], string> = {
+const RULE_TONE_COLORS: Record<FareRuleSummary['tone'] | 'loading', string> = {
   included: '#007F20',
   pay: '#CE6400',
   na: '#C5001F',
+  loading: '#CCD3E0',
 };
 
-// One fare in the flight details sheet: its name and price, refundability,
-// baggage, then the real cancellation / date change rules (the same summary
-// as the web fare cards). Until the rules load — or when there are none —
-// the refundable flag stands in for cancellation.
-const FareOptionCard: React.FC<{ offerId: string; fare: FareOption; selected: boolean; onSelect: () => void }> = ({
+// Per-fare accent, in list order (Phone Dev fare cards; same set as the web
+// cards): the card border, and the header tint while the card is picked.
+type GradientPoint = { x: number; y: number };
+// Header tints as opaque stops, pre-blended over the white card: Android
+// interpolates semi-transparent stops premultiplied (a transparent stop acts
+// like black), which drew Figma's 70%-grey header ~10 levels too dark.
+const FARE_CARD_STYLES: { border: string; header: string[]; start: GradientPoint; end: GradientPoint }[] = [
+  // Figma's own diagonal gradient on the 327x52 header.
+  { border: '#ADB8CD', header: ['#FFFFFF', '#FAFAFA', '#F3F3F3', '#E9E9E9', '#DDDDDD', '#CECECE', '#BCBCBC'], start: { x: -0.481, y: 1.923 }, end: { x: 1.345, y: -0.419 } },
+  { border: '#114BFF', header: ['#FFFFFF', '#EFF3FF', '#DFE7FF', '#CFDBFF', '#C0CFFF', '#B0C3FF', '#A0B7FF'], start: { x: -0.11, y: 0.5 }, end: { x: 1.02, y: 0.5 } },
+  { border: '#7C1AEE', header: ['#FFFFFF', '#FAF0FF', '#F5E0FF', '#F0D0FF', '#E8B9FF', '#E0A1FF', '#D88AFF'], start: { x: 0, y: 0.5 }, end: { x: 1.02, y: 0.5 } },
+  { border: '#D4AF37', header: ['#FFFFFF', '#F8F2DE', '#F1E4BC', '#EAD79B', '#E2CA7A', '#DBBC58', '#D4AF37'], start: { x: 0.04, y: 0.5 }, end: { x: 1.02, y: 0.5 } },
+];
+
+const RuleIcon: React.FC<{ tone: FareRuleSummary['tone'] | 'loading' }> = ({ tone }) => (
+  <View style={[styles.fareRuleIcon, { backgroundColor: RULE_TONE_COLORS[tone] }]}>
+    {tone === 'loading' ? null : tone === 'included' ? (
+      <Check size={9} color="#FFFFFF" strokeWidth={3} />
+    ) : tone === 'pay' ? (
+      <Minus size={9} color="#FFFFFF" strokeWidth={3} />
+    ) : (
+      <X size={8} color="#FFFFFF" strokeWidth={3} />
+    )}
+  </View>
+);
+
+// One fare in the flight details sheet (Phone Dev "Select Your Fare"): a
+// header with the radio, "Name | ₹price/adult" and its tagline; the picked
+// fare opens to show cabin bag, the real cancellation / date change rules
+// (same summary as the web cards) and check-in baggage. Until the rules load —
+// or when there are none — the refundable flag stands in for cancellation.
+const FareOptionCard: React.FC<{ offerId: string; fare: FareOption; index: number; selected: boolean; onSelect: () => void }> = ({
   offerId,
   fare,
+  index,
   selected,
   onSelect,
 }) => {
-  const { data } = useFareRulesMobile([offerId], [fare.fareId]);
+  // Rules take several seconds (the fare is re-checked with the supplier), so
+  // the two lines say they're loading until then.
+  const { data, isLoading } = useFareRulesMobile([offerId], [fare.fareId]);
   const rules = data?.legs.find((l) => l.offerId === offerId) ?? data?.legs[0];
-  const cancellation = fareRuleSummary(rules, 'Cancellation', fare.refundable, fare.totalAmount);
-  const dateChange = fareRuleSummary(rules, 'DateChange', fare.refundable, fare.totalAmount);
-  const refundable = cancellation ? cancellation.tone !== 'na' : fare.refundable;
-  const ruleLines = [cancellation, dateChange].filter((line): line is FareRuleSummary => !!line);
+  const cancellation: FareRuleSummary = fareRuleSummary(rules, 'Cancellation', fare.refundable, fare.totalAmount) ?? {
+    text: fare.refundable ? 'Cancellation: refundable' : 'Cancellation: non-refundable',
+    tone: fare.refundable ? 'included' : 'na',
+  };
+  const dateChange: FareRuleSummary = fareRuleSummary(rules, 'DateChange', fare.refundable, fare.totalAmount) ?? {
+    text: 'Date change: as per fare rules',
+    tone: 'pay',
+  };
+  const hasCheckIn = /[1-9]/.test(fare.checkInBaggage ?? '');
+  type Row = { text: string; tone: FareRuleSummary['tone'] | 'loading' };
+  const rows: Row[] = [
+    fare.handBaggage ? { text: `Cabin bag: ${fare.handBaggage}`, tone: 'included' } : { text: 'Cabin bag: not stated', tone: 'na' },
+    isLoading ? { text: 'Loading cancellation rules…', tone: 'loading' } : cancellation,
+    isLoading ? { text: 'Loading date change rules…', tone: 'loading' } : dateChange,
+    hasCheckIn ? { text: `Check-in Baggage: ${fare.checkInBaggage} / Adult`, tone: 'included' } : { text: 'No check-in baggage', tone: 'na' },
+  ];
+  const look = FARE_CARD_STYLES[index % FARE_CARD_STYLES.length];
 
   return (
-    <TouchableOpacity style={[styles.fareCard, selected && styles.fareCardSelected]} onPress={onSelect}>
-      <View style={styles.fareCardTopRow}>
+    <View style={[styles.fareCard, { borderColor: look.border }]}>
+      <TouchableOpacity style={styles.fareCardHeader} onPress={onSelect} activeOpacity={0.8} accessibilityState={{ selected }}>
+        {selected && (
+          <LinearGradient
+            colors={look.header as [string, string, ...string[]]}
+            start={look.start}
+            end={look.end}
+            style={StyleSheet.absoluteFill}
+          />
+        )}
         <View style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
           {selected && <View style={styles.radioDot} />}
         </View>
         <View style={styles.fareCardTitle}>
-          <Text style={styles.fareCardName}>{fareDisplayName(fare)}</Text>
-          <Text style={styles.fareCardPrice}>{formatPrice(fare.totalAmount, fare.currencyCode)}/adult</Text>
+          <Text style={styles.fareCardName} numberOfLines={1}>
+            {fareDisplayName(fare).replace(/ Fare$/, '')}
+            <Text style={styles.fareCardMuted}> | </Text>
+            <Text style={styles.fareCardPrice}>{formatPrice(fare.totalAmount, fare.currencyCode)}</Text>
+            <Text style={styles.fareCardMuted}>/adult</Text>
+          </Text>
+          <Text style={styles.fareCardTagline} numberOfLines={1}>
+            {fareTagline(fare)}
+          </Text>
         </View>
-        <Text style={refundable ? styles.fareCardRefundable : styles.fareCardNonRefundable}>
-          {refundable ? 'Refundable' : 'Non-refundable'}
-        </Text>
-      </View>
-      {(fare.checkInBaggage || fare.handBaggage) && (
-        <Text style={styles.fareCardBaggage}>
-          {fare.checkInBaggage ? `${fare.checkInBaggage} check-in` : 'No check-in baggage'}
-          {fare.handBaggage ? ` · ${fare.handBaggage} hand baggage` : ''}
-        </Text>
+        {selected ? (
+          <ChevronDown size={20} color="#182339" strokeWidth={1.2} />
+        ) : (
+          <ChevronUp size={20} color="#182339" strokeWidth={1.2} />
+        )}
+      </TouchableOpacity>
+      {selected && (
+        <View style={styles.fareCardBody}>
+          {rows.map((row, rowIndex) => (
+            <View key={rowIndex} style={styles.fareRuleRow}>
+              <RuleIcon tone={row.tone} />
+              <Text style={[styles.fareRuleText, row.tone === 'loading' && styles.fareRuleTextLoading]}>{row.text}</Text>
+            </View>
+          ))}
+        </View>
       )}
-      {ruleLines.map((line) => (
-        <View key={line.text} style={styles.fareCardRule}>
-          <View style={[styles.fareCardRuleDot, { borderColor: RULE_TONE_COLORS[line.tone] }]} />
-          <Text style={styles.fareCardRuleText}>{line.text}</Text>
-        </View>
-      ))}
-    </TouchableOpacity>
+    </View>
   );
 };
 
