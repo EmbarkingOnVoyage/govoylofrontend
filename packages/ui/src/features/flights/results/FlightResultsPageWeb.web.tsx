@@ -100,7 +100,8 @@ const DateFareStripWeb: React.FC<{
   return (
     <div className="flex items-center gap-2 h-[59px]">
       {arrow(-1)}
-      {/* Desktop-15 date strip: 109.46 x 48.76 boxes, 6.76px apart. */}
+      {/* Desktop-15 date strip: 109.46 x 48.76 boxes, 6.76px apart. Narrower
+          windows shrink the boxes instead of pushing the page sideways. */}
       <div className="flex-1 min-w-0 flex items-center gap-[6.76px]">
         {days.map((d, index) => {
           const fare = fareByDate.get(dateKey(d));
@@ -118,7 +119,7 @@ const DateFareStripWeb: React.FC<{
               type="button"
               disabled={isSelected || isPast}
               onClick={() => onSelectDate(toIso(d))}
-              className="w-[109.46px] shrink-0 h-[48.76px] p-[2.7px] bg-white rounded-[3.38px] flex flex-col items-center justify-center disabled:cursor-default"
+              className="flex-1 min-w-0 max-w-[109.46px] h-[48.76px] p-[2.7px] bg-white rounded-[3.38px] flex flex-col items-center justify-center disabled:cursor-default"
               style={{ border: `1.35px solid ${isSelected ? '#114BFF' : '#D7DCE7'}` }}
             >
               <span className="text-[14.86px] leading-[22px] font-medium text-[#182339] whitespace-nowrap">{stripLabel(d)}</span>
