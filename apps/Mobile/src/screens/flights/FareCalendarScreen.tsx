@@ -274,6 +274,57 @@ const MonthBlock: React.FC<MonthBlockProps> = ({
   );
 };
 
+function parseCalendarDate(value?: string | null): Date | null {
+  if (!value) return null;
+
+  const input = value.trim();
+
+  // Handles DD/MM/YYYY, e.g. 12/10/2026
+  const displayMatch = input.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+  if (displayMatch) {
+    const day = Number(displayMatch[1]);
+    const month = Number(displayMatch[2]);
+    const year = Number(displayMatch[3]);
+
+    const date = new Date(year, month - 1, day);
+
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return date;
+  }
+
+  // Handles ISO dates, e.g. 2026-10-12
+  const isoMatch = input.match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+  if (isoMatch) {
+    const year = Number(isoMatch[1]);
+    const month = Number(isoMatch[2]);
+    const day = Number(isoMatch[3]);
+
+    const date = new Date(year, month - 1, day);
+
+    if (
+      date.getFullYear() !== year ||
+      date.getMonth() !== month - 1 ||
+      date.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return date;
+  }
+
+  return null;
+}
+
+
 export const FareCalendarScreen: React.FC<FareCalendarScreenProps> = ({
   title,
   footerLabel,
@@ -288,17 +339,37 @@ export const FareCalendarScreen: React.FC<FareCalendarScreenProps> = ({
 }) => {
   useHardwareBack(() => onBack());
 
-  const [selected, setSelected] = useState<Date | null>(initialDate ? new Date(initialDate) : null);
-  const [departureDate, setDepartureDate] = useState<Date | null>(
-  initialDate ? startOfDay(new Date(initialDate)) : null
+//   const [selected, setSelected] = useState<Date | null>(initialDate ? new Date(initialDate) : null);
+//   const [departureDate, setDepartureDate] = useState<Date | null>(
+//   initialDate ? startOfDay(new Date(initialDate)) : null
+// );
+
+// const [returnDate, setReturnDate] = useState<Date | null>(
+//   initialReturnDate ? startOfDay(new Date(initialReturnDate)) : null
+// );
+
+// const [selectingReturn, setSelectingReturn] = useState(
+//   !!initialDate && !initialReturnDate
+// );
+
+
+const initialDeparture = parseCalendarDate(initialDate);
+const initialReturn = parseCalendarDate(initialReturnDate);
+
+const [selected, setSelected] = useState<Date | null>(
+  initialDeparture
+);
+
+const [departureDate, setDepartureDate] = useState<Date | null>(
+  initialDeparture ? startOfDay(initialDeparture) : null
 );
 
 const [returnDate, setReturnDate] = useState<Date | null>(
-  initialReturnDate ? startOfDay(new Date(initialReturnDate)) : null
+  initialReturn ? startOfDay(initialReturn) : null
 );
 
 const [selectingReturn, setSelectingReturn] = useState(
-  !!initialDate && !initialReturnDate
+  !!initialDeparture && !initialReturn
 );
 
   const [monthCount, setMonthCount] = useState(INITIAL_MONTHS);

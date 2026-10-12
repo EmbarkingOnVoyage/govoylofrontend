@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Check } from 'lucide-react-native';
-import {
+import { Calendar, ChevronDown } from 'lucide-react-native';import {
   useCustomerProfileMobile,
   useUpdateCustomerProfileMobile,
   type CustomerProfile,
@@ -82,6 +82,7 @@ export const PersonalDetailsScreen: React.FC<PersonalDetailsScreenProps> = ({ on
   const [panCardNumberEdited, setPanCardNumberEdited] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [showValidation, setShowValidation] = useState(false);
+  const [showPassportExpiryPicker, setShowPassportExpiryPicker] = useState(false);
 
   const parseDate = (value: string): Date => {
   const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
@@ -253,14 +254,18 @@ if (!isValidDateOfBirth(dateOfBirth)) {
         <Text style={[styles.sectionHeading, styles.firstSectionHeading]}>General information</Text>
 
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>First name</Text>
+          <Text style={styles.label}>
+            First name<Text style={{ color: 'red' }}>*</Text>
+          </Text>
           <TextInput  style={[
     styles.input,
     showValidation && !firstName.trim() && styles.inputError,
   ]} value={firstName} onChangeText={setFirstName} placeholder="Text" placeholderTextColor="#697691" />
         </View>
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>Last name</Text>
+          <Text style={styles.label}>
+            Last name<Text style={{ color: 'red' }}>*</Text>
+          </Text>
           <TextInput  style={[
     styles.input,
     showValidation && !lastName.trim() && styles.inputError,
@@ -268,20 +273,15 @@ if (!isValidDateOfBirth(dateOfBirth)) {
         </View>
         <View style={styles.row}>
           <View style={styles.fieldWrapperGender}>
-            <Text style={styles.label}>Gender</Text>
+            <Text style={styles.label}>
+              Gender<Text style={{ color: 'red' }}>*</Text>
+            </Text>
             <SelectField value={gender} options={GENDER_OPTIONS} onSelect={setGender} title="Select gender"  style={showValidation && !gender.trim() ? styles.inputError : undefined} />
           </View>
           <View style={styles.fieldWrapperHalf}>
-            <Text style={styles.label}>Date of birth</Text>
-            {/* <DateField
-              style={
-                showValidation && (!dateOfBirth.trim() || !isValidDateOfBirth(dateOfBirth))
-                  ? styles.inputError
-                  : undefined
-              }
-              value={dateOfBirth}
-              onChangeText={setDateOfBirth}
-            /> */}
+            <Text style={styles.label}>
+              Date of birth<Text style={{ color: 'red' }}>*</Text>
+            </Text>
 
             <TouchableOpacity
               style={[
@@ -293,6 +293,9 @@ if (!isValidDateOfBirth(dateOfBirth)) {
               ]}
               onPress={() => setShowDobPicker(true)}
             >
+              <View style={styles.dateRow}></View>
+               {/* Calendar icon on the left */}
+              <Calendar size={20} color="#182339" strokeWidth={1.6} />
               <Text
                 style={
                   dateOfBirth
@@ -300,11 +303,12 @@ if (!isValidDateOfBirth(dateOfBirth)) {
                     : styles.inputDisplayPlaceholder
                 }
               >
-                {dateOfBirth || 'Select date of birth'}
+                {dateOfBirth || 'DD/MM/YYYY'}
               </Text>
+              
             </TouchableOpacity>
 
-            {showDobPicker && (
+              {showDobPicker && (
               <>
                 <DateTimePicker
                   value={parseDate(dateOfBirth)}
@@ -321,6 +325,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
                     if (event.type === 'set' && selectedDate) {
                       setDateOfBirth(formatDateForDisplay(selectedDate));
                     }
+                    
                   }}
                 />
 
@@ -331,12 +336,12 @@ if (!isValidDateOfBirth(dateOfBirth)) {
                 )}
               </>
             )}
-
-
-          </View>
+        </View>
         </View>
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>Nationality</Text>
+          <Text style={styles.label}>
+            Nationality<Text style={{ color: 'red' }}>*</Text>
+          </Text>
           <SelectField
             value={nationality}
             options={COUNTRY_OPTIONS}
@@ -359,48 +364,50 @@ if (!isValidDateOfBirth(dateOfBirth)) {
               <Text style={styles.label}>Anniversary</Text>
               {/* <DateField value={anniversary} onChangeText={setAnniversary} placeholder="Select" /> */}
              
-<TouchableOpacity
-  style={styles.inputDisplay}
-  onPress={() => setShowAnniversaryPicker(true)}
->
-  <Text
-    style={
-      anniversary
-        ? styles.inputDisplayText
-        : styles.inputDisplayPlaceholder
-    }
-  >
-    {anniversary || 'Select anniversary'}
-  </Text>
-</TouchableOpacity>
+              <TouchableOpacity
+                style={styles.inputDisplay}
+                onPress={() => setShowAnniversaryPicker(true)}
+              >
+                {/* Calendar icon on the left */}
+                  <Calendar size={20} color="#182339" strokeWidth={1.6} />
+                <Text
+                  style={
+                    anniversary
+                      ? styles.inputDisplayText
+                      : styles.inputDisplayPlaceholder
+                  }
+                >
+                  {anniversary || 'DD/MM/YYYY'}
+                </Text>
+              </TouchableOpacity>
 
-{showAnniversaryPicker && (
-  <>
-    <DateTimePicker
-      value={parseDate(anniversary)}
-      mode="date"
-      maximumDate={new Date()}
-      display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-      onChange={(event, selectedDate) => {
-        if (Platform.OS === 'android') {
-          setShowAnniversaryPicker(false);
-        }
+              {showAnniversaryPicker && (
+                <>
+                  <DateTimePicker
+                    value={parseDate(anniversary)}
+                    mode="date"
+                    maximumDate={new Date()}
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    onChange={(event, selectedDate) => {
+                      if (Platform.OS === 'android') {
+                        setShowAnniversaryPicker(false);
+                      }
 
-        if (event.type === 'set' && selectedDate) {
-          setAnniversary(formatDateForDisplay(selectedDate));
-        }
-      }}
-    />
+                      if (event.type === 'set' && selectedDate) {
+                        setAnniversary(formatDateForDisplay(selectedDate));
+                      }
+                    }}
+                  />
 
-    {Platform.OS === 'ios' && (
-      <TouchableOpacity
-        onPress={() => setShowAnniversaryPicker(false)}
-      >
-        <Text>Done</Text>
-      </TouchableOpacity>
-    )}
-  </>
-)}
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity
+                      onPress={() => setShowAnniversaryPicker(false)}
+                    >
+                      <Text>Done</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
 
             </View>
           </View>
@@ -416,7 +423,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
           </View>
         )}
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>City of residents</Text>
+          <Text style={styles.label}>City of Residence</Text>
           <SelectField
             value={cityOfResidence}
             options={INDIAN_CITY_OPTIONS}
@@ -448,7 +455,7 @@ if (!isValidDateOfBirth(dateOfBirth)) {
             placeholder="Text" placeholderTextColor="#697691"
           />
         </View>
-        <View style={styles.fieldWrapperFull}>
+        {/* <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>Expiry date</Text>
           <TextInput
             style={styles.input}
@@ -456,7 +463,62 @@ if (!isValidDateOfBirth(dateOfBirth)) {
             onChangeText={setPassportExpiryDate}
             placeholder="DD/MM/YYYY" placeholderTextColor="#697691"
           />
-        </View>
+        </View> */}
+        
+<View style={styles.fieldWrapperFull}>
+  <Text style={styles.label}>Expiry date</Text>
+
+  <TouchableOpacity
+    style={styles.inputDisplay}
+    onPress={() => setShowPassportExpiryPicker(true)}
+  >
+    <View style={styles.dateRow}>
+      <Calendar size={20} color="#182339" strokeWidth={1.6} />
+
+      <Text
+        style={
+          passportExpiryDate
+            ? styles.inputDisplayText
+            : styles.inputDisplayPlaceholder
+        }
+      >
+        {passportExpiryDate || 'DD/MM/YYYY'}
+      </Text>
+    </View>
+
+  </TouchableOpacity>
+
+  {showPassportExpiryPicker && (
+    <>
+      <DateTimePicker
+        value={parseDate(passportExpiryDate)}
+        mode="date"
+        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+        accentColor="#7C1AEE"
+        themeVariant="light"
+        onChange={(event, selectedDate) => {
+          if (Platform.OS === 'android') {
+            setShowPassportExpiryPicker(false);
+          }
+
+          if (event.type === 'set' && selectedDate) {
+            setPassportExpiryDate(formatDateForDisplay(selectedDate));
+            setPassportNumberEdited(true);
+          }
+        }}
+      />
+
+      {Platform.OS === 'ios' && (
+        <TouchableOpacity
+          onPress={() => setShowPassportExpiryPicker(false)}
+        >
+          <Text>Done</Text>
+        </TouchableOpacity>
+      )}
+    </>
+  )}
+</View>
+
         <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>Issuing country</Text>
           <SelectField

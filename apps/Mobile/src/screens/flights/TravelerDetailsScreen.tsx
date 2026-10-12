@@ -133,6 +133,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   // 'mobile': Securely pay with no mobile on the account or any selected traveller.
   const [contactMode, setContactMode] = useState<'email' | 'mobile'>('email');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectionOrder, setSelectionOrder] = useState<string[]>([]);
   // Which type's full list the "More" modal is showing, if open.
   const [allTravelersType, setAllTravelersType] = useState<PaxType | null>(null);
   const [selectionHint, setSelectionHint] = useState('');
@@ -224,10 +225,21 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   // Flyshop endpoint that requires PAX details.
   // Adults first, then children, then infants — the order passengers are
   // sent to the supplier (Pax_Id 1..n).
-  const selectedTravelers = useMemo(
-    () => PAX_TYPES.flatMap((type) => travelersByType[type].filter((t) => selectedIds.has(t.id))),
-    [travelersByType, selectedIds]
-  );
+  // const selectedTravelers = useMemo(
+  //   () => PAX_TYPES.flatMap((type) => travelersByType[type].filter((t) => selectedIds.has(t.id))),
+  //   [travelersByType, selectedIds]
+  // );
+  
+const selectedTravelers = useMemo(
+  () =>
+    PAX_TYPES.flatMap((type) =>
+      selectionOrder
+        .map((id) => travelersByType[type].find((t) => t.id === id))
+        .filter((t): t is Traveler => t !== undefined)
+    ),
+  [travelersByType, selectionOrder]
+);
+
 
   const selectedCount = (type: PaxType) => travelersByType[type].filter((t) => selectedIds.has(t.id)).length;
 
@@ -535,12 +547,14 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
   const toggleSelected = (traveler: Traveler) => {
     const type = paxTypeOf(traveler);
+    const isSelected = selectedIds.has(traveler.id);
     const check = ageChecks.get(traveler.id);
-    if (!selectedIds.has(traveler.id) && check?.blocked) {
+    // if (!selectedIds.has(traveler.id) && check?.blocked) {
+    if (!isSelected  && check?.blocked) {
       setSelectionHint(`${traveler.firstName} ${traveler.lastName} can't travel on these dates: ${check.note.toLowerCase()}.`);
       return;
     }
-    if (!selectedIds.has(traveler.id) && selectedCount(type) >= requiredCounts[type]) {
+    if (!isSelected  && selectedCount(type) >= requiredCounts[type]) {
       setSelectionHint(
         `This search is for ${paxCountText(type, requiredCounts[type])}. Unselect one to choose another.`
       );
@@ -548,6 +562,7 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
     }
     setSelectionHint('');
     setPaymentError('');
+      // Keep the selected IDs in sync with the selection order.
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(traveler.id)) {
@@ -557,6 +572,14 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       }
       return next;
     });
+    //Append newly selected travellers; remove deselected travellers.
+      setSelectionOrder((prev) => {
+        if (isSelected) {
+          return prev.filter((id) => id !== traveler.id);
+        }
+
+        return [...prev, traveler.id];
+      });
   };
 
   const renderTravelerRow = (traveler: Traveler) => {
@@ -586,6 +609,23 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
       </View>
     );
   };
+
+
+const getInlineTravelers = (ofType: Traveler[]) => {
+  const selectedFirst = selectionOrder
+    .map((id) => ofType.find((t) => t.id === id))
+    .filter((t): t is Traveler => t !== undefined);
+
+  const unselected = ofType.filter(
+    (t) => !selectedIds.has(t.id)
+  );
+
+  return [...selectedFirst, ...unselected].slice(
+    0,
+    INLINE_TRAVELER_LIMIT
+  );
+};
+
 
   // Traveller Details stays mounted (hidden) behind the Payment page so the
   // add-on picks held inside WhatsIncludedSection survive going back.
@@ -785,7 +825,8 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
                     No saved {PAX_LABELS[type].plural} yet. Add one below.
                   </Text>
                 ) : (
-                  ofType.slice(0, INLINE_TRAVELER_LIMIT).map(renderTravelerRow)
+                  // ofType.slice(0, INLINE_TRAVELER_LIMIT).map(renderTravelerRow)
+                  getInlineTravelers(ofType).map(renderTravelerRow)
                 )}
                 {ofType.length > INLINE_TRAVELER_LIMIT && (
                   <TouchableOpacity style={styles.moreButton} onPress={() => setAllTravelersType(type)} activeOpacity={0.7}>

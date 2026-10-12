@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ArrowLeft, Check } from 'lucide-react-native';
+// import { ArrowLeft, Check } from 'lucide-react-native';
+import {ArrowLeft,Check,Calendar,ChevronDown,} from 'lucide-react-native';
 import {
   useTravellerDetailMobile,
   useSaveTravellerMobile,
@@ -13,12 +14,40 @@ import { DateField } from '../../components/DateField';
 import { GENDER_OPTIONS, INDIAN_STATE_OPTIONS, INDIAN_CITY_OPTIONS, COUNTRY_OPTIONS } from '@workspace/ui/src/data/selectOptions';
 import { styles } from './PersonalDetailsScreen.styles';
 import { useHardwareBack } from '../../navigation/useHardwareBack';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 interface CoTravellerFormScreenProps {
   travellerId: string | null;
   // Adding the signed-in customer themselves: prefilled from their profile.
   asAccountHolder?: boolean;
   onDone: () => void;
+}
+
+function parseDateForPicker(display: string): Date {
+  const match = display.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+
+  if (!match) return new Date();
+
+  const [, day, month, year] = match;
+  const date = new Date(Number(year), Number(month) - 1, Number(day));
+
+  // Reject invalid dates such as 31/02/2020.
+  if (
+    date.getFullYear() !== Number(year) ||
+    date.getMonth() !== Number(month) - 1 ||
+    date.getDate() !== Number(day)
+  ) {
+    return new Date();
+  }
+
+  return date;
+}
+
+function formatDateForDisplay(date: Date): string {
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+
+  return `${day}/${month}/${date.getFullYear()}`;
 }
 
 // Formats an ISO date string (e.g. "1990-05-15T00:00:00") as DD/MM/YYYY.
@@ -84,6 +113,9 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
   const [autoAddTravelInsurance, setAutoAddTravelInsurance] = useState(false);
   const [passportEdited, setPassportEdited] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [showDobPicker, setShowDobPicker] = useState(false);
+const [showPassportExpiryPicker, setShowPassportExpiryPicker] = useState(false);
+const [showPassportIssuePicker, setShowPassportIssuePicker] = useState(false);
 
   useEffect(() => {
     if (!detail) return;
@@ -228,25 +260,84 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
         <Text style={[styles.sectionHeading, styles.firstSectionHeading]}>General information</Text>
 
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>First name</Text>
+          <Text style={styles.label}>
+            First name <Text style={{ color: 'red' }}>*</Text>
+          </Text>
           <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="Text" placeholderTextColor="#697691" />
         </View>
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>Last name</Text>
+          <Text style={styles.label}>
+            Last name<Text style={{ color: 'red' }}>*</Text>
+          </Text>
           <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="Text" placeholderTextColor="#697691" />
         </View>
         <View style={styles.row}>
           <View style={styles.fieldWrapperGender}>
-            <Text style={styles.label}>Gender</Text>
+            <Text style={styles.label}>
+              Gender<Text style={{ color: 'red' }}>*</Text>
+            </Text>
             <SelectField value={gender} options={GENDER_OPTIONS} onSelect={setGender} title="Select gender" />
           </View>
-          <View style={styles.fieldWrapperHalf}>
-            <Text style={styles.label}>Date of birth</Text>
-            <DateField value={dateOfBirth} onChangeText={setDateOfBirth} />
-          </View>
+      
+            <View style={styles.fieldWrapperHalf}>
+              <Text style={styles.label}>
+                Date of birth<Text style={{ color: 'red' }}>*</Text>
+              </Text>
+
+              <TouchableOpacity
+                style={styles.inputDisplay}
+                onPress={() => setShowDobPicker(true)}
+              >
+                <View style={styles.dateRow}>
+                  <Calendar size={20} color="#182339" strokeWidth={1.6} />
+
+                  <Text
+                    style={
+                      dateOfBirth
+                        ? styles.inputDisplayText
+                        : styles.inputDisplayPlaceholder
+                    }
+                  >
+                    {dateOfBirth || 'DD/MM/YYYY'}
+                  </Text>
+                </View>
+                {/* <ChevronDown size={20} color="#182339" strokeWidth={2} /> */}
+              </TouchableOpacity>
+
+              {showDobPicker && (
+                <>
+                  <DateTimePicker
+                    value={parseDateForPicker(dateOfBirth)}
+                    mode="date"
+                    maximumDate={new Date()}
+                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    accentColor="#7C1AEE"
+                    themeVariant="light"
+                    onChange={(event, selectedDate) => {
+                      if (Platform.OS === 'android') {
+                        setShowDobPicker(false);
+                      }
+
+                      if (event.type === 'set' && selectedDate) {
+                        setDateOfBirth(formatDateForDisplay(selectedDate));
+                      }
+                    }}
+                  />
+
+                  {Platform.OS === 'ios' && (
+                    <TouchableOpacity onPress={() => setShowDobPicker(false)}>
+                      <Text>Done</Text>
+                    </TouchableOpacity>
+                  )}
+                </>
+              )}
+            </View>
+
         </View>
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>Nationality</Text>
+          <Text style={styles.label}>
+            Nationality<Text style={{ color: 'red' }}>*</Text>
+          </Text>
           <SelectField
             value={nationality}
             options={COUNTRY_OPTIONS}
@@ -255,7 +346,7 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
           />
         </View>
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>City of residents</Text>
+          <Text style={styles.label}>City of Residence</Text>
           <SelectField value={city} options={INDIAN_CITY_OPTIONS} onSelect={setCity} title="Select city of residence" />
         </View>
         <View style={styles.fieldWrapperFull}>
@@ -305,30 +396,114 @@ export const CoTravellerFormScreen: React.FC<CoTravellerFormScreenProps> = ({ tr
             placeholder="Text" placeholderTextColor="#697691"
           />
         </View>
+
+<View style={styles.fieldWrapperFull}>
+  <Text style={styles.label}>Expiry date</Text>
+
+  <TouchableOpacity
+    style={styles.inputDisplay}
+    onPress={() => setShowPassportExpiryPicker(true)}
+  >
+    <View style={styles.dateRow}>
+      <Calendar size={20} color="#182339" strokeWidth={1.6} />
+      <Text
+        style={
+          passportExpiryDate
+            ? styles.inputDisplayText
+            : styles.inputDisplayPlaceholder
+        }
+      >
+        {passportExpiryDate || 'DD/MM/YYYY'}
+      </Text>
+    </View>
+    {/* <ChevronDown size={20} color="#182339" strokeWidth={2} /> */}
+  </TouchableOpacity>
+
+  {showPassportExpiryPicker && (
+    <>
+      <DateTimePicker
+        value={parseDateForPicker(passportExpiryDate)}
+        mode="date"
+        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+        accentColor="#7C1AEE"
+        themeVariant="light"
+        onChange={(event, selectedDate) => {
+          if (Platform.OS === 'android') {
+            setShowPassportExpiryPicker(false);
+          }
+
+          if (event.type === 'set' && selectedDate) {
+            setPassportExpiryDate(formatDateForDisplay(selectedDate));
+            setPassportEdited(true);
+          }
+        }}
+      />
+
+      {Platform.OS === 'ios' && (
+        <TouchableOpacity
+          onPress={() => setShowPassportExpiryPicker(false)}
+        >
+          <Text>Done</Text>
+        </TouchableOpacity>
+      )}
+    </>
+  )}
+</View>
+    
+{/* IssueDate */}
         <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>Expiry date</Text>
-          <TextInput
-            style={styles.input}
-            value={passportExpiryDate}
-            onChangeText={(text) => {
-              setPassportExpiryDate(text);
-              setPassportEdited(true);
-            }}
-            placeholder="DD/MM/YYYY" placeholderTextColor="#697691"
-          />
-        </View>
-        <View style={styles.fieldWrapperFull}>
-          <Text style={styles.label}>Issue date</Text>
-          <TextInput
-            style={styles.input}
-            value={passportIssueDate}
-            onChangeText={(text) => {
-              setPassportIssueDate(text);
-              setPassportEdited(true);
-            }}
-            placeholder="DD/MM/YYYY" placeholderTextColor="#697691"
-          />
-        </View>
+  <Text style={styles.label}>Issue date</Text>
+
+  <TouchableOpacity
+    style={styles.inputDisplay}
+    onPress={() => setShowPassportIssuePicker(true)}
+  >
+    <View style={styles.dateRow}>
+      <Calendar size={20} color="#182339" strokeWidth={1.6} />
+      <Text
+        style={
+          passportIssueDate
+            ? styles.inputDisplayText
+            : styles.inputDisplayPlaceholder
+        }
+      >
+        {passportIssueDate || 'DD/MM/YYYY'}
+      </Text>
+    </View>
+    <ChevronDown size={20} color="#182339" strokeWidth={2} />
+  </TouchableOpacity>
+
+  {showPassportIssuePicker && (
+    <>
+      <DateTimePicker
+        value={parseDateForPicker(passportIssueDate)}
+        mode="date"
+        maximumDate={new Date()}
+        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+        accentColor="#7C1AEE"
+        themeVariant="light"
+        onChange={(event, selectedDate) => {
+          if (Platform.OS === 'android') {
+            setShowPassportIssuePicker(false);
+          }
+
+          if (event.type === 'set' && selectedDate) {
+            setPassportIssueDate(formatDateForDisplay(selectedDate));
+            setPassportEdited(true);
+          }
+        }}
+      />
+
+      {Platform.OS === 'ios' && (
+        <TouchableOpacity
+          onPress={() => setShowPassportIssuePicker(false)}
+        >
+          <Text>Done</Text>
+        </TouchableOpacity>
+      )}
+    </>
+  )}
+</View>
         <View style={styles.fieldWrapperFull}>
           <Text style={styles.label}>Issuing country</Text>
           <SelectField

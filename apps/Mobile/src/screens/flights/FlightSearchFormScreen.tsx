@@ -566,21 +566,60 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                     onPress={() => setSubScreen({ type: 'calendar', field: 'departure', segmentIndex: null })}
                   >
                     <Text style={departureDate ? styles.odValue : styles.odPlaceholder}>
-                      {departureDate || 'DD/MM/YYYY'}
+                      {/* DD/MM/YY */}
+                      {departureDate || 'Date'}
                     </Text>
                   </TouchableOpacity>
                 </View>
-                <View style={[styles.dateField, styles.odFieldEnd]}>
+                {/* <View style={[styles.dateField, styles.odFieldEnd]}>
                   <Text style={styles.odLabel}>Return</Text>
                   <TouchableOpacity
                     style={styles.input}
-                    onPress={() => setSubScreen({ type: 'calendar', field: 'return', segmentIndex: null })}
+                    onPress={() => {
+      if (tripType === 'OneWay') {
+        setTripType('RoundTrip');
+      }
+
+      setSubScreen({
+        type: 'calendar',
+        field: 'return',
+        segmentIndex: null,
+      });
+    }}
+                    //onPress={() => setSubScreen({ type: 'calendar', field: 'return', segmentIndex: null })}
                   >
                     <Text style={returnDate ? styles.odValue : styles.odPlaceholder}>
                       {returnDate || 'Add for discount'}
                     </Text>
                   </TouchableOpacity>
-                </View>
+                </View> */}
+
+                
+<View style={[styles.dateField, styles.odFieldEnd]}>
+  <Text style={styles.odLabel}>Return</Text>
+
+  <TouchableOpacity
+    style={styles.input}
+    onPress={() => {
+      if (tripType === 'OneWay') {
+        setTripType('RoundTrip');
+      }
+
+      setSubScreen({
+        type: 'calendar',
+        field: 'return',
+        segmentIndex: null,
+      });
+    }}
+  >
+    <Text
+      style={returnDate ? styles.odValue : styles.odPlaceholder}
+    >
+      {returnDate || 'Add for discount'}
+    </Text>
+  </TouchableOpacity>
+</View>
+
               </View>
             </View>
           ) : (
