@@ -1,3 +1,5 @@
+import { ArrowLeft, X } from "lucide-react";
+import govoyloLogo from "../../assets/images/govoylo-logo.svg";
 import React, { useState, useRef, useEffect } from "react";
 import { DashboardLayout } from '../../components/layout/Layout'; 
 import { useMutation } from "@tanstack/react-query"; 
@@ -139,14 +141,14 @@ export const OtpFeature: React.FC<OtpFeatureProps> = ({ onNavigate, variant = "p
 
   const content = (
       <div className={s.container}>
-        <button className={s.backArrow} onClick={() => onNavigate("ON_BACK_TO_LOGIN")}>&larr;</button>
+        <button className={s.backArrow} onClick={() => onNavigate("ON_BACK_TO_LOGIN")}><ArrowLeft size={20} strokeWidth={2} /></button>
         <button
           className={s.closeButton}
           onClick={() => (onCloseModal ? onCloseModal() : console.log("Close Clicked"))}
-        >&times;</button>
+        ><X size={20} strokeWidth={2} /></button>
 
         <div className={s.logoWrapper}>
-          <span className={s.logoText}>⚛️</span>
+          <img src={govoyloLogo} alt="goVoylo" className={s.logoText} />
         </div>
 
         <h2 className={s.title}>Log in or sign up</h2>
