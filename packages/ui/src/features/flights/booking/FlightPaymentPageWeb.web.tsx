@@ -178,6 +178,7 @@ export const FlightPaymentPageWeb: React.FC<{
         currencyCode,
         route: `${cityFor(first.origin)} (${first.origin}) → ${cityFor(destination)} (${destination})`,
         breakdown: { ...breakdown, convenienceFee: chargedConvenienceFee, total: chargeAmount },
+        email: checkout.email,
       });
     } catch (err) {
       setPayState('idle');

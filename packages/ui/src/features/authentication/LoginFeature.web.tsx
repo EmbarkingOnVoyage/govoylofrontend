@@ -11,9 +11,11 @@ interface LoginFeatureProps {
   onNavigate: (rule: string) => void;
   variant?: "page" | "modal";
   onCloseModal?: () => void;
+  // Booking pages: offer checking out without an account.
+  onContinueAsGuest?: () => void;
 }
 
-export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate, variant = "page", onCloseModal }) => {
+export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate, variant = "page", onCloseModal, onContinueAsGuest }) => {
   const [email, setEmail] = useState("");
   const [validationError, setValidationError] = useState("");
   const [isApiLoading, setIsApiLoading] = useState(false);
@@ -108,6 +110,12 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate, variant 
             </span>
           </button>
         </form>
+
+        {onContinueAsGuest && (
+          <button type="button" className={s.secondaryButton} onClick={onContinueAsGuest} disabled={isWorking}>
+            Continue as guest
+          </button>
+        )}
 
         {/* Content Section Break Dividers */}
         <div className={s.dividerLineWrapper}>
