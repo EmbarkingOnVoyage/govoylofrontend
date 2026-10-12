@@ -8,7 +8,6 @@ import {
   Loader2,
   Luggage,
   Plane,
-  Search,
   ShieldCheck,
   Armchair,
   Star,
@@ -29,6 +28,7 @@ import {
 } from '../logic/myTrips';
 import { downloadETicketWeb } from './downloadETicket.web';
 import { NoticeDialogWeb } from './NoticeDialogWeb.web';
+import { TripsTitleBlockWeb } from './TripsTitleBlockWeb.web';
 
 const TABS: TripTab[] = ['Upcoming', 'Completed', 'Cancelled'];
 // The design's chips; only flights can be booked today.
@@ -343,31 +343,7 @@ export const MyTripsPageWeb: React.FC<{
 
   return (
     <div className="pb-16 font-['Inter',sans-serif]">
-      {/* Title block: breadcrumb, title, search (Desktop-31 y 65–241). */}
-      <div className="mt-px bg-white">
-        <div className="relative max-w-[1440px] mx-auto h-[176px]">
-          <nav className="absolute left-10 top-[11px] flex items-center gap-[2px] text-[13px] leading-4 font-medium text-[#182339]">
-            <button type="button" onClick={onExploreTrips} className="underline underline-offset-[3px]">
-              Home
-            </button>
-            <ChevronRight size={18} strokeWidth={1.67} className="text-[#ADB8CD]" />
-            <span>Bookings</span>
-          </nav>
-          <div className="absolute left-[45px] top-[57.6px]">
-            <h1 className="text-[28px] leading-[34px] font-bold text-[#182339]">My trips</h1>
-            <p className="text-[15px] leading-5 text-[#697691]">Manage every journey in one place.</p>
-          </div>
-          <label className="absolute right-[44px] top-[65px] w-[386px] h-12 flex items-center gap-[11px] pl-[17px] pr-4 rounded-[12px] bg-white border border-[#7C8CAD]">
-            <Search size={20} strokeWidth={1.67} className="text-[#182339] shrink-0" />
-            <input
-              className="flex-1 min-w-0 text-[15px] leading-5 text-[#182339] placeholder:text-[#697691] outline-none bg-transparent"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search trips, booking ID or destination"
-            />
-          </label>
-        </div>
-      </div>
+      <TripsTitleBlockWeb onHome={onExploreTrips} search={search} onSearch={setSearch} />
 
       <div className="max-w-[1440px] mx-auto">
         {/* Tab bar across the bottom of the title block. */}

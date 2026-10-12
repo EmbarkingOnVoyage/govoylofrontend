@@ -10,5 +10,5 @@ export const MyTripsRoute: React.FC = () => {
 export const TripDetailsRoute: React.FC = () => {
   const navigate = useNavigate();
   const { tripBookingId = "" } = useParams();
-  return <TripDetailsPageWeb tripBookingId={tripBookingId} onBack={() => navigate("/my-trips")} />;
+  return <TripDetailsPageWeb tripBookingId={tripBookingId} onBack={() => navigate("/my-trips")} onHome={() => navigate("/")} />;
 };
