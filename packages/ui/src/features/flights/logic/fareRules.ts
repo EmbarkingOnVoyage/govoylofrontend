@@ -1,6 +1,6 @@
 // Pure fare-rule logic shared by the mobile Fare rules modal and the web
 // Fare rules popup: turns a fare's policies into the banded timeline rows.
-import type { FareRule, FareRulePolicy, FareRulesResponse } from '../useFareRulesMobile';
+import type { FareRule, FareRulePolicy, FareRulesResponse, LegFareRules } from '../useFareRulesMobile';
 
 export type FareRuleTab = 'Cancellation' | 'DateChange';
 
@@ -148,4 +148,52 @@ export function buildRuleTabs(legs: FareRulesLeg[], data: FareRulesResponse | un
     ...tab,
     label: usesLegLabels && tab.label ? tab.label : `Flight-${index + 1}`,
   }));
+}
+
+export type FareRuleTone = 'included' | 'pay' | 'na';
+
+export interface FareRuleSummary {
+  text: string;
+  tone: FareRuleTone;
+}
+
+// One line for a fare card ("Cancellation fee from ₹3,000", "Free date change
+// until 3 days before"), from the fare's real rules. Tripjack's banded
+// policies give amounts; Flyshop's rules are text only, so those point to the
+// Fare Rule tab. Null when there are no rules to go on — the card keeps its
+// own wording then. fareAmount (per adult): a cancellation fee at or above it
+// leaves nothing to refund, so that reads as non-refundable.
+export function fareRuleSummary(
+  rules: LegFareRules | undefined,
+  tab: FareRuleTab,
+  refundable: boolean,
+  fareAmount?: number
+): FareRuleSummary | null {
+  const label = tab === 'Cancellation' ? 'Cancellation' : 'Date change';
+  const noun = tab === 'Cancellation' ? 'cancellation' : 'date change';
+  if (!rules) return null;
+
+  const bands = rules.policies.filter((p) => p.type === tab);
+  if (bands.length > 0) {
+    const priced = bands.filter((b) => b.airlineFee != null);
+    if (priced.length === 0) return { text: `${label}: as per airline policy`, tone: 'pay' };
+    const cheapest = priced.reduce((a, b) => ((b.airlineFee ?? 0) < (a.airlineFee ?? 0) ? b : a));
+    if ((cheapest.airlineFee ?? 0) === 0) {
+      const start = cheapest.startHours ?? 0;
+      return {
+        text: start > 0 ? `Free ${noun} until ${hoursText(start)} before` : `Free ${noun}`,
+        tone: 'included',
+      };
+    }
+    if (tab === 'Cancellation' && fareAmount != null && (cheapest.airlineFee ?? 0) >= fareAmount) {
+      return { text: 'Cancellation: non-refundable', tone: 'na' };
+    }
+    const prefix = priced.length > 1 || bands.length > priced.length ? 'from ' : '';
+    return { text: `${label} fee ${prefix}${money(cheapest.airlineFee ?? 0)}`, tone: 'pay' };
+  }
+
+  // No amounts. A non-refundable fare can't be cancelled whatever the text says.
+  if (tab === 'Cancellation' && !refundable) return { text: 'Cancellation: non-refundable', tone: 'na' };
+  if (textRulesFor(rules.rules, tab).length > 0) return { text: `${label}: see Fare Rule tab`, tone: 'pay' };
+  return null;
 }
