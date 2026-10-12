@@ -321,7 +321,7 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
         </span>
       </button>
       {activeDropdown?.type === field && activeDropdown.segmentIndex === segIndex && (
-        <div className="absolute z-30 top-full left-0 mt-2">
+        <div className="absolute z-30 top-full left-0 mt-2 w-0">
           <FareCalendarDropdown
             footerLabel={field === 'departure' ? 'Departure date' : 'Return date'}
             initialDate={parseDisplayDate(value)}
@@ -423,7 +423,7 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
           </span>
         </button>
         {activeDropdown?.type === field && activeDropdown.segmentIndex === segIndex && (
-          <div className="absolute z-40 top-full left-0 mt-2">
+          <div className="absolute z-40 top-full left-0 mt-2 w-0">
             <FareCalendarDropdown
               footerLabel={field === 'departure' ? 'Departure date' : 'Return date'}
               initialDate={parseDisplayDate(value)}
