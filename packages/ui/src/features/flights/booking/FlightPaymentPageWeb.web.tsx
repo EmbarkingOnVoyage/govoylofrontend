@@ -7,7 +7,7 @@ import { useReleaseHoldMobile } from '../useReleaseHoldMobile';
 import type { Traveler } from '../../profile/useTravellersMobile';
 import { useCreateRazorpayOrderMobile, useVerifyRazorpayPaymentMobile } from '../../payments/useRazorpayPaymentMobile';
 import { RazorpayCheckoutError, openRazorpayCheckout } from '../../payments/razorpayCheckout.web';
-import { CABIN_CLASS_LABELS, formatPrice, formatTime24, formatTotalDuration, stopsLabel } from '../logic/flightResults';
+import { CABIN_CLASS_LABELS, formatPrice, formatTime24 } from '../logic/flightResults';
 import { PAX_TYPES, type PaxType } from '../logic/travellers';
 import { buildBookingLegs, buildBookingTravelers } from '../logic/booking';
 import { convenienceFeeFor } from '../logic/convenienceFee';
@@ -17,6 +17,7 @@ import { useAirportLookup } from '../results/useAirportLookup';
 import { BookingPageWeb, FareSummaryWeb, SectionHeading, Separator, buildFareBreakdown } from './BookingLayoutWeb.web';
 import { SelectedTravellersWeb, paxSummaryText } from './FlightReviewPageWeb.web';
 import type { BookingConfirmation } from './BookingConfirmedWeb.web';
+import { TripSummaryPanelWeb, legLine } from './TripSummaryPanelWeb.web';
 import upiLogo from '../../../assets/images/payments/upi.png';
 import applePayLogo from '../../../assets/images/payments/apple-pay.png';
 import googlePayLogo from '../../../assets/images/payments/google-pay.png';
@@ -40,22 +41,6 @@ const PAY_STATE_TEXT: Record<Exclude<PayState, 'idle'>, string> = {
   verifying: 'Confirming your payment…',
 };
 
-// "Thu, 22 Oct"
-function dayText(iso: string): string {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' }).replace(/^(\w+)/, '$1,');
-}
-
-// "Thu, 22 Oct · 1 Stop · 21h 10m · Economy"
-// (dated by one of its segments in the open card).
-function legLine(leg: FlightOffer, cabin: string, dateIso?: string): string {
-  const first = leg.segments[0];
-  const last = leg.segments[leg.segments.length - 1];
-  const stops = stopsLabel(leg.segments.length - 1).replace(/stops?/, (m) => m[0].toUpperCase() + m.slice(1));
-  return `${dayText(dateIso ?? first.departureDateTime)} · ${stops} · ${formatTotalDuration(first.departureDateTime, last.arrivalDateTime)} · ${cabin}`;
-}
-
 // "BOM ⇌ JFK" for a return trip, "DEL → BOM → GOI" for multi-city.
 function tripTitle(selection: FlightBookingSelection): string {
   const { legs, summary } = selection;
@@ -69,7 +54,8 @@ function tripTitle(selection: FlightBookingSelection): string {
 }
 
 // Web Dev "Desktop - 19" (flight card collapsed) / "Desktop - 20" (open):
-// the trip, who's flying and where the booking goes, then "Securely pay".
+// the trip, who's flying and where the booking goes, then "Securely pay",
+// which opens the Trip Summary panel; its Pay Now starts the payment.
 // Paying holds the seats with the supplier, opens Razorpay Checkout for the
 // held amount and verifies the payment; a hold that isn't paid is released.
 export const FlightPaymentPageWeb: React.FC<{
@@ -87,6 +73,7 @@ export const FlightPaymentPageWeb: React.FC<{
   const verifyPayment = useVerifyRazorpayPaymentMobile();
 
   const [expanded, setExpanded] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [payState, setPayState] = useState<PayState>('idle');
   const [error, setError] = useState('');
   const [priceChange, setPriceChange] = useState<{ from: number; to: number; resolve: (ok: boolean) => void } | null>(null);
@@ -194,6 +181,7 @@ export const FlightPaymentPageWeb: React.FC<{
       });
     } catch (err) {
       setPayState('idle');
+      setSummaryOpen(false);
       // Razorpay's own failure text ("Please use another method") reads oddly
       // here once its checkout has closed, so checkout outcomes get our wording.
       setError(
@@ -284,7 +272,7 @@ export const FlightPaymentPageWeb: React.FC<{
           </div>
           <button
             type="button"
-            onClick={handlePay}
+            onClick={() => setSummaryOpen(true)}
             disabled={busy}
             className="w-[363px] h-11 flex items-center justify-center gap-2 p-3 rounded-xl bg-[#7C1AEE] text-[15px] leading-5 font-medium text-white hover:opacity-90 disabled:opacity-60"
           >
@@ -295,6 +283,21 @@ export const FlightPaymentPageWeb: React.FC<{
           {error && <p className="max-w-[460px] text-center text-[13px] leading-4 text-[#C5001F]">{error}</p>}
         </div>
       </div>
+
+      {summaryOpen && (
+        <TripSummaryPanelWeb
+          legs={legs}
+          cabin={cabin}
+          travellers={checkout.travellers}
+          paxTypeOf={paxTypeOf}
+          addOns={checkout.addOns}
+          total={money(totalAmount)}
+          busy={busy}
+          status={busy ? PAY_STATE_TEXT[payState as Exclude<PayState, 'idle'>] : undefined}
+          onPay={handlePay}
+          onClose={() => setSummaryOpen(false)}
+        />
+      )}
 
       {priceChange && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
