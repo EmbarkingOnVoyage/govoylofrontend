@@ -1657,24 +1657,25 @@ interface FlightResultsScreenProps {
   ) => void;
 }
 
-const RULE_TONE_COLORS: Record<FareRuleSummary['tone'], string> = {
+const RULE_TONE_COLORS: Record<FareRuleSummary['tone'] | 'loading', string> = {
   included: '#007F20',
   pay: '#CE6400',
   na: '#C5001F',
+  loading: '#CCD3E0',
 };
 
 // Per-fare accent, in list order (Phone Dev fare cards; same set as the web
 // cards): the card border, and the header tint while the card is picked.
 const FARE_CARD_STYLES: { border: string; header: string[]; start: number; end: number }[] = [
-  { border: '#ADB8CD', header: ['rgba(224,224,224,0)', 'rgba(160,160,160,1)'], start: -0.48, end: 1.35 },
+  { border: '#ADB8CD', header: ['rgba(224,224,224,0)', 'rgba(160,160,160,0.7)'], start: -0.495, end: 1.347 },
   { border: '#114BFF', header: ['rgba(255,255,255,0.4)', 'rgba(17,75,255,0.4)'], start: -0.11, end: 1.02 },
   { border: '#7C1AEE', header: ['rgba(255,255,255,0.5)', 'rgba(224,162,255,0.5)', 'rgba(177,20,255,0.5)'], start: 0, end: 1.02 },
   { border: '#D4AF37', header: ['#FFFFFF', '#D4AF37'], start: 0.04, end: 1.02 },
 ];
 
-const RuleIcon: React.FC<{ tone: FareRuleSummary['tone'] }> = ({ tone }) => (
+const RuleIcon: React.FC<{ tone: FareRuleSummary['tone'] | 'loading' }> = ({ tone }) => (
   <View style={[styles.fareRuleIcon, { backgroundColor: RULE_TONE_COLORS[tone] }]}>
-    {tone === 'included' ? (
+    {tone === 'loading' ? null : tone === 'included' ? (
       <Check size={9} color="#FFFFFF" strokeWidth={3} />
     ) : tone === 'pay' ? (
       <Minus size={9} color="#FFFFFF" strokeWidth={3} />
@@ -1696,7 +1697,9 @@ const FareOptionCard: React.FC<{ offerId: string; fare: FareOption; index: numbe
   selected,
   onSelect,
 }) => {
-  const { data } = useFareRulesMobile([offerId], [fare.fareId]);
+  // Rules take several seconds (the fare is re-checked with the supplier), so
+  // the two lines say they're loading until then.
+  const { data, isLoading } = useFareRulesMobile([offerId], [fare.fareId]);
   const rules = data?.legs.find((l) => l.offerId === offerId) ?? data?.legs[0];
   const cancellation: FareRuleSummary = fareRuleSummary(rules, 'Cancellation', fare.refundable, fare.totalAmount) ?? {
     text: fare.refundable ? 'Cancellation: refundable' : 'Cancellation: non-refundable',
@@ -1707,10 +1710,11 @@ const FareOptionCard: React.FC<{ offerId: string; fare: FareOption; index: numbe
     tone: 'pay',
   };
   const hasCheckIn = /[1-9]/.test(fare.checkInBaggage ?? '');
-  const rows: FareRuleSummary[] = [
+  type Row = { text: string; tone: FareRuleSummary['tone'] | 'loading' };
+  const rows: Row[] = [
     fare.handBaggage ? { text: `Cabin bag: ${fare.handBaggage}`, tone: 'included' } : { text: 'Cabin bag: not stated', tone: 'na' },
-    cancellation,
-    dateChange,
+    isLoading ? { text: 'Loading cancellation rules…', tone: 'loading' } : cancellation,
+    isLoading ? { text: 'Loading date change rules…', tone: 'loading' } : dateChange,
     hasCheckIn ? { text: `Check-in Baggage: ${fare.checkInBaggage} / Adult`, tone: 'included' } : { text: 'No check-in baggage', tone: 'na' },
   ];
   const look = FARE_CARD_STYLES[index % FARE_CARD_STYLES.length];
@@ -1751,7 +1755,7 @@ const FareOptionCard: React.FC<{ offerId: string; fare: FareOption; index: numbe
           {rows.map((row, rowIndex) => (
             <View key={rowIndex} style={styles.fareRuleRow}>
               <RuleIcon tone={row.tone} />
-              <Text style={styles.fareRuleText}>{row.text}</Text>
+              <Text style={[styles.fareRuleText, row.tone === 'loading' && styles.fareRuleTextLoading]}>{row.text}</Text>
             </View>
           ))}
         </View>

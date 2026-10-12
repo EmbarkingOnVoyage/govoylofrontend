@@ -914,6 +914,9 @@ export const styles = StyleSheet.create({
     lineHeight: 16,
     color: '#3E4B64',
   },
+  fareRuleTextLoading: {
+    color: '#697691',
+  },
   fareCardPrice: {
     fontWeight: '700',
     color: '#182339',
