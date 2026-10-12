@@ -30,7 +30,7 @@ export const AuthModal: React.FC = () => {
 
   return (
     <div className={s.backdrop} onClick={closeModal}>
-      <div onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-[440px]" onClick={(e) => e.stopPropagation()}>
         {modalStep === "signin" ? (
           <LoginFeature variant="modal" onNavigate={handleRule} onCloseModal={closeModal} />
         ) : (

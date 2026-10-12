@@ -4,7 +4,7 @@ import type { FlightOffer, FlightOfferSegment } from '../useSearchFlightsMobile'
 import type { FlightBookingSelection, FlightCheckoutDetails } from '../flightBookingSession';
 import { useTravellerDetailMobile, useTravellersMobile, type Traveler } from '../../profile/useTravellersMobile';
 import { useCustomerProfileMobile } from '../../profile/useCustomerProfileMobile';
-import { formatPrice, formatTime24, formatTotalDuration } from '../logic/flightResults';
+import { formatPrice, formatTime24, formatTotalDuration, stopsLabel } from '../logic/flightResults';
 import {
   GSTIN_PATTERN,
   PAX_LABELS,
@@ -397,6 +397,17 @@ export const FlightReviewPageWeb: React.FC<{
     };
   });
 
+  // "Sat, 07 Nov · 1 stop · 6h 20m · Premium Economy" — the fare rules popup's meta row.
+  const fareRulesMeta = (() => {
+    const first = legs[0];
+    if (!first) return 'All charges are per passenger';
+    const dep = first.segments[0];
+    const arr = first.segments[first.segments.length - 1];
+    const date = new Date(dep.departureDateTime).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short' });
+    const cabin = selection.summary.request.cabinClass.replace(/([a-z])([A-Z])/g, '$1 $2');
+    return `${date.replace(/,/, '')} · ${stopsLabel(first.segments.length - 1).toLowerCase()} · ${formatTotalDuration(dep.departureDateTime, arr.arrivalDateTime)} · ${cabin}`.replace(/^(\w+) /, '$1, ');
+  })();
+
   const fareRuleLegs: FareRulesLeg[] = legs.map((leg, index) => ({
     offerId: leg.offerId,
     label: legLabels?.[index] ?? `Flight ${index + 1}`,
@@ -672,22 +683,24 @@ export const FlightReviewPageWeb: React.FC<{
 
       {showRules && (
         <div className="fixed inset-0 z-40 flex justify-end bg-black/40" onClick={() => setShowRules(false)}>
+          {/* Web Dev fare rules popup: left edge at x=637 (Figma draws it 813px
+              wide, 10px past the frame), 44px title bar, trip meta row. */}
           <div
-            className="w-full max-w-[813px] h-full bg-white flex flex-col"
+            className="w-full max-w-[803px] h-full bg-white flex flex-col"
             onClick={(e) => e.stopPropagation()}
             role="dialog"
             aria-label="Fare rules"
           >
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#CCD3E0]">
-              <div>
-                <h3 className="text-[20px] leading-[30px] font-extrabold text-[#182339]">Fare rules</h3>
-                <p className="text-[13px] leading-4 text-[#697691]">All charges are per passenger</p>
-              </div>
-              <button type="button" onClick={() => setShowRules(false)} aria-label="Close" className="w-9 h-9 flex items-center justify-center rounded">
-                <X size={20} />
+            <div className="h-11 shrink-0 flex items-center justify-between pl-4 pr-[15px] border-b-2 border-[#CCD3E0]">
+              <h3 className="pl-[17px] text-[15px] leading-5 font-semibold text-[#182339]">Fare rules</h3>
+              <button type="button" onClick={() => setShowRules(false)} aria-label="Close" className="w-5 h-5 flex items-center justify-center text-[#3E4B64]">
+                <X size={14} strokeWidth={1.5} />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto px-6 py-5">
+            <div className="mx-4 h-[51px] shrink-0 flex items-center pl-5 border-b-2 border-[#ECEEF3] text-[13px] leading-4 text-[#697691]">
+              {fareRulesMeta}
+            </div>
+            <div className="flex-1 overflow-y-auto px-4 pt-[15px] pb-5">
               <FareRulesPanelWeb legs={fareRuleLegs} />
             </div>
           </div>

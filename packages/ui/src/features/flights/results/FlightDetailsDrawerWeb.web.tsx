@@ -132,7 +132,8 @@ const SegmentCard: React.FC<{ segment: FlightOfferSegment; airlineName: string; 
   </div>
 );
 
-// Web Dev "FlightDetailsDrawer": a 1044px right-hand panel with "Flight
+// Web Dev "FlightDetailsDrawer": a right-hand panel whose left edge sits at
+// x=406 like the design (Figma draws it 1044px wide, 10px past the frame), so 1034px; with "Flight
 // Details | Fare Rule" tabs — the itinerary, fare categories and fare cards
 // (each with its own Book Now) — and the selected fare's rules. Several legs
 // (Onward/Return, Flight 1..N) get leg cards and a footer action instead.
@@ -184,7 +185,7 @@ export const FlightDetailsDrawerWeb: React.FC<{
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-[rgba(24,35,57,0.4)]" onClick={onClose}>
       <div
-        className="w-full max-w-[1044px] h-full bg-white flex flex-col shadow-[-4px_0px_32px_rgba(24,35,57,0.14)]"
+        className="w-full max-w-[1034px] h-full bg-white flex flex-col shadow-[-4px_0px_32px_rgba(24,35,57,0.14)]"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-label="Flight details"

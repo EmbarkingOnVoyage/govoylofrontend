@@ -1,4 +1,5 @@
 import React from 'react';
+import { Check } from 'lucide-react';
 import { MenuBar } from './MenuBar';
 import { Sidebar, TabItem } from './Sidebar';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
@@ -23,6 +24,33 @@ function getInitials(profile?: CustomerProfile): string {
   return initials || '?';
 }
 
+// The profile's completion as an orange 3px arc around the avatar, from 12 o'clock.
+const CompletionRing: React.FC<{ percent: number }> = ({ percent }) => {
+  const r = 58.5;
+  const circumference = 2 * Math.PI * r;
+  const shown = Math.max(0, Math.min(100, percent));
+  return (
+    <svg className="absolute inset-0 -rotate-90" width="120" height="120" viewBox="0 0 120 120" aria-hidden="true">
+      <circle
+        cx="60"
+        cy="60"
+        r={r}
+        fill="none"
+        stroke="#FF8011"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeDasharray={`${(circumference * shown) / 100} ${circumference}`}
+      />
+    </svg>
+  );
+};
+
+const VerifiedMark: React.FC = () => (
+  <span className={s.verifiedIcon}>
+    <Check size={11} strokeWidth={3} />
+  </span>
+);
+
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   children,
   tabs = [],
@@ -40,49 +68,57 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({
 
       {showSidebar ? (
         <>
-          {/* Full Dashboard/Profile Mode Layout Grid */}
-          <div className={s.heroBanner}>
-            <div
-              className={s.heroBackground}
-              style={{ backgroundImage: `url(${profileBannerBg})`, opacity: 0.1 }}
-            />
-            <div className={s.heroInner}>
-              <div className={s.profileCard}>
-                <div className={s.avatarWrapper}>
-                  {profile?.profileImageUrl ? (
-                    <img
-                      src={`${AUTH_BASE_URL}${profile.profileImageUrl}`}
-                      alt="Avatar Profile"
-                      className={s.avatarImg}
-                    />
-                  ) : (
-                    <div className={s.avatarPlaceholder}>{getInitials(profile)}</div>
-                  )}
-                  <div className={s.progressBadge}>{profile?.profileCompletionPercentage ?? 0}%</div>
+          {/* Web Dev profile frames: inset banner (avatar with the completion
+              ring, email and phone), then the menu + content card. */}
+          <div className={s.pageInner}>
+            <div className={s.heroBanner}>
+              <div
+                className={s.heroBackground}
+                style={{ backgroundImage: `url(${profileBannerBg})`, opacity: 0.1 }}
+              />
+              <div className={s.heroInner}>
+                <div className={s.profileCard}>
+                  <div className={s.avatarWrapper}>
+                    {profile?.profileImageUrl ? (
+                      <img
+                        src={`${AUTH_BASE_URL}${profile.profileImageUrl}`}
+                        alt="Avatar Profile"
+                        className={s.avatarImg}
+                      />
+                    ) : (
+                      <div className={s.avatarPlaceholder}>{getInitials(profile)}</div>
+                    )}
+                    <CompletionRing percent={profile?.profileCompletionPercentage ?? 0} />
+                    <div className={s.progressBadge}>{profile?.profileCompletionPercentage ?? 0}%</div>
+                  </div>
                 </div>
                 <div className={s.profileMeta}>
                   <div className={s.profileEmail}>
                     <span>{profile?.email || '—'}</span>
-                    {profile?.isEmailVerified && <span className="text-green-400">✔</span>}
+                    {profile?.isEmailVerified && <VerifiedMark />}
                   </div>
-                  <div className={s.profilePhone}>
-                    <span>{profile?.phone || '—'}</span>
-                    {profile?.isPhoneVerified && <span className="text-green-400">✔</span>}
-                  </div>
+                  {profile?.phone && (
+                    <div className={s.profilePhone}>
+                      <span>
+                        +91 {profile.phone}
+                      </span>
+                      {profile.isPhoneVerified && <VerifiedMark />}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
 
-          <main className={s.mainLayout}>
-            <Sidebar tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
-            <section className={s.contentArea}>
-              {children}
-            </section>
-          </main>
+            <main className={s.mainLayout}>
+              <Sidebar tabs={tabs} activeTab={activeTab} setActiveTab={setActiveTab} />
+              <section className={s.contentArea}>
+                {children}
+              </section>
+            </main>
+          </div>
         </>
       ) : variant === 'wide' ? (
-        <main className="min-h-[calc(100vh-64px)] bg-[#F8F9FB]">{children}</main>
+        <main className="min-h-[calc(100vh-64px)] bg-[#F8F9FB] font-['Inter',sans-serif]">{children}</main>
       ) : (
         /* Minimalist Centered Workspace Mode Layout (Used for Login & OTP screens) */
         <main className="flex items-center justify-center min-h-[calc(100vh-73px)] p-6 bg-[#F4F4F6]">

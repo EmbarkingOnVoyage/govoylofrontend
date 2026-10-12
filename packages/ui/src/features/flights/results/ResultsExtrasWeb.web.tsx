@@ -29,16 +29,19 @@ export const OffersStripWeb: React.FC = () => {
   const scroll = (by: number) => scroller.current?.scrollBy({ left: by, behavior: 'smooth' });
   return (
     <div className="bg-[#ECEEF3] border-b border-[#CCD3E0]">
-      <div className="max-w-[1440px] mx-auto h-16 px-5 flex items-center gap-2.5">
+      <div className="max-w-[1440px] mx-auto h-[63px] px-5 flex items-center gap-2.5">
         <RoundArrow dir="left" onClick={() => scroll(-360)} />
         <div ref={scroller} className="flex-1 min-w-0 flex items-center gap-2.5 overflow-x-auto [scrollbar-width:none]">
           {OFFERS.map((offer, index) => (
             <div
               key={index}
-              className="shrink-0 h-[43px] flex items-center gap-2 px-3.5 py-[7px] bg-white border border-[#CCD3E0] rounded-lg"
+              className="shrink-0 h-[45px] flex items-center gap-2 px-3 py-[7px] bg-white border border-[#CCD3E0] rounded-lg"
             >
               <span className="text-[18px] leading-[27px]">{offer.emoji}</span>
-              <span className="text-[12.5px] leading-[19px] font-bold text-[#182339] whitespace-nowrap">{offer.text}</span>
+              {/* The deal is bold, the bank/card part regular (Desktop-15). */}
+              <span className="text-[12.5px] leading-[19px] text-[#182339] whitespace-nowrap">
+                <span className="font-bold">{offer.text.split(' with ')[0]}</span> with {offer.text.split(' with ').slice(1).join(' with ')}
+              </span>
             </div>
           ))}
         </div>

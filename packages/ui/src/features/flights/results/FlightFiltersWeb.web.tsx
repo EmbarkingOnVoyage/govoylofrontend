@@ -278,7 +278,7 @@ export const FlightFiltersWeb: React.FC<{
                 type="button"
                 disabled={cheapest === null}
                 onClick={() => set({ stops: toggle(filters.stops, bucket.id) })}
-                className={`flex-1 h-[52px] flex flex-col items-center justify-center gap-0.5 px-1 py-2 rounded-lg border disabled:opacity-50 ${
+                className={`flex-1 h-[54px] flex flex-col items-center justify-center gap-0.5 px-1 py-2 rounded-lg border disabled:opacity-50 ${
                   selected ? 'bg-[#F3E8FF] border-[#7C1AEE]' : 'bg-white border-[#CCD3E0]'
                 }`}
               >

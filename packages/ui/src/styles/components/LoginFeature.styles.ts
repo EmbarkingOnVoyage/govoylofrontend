@@ -203,32 +203,30 @@ export const mobile: ILoginMobileStyles = {
 // ==========================================
 
 export const web: ILoginWebStyles = {
-  backdrop: "fixed inset-0 z-50 flex items-center justify-center bg-gray-500/50 backdrop-blur-sm p-4",
-  container: "relative w-full max-w-[430px] bg-white rounded-3xl p-8 shadow-2xl flex flex-col items-center border border-gray-100",
-  closeButton: "absolute top-5 right-6 text-gray-400 hover:text-gray-600 transition-colors text-2xl font-light outline-none cursor-pointer",
-  logoWrapper: "w-11 h-11 bg-[#7F1DFF] text-white rounded-xl flex items-center justify-center mb-4 shadow-md",
-  logoText: "text-xl text-white",
-  title: "text-2xl font-bold text-gray-900 mb-6 tracking-tight text-center subpixel-antialiased",
-  formWrapper: "w-full",
-  inputWrapper: "w-full mb-4",
+  // Web Dev "Login web": 440px card, 16px radius, 32px padding, Inter.
+  backdrop: "fixed inset-0 z-50 flex items-center justify-center bg-[rgba(24,35,57,0.4)] p-4 font-['Inter',sans-serif]",
+  container: "relative w-full max-w-[440px] bg-white rounded-2xl px-8 pt-8 pb-[34px] flex flex-col items-center shadow-[0px_60px_40px_rgba(79,94,113,0.05),0px_40px_30px_rgba(79,94,113,0.08),0px_24px_24px_rgba(79,94,113,0.14),0px_5px_16px_rgba(79,94,113,0.15),0px_2px_6px_-1px_rgba(79,94,113,0.14),0px_-1px_2px_-1px_rgba(79,94,113,0.15)]",
+  closeButton: "absolute top-4 right-4 w-5 h-5 flex items-center justify-center text-black cursor-pointer outline-none",
+  logoWrapper: "w-8 h-8 rounded-full overflow-hidden shrink-0",
+  logoText: "h-8 w-auto max-w-none",
+  title: "mt-[6px] text-[24px] leading-[30px] font-bold text-[#182339] text-center",
+  formWrapper: "w-full mt-[38px]",
+  inputWrapper: "w-full",
   inputField: (hasError: boolean): string => `
-    w-full px-4 py-3.5 rounded-xl border text-base outline-none transition-all duration-200 text-gray-900 placeholder-gray-400
-    ${hasError
-      ? "border-red-500 bg-red-50/30 focus:ring-1 focus:ring-red-500"
-      : "border-gray-200 bg-gray-50/50 focus:border-purple-600 focus:bg-white"
-    }
+    w-full h-11 pl-[13px] pr-3 rounded-xl border bg-white text-[16px] leading-5 outline-none text-[#182339] placeholder:text-[#99A6C0]
+    ${hasError ? "border-[#C5001F]" : "border-[#ADB8CD] focus:border-[#7C1AEE]"}
   `.replace(/\s+/g, ' ').trim(),
-  inputFieldError: "border-red-500 bg-red-50/30",
-  inputErrorMessage: "text-red-500 text-xs mt-1.5 ml-1 font-medium text-left block w-full",
-  primaryButton: "w-full h-[54px] bg-[#7F1DFF] hover:bg-[#6A16D9] text-white font-bold rounded-xl transition-all duration-200 shadow-lg shadow-purple-100 active:scale-[0.99] flex items-center justify-center text-base cursor-pointer mt-4",
-  disabledButton: "bg-[#CCCCCC] opacity-60 cursor-not-allowed active:scale-100 shadow-none",
-  primaryButtonText: "text-white text-base font-bold",
-  dividerLineWrapper: "w-full flex items-center my-6",
-  dividerLine: "flex-1 h-[1px] bg-gray-100",
-  dividerText: "px-4 text-xs text-gray-400 font-normal tracking-wide uppercase",
-  socialRow: "w-full flex justify-between mb-8",
-  socialButton: "flex-1 flex items-center justify-center h-12 bg-[#F0F2F5] hover:bg-[#E4E6EB] text-gray-700 rounded-xl transition-all duration-200 border border-gray-200 mx-1 active:scale-[0.97] cursor-pointer",
-  socialIcon: "w-6 h-6 object-contain",
-  footerText: "text-xs text-gray-400 text-center leading-relaxed max-w-[290px] font-normal",
-  footerLink: "underline cursor-pointer hover:text-purple-600 font-medium transition-colors"
+  inputFieldError: "border-[#C5001F]",
+  inputErrorMessage: "text-[#C5001F] text-[12px] leading-4 mt-1.5 text-left block w-full",
+  primaryButton: "w-full h-11 mt-3 bg-[#7C1AEE] hover:bg-[#6A16D9] rounded-xl flex items-center justify-center cursor-pointer",
+  disabledButton: "opacity-60 cursor-not-allowed",
+  primaryButtonText: "text-white text-[15px] leading-5 font-medium",
+  dividerLineWrapper: "w-full h-4 mt-6 flex items-center gap-[5px]",
+  dividerLine: "flex-1 h-px bg-[#D7DCE7]",
+  dividerText: "text-[13px] leading-4 font-medium text-[#697691]",
+  socialRow: "w-full mt-6 flex gap-3",
+  socialButton: "flex-1 h-11 flex items-center justify-center rounded-lg bg-[#CCD3E0] hover:bg-[#BFC7D6] cursor-pointer",
+  socialIcon: "w-5 h-5 object-contain",
+  footerText: "mt-[37px] max-w-[300px] text-[13px] leading-4 text-[#4C5973] text-center",
+  footerLink: "font-medium text-[#182339] cursor-pointer"
 };
