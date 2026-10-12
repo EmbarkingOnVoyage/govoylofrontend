@@ -4,16 +4,19 @@ import { mobileAuthFetch } from "../authentication/mobileAuthFetch";
 
 export interface ReleaseHoldRequest {
   bookingRefNo: string;
-  airlinePnr: string;
+  // Null for a hold with no airline PNR (Flyshop direct temp booking, a fare
+  // the supplier can't hold): the server just marks the booking released.
+  airlinePnr: string | null;
 }
 
 export interface ReleaseHoldResponse {
   success: boolean;
 }
 
-// Releases a Flyshop Block_Ticket hold via Air_ReleasePNR — used when a hold was
-// placed but the customer backs out or payment fails/is cancelled before the
-// booking completes, so the seat isn't held against them for no reason.
+// Gives up a hold when the customer backs out or payment fails/is cancelled
+// before the booking completes: the server releases it with the supplier (when
+// there's a PNR) and marks the booking Released, so the seat isn't held against
+// them and My Trips doesn't keep showing it as on hold.
 export function useReleaseHoldMobile() {
   return useMutation({
     mutationFn: async (request: ReleaseHoldRequest): Promise<ReleaseHoldResponse> => {

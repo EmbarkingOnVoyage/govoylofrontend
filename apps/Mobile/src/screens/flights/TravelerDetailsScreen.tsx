@@ -307,15 +307,16 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
 
   // Best-effort: if a hold was placed but the flow doesn't end in a completed
   // booking (checkout cancelled, payment failed/unverified, a later step
-  // throws), release it via Air_ReleasePNR so the seat isn't held against the
-  // customer for nothing. A failed release is swallowed — it must never mask
+  // throws), release it so the seat isn't held against the customer for
+  // nothing and My Trips shows it as released (a hold with no airline PNR is
+  // just marked released). A failed release is swallowed — it must never mask
   // the actual payment error shown to the user.
   const releaseHeldBookingSilently = async (held: CreateBookingResponse | null) => {
-    if (!held?.bookingRefNo || !held.airlinePnr) {
+    if (!held?.bookingRefNo) {
       return;
     }
     try {
-      await releaseHold.mutateAsync({ bookingRefNo: held.bookingRefNo, airlinePnr: held.airlinePnr });
+      await releaseHold.mutateAsync({ bookingRefNo: held.bookingRefNo, airlinePnr: held.airlinePnr || null });
     } catch {
       // Swallowed deliberately — see comment above.
     }

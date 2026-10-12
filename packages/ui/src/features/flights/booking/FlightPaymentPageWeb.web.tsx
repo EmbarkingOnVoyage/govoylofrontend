@@ -103,9 +103,9 @@ export const FlightPaymentPageWeb: React.FC<{
   }));
 
   const releaseSilently = async (held: CreateBookingResponse | null) => {
-    if (!held?.bookingRefNo || !held.airlinePnr) return;
+    if (!held?.bookingRefNo) return;
     try {
-      await releaseHold.mutateAsync({ bookingRefNo: held.bookingRefNo, airlinePnr: held.airlinePnr });
+      await releaseHold.mutateAsync({ bookingRefNo: held.bookingRefNo, airlinePnr: held.airlinePnr || null });
     } catch {
       // A failed release must never hide the payment error itself.
     }
