@@ -848,12 +848,39 @@ export const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: '#7C1AEE',
   },
-  fareCardPrice: {
+  fareCardTitle: {
     flex: 1,
+  },
+  fareCardName: {
+    fontSize: 13,
+    lineHeight: 16,
+    fontWeight: '600',
+    color: '#3E4B64',
+  },
+  fareCardPrice: {
     fontSize: 15,
     lineHeight: 20,
     fontWeight: '700',
     color: '#182339',
+  },
+  fareCardRule: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 6,
+    marginLeft: 30,
+  },
+  fareCardRuleDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    borderWidth: 2.5,
+  },
+  fareCardRuleText: {
+    flex: 1,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#3E4B64',
   },
   fareCardRefundable: {
     fontSize: 12,

@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Slider from '@react-native-community/slider';
 import {
   useFareCalendarMobile,
+  useFareRulesMobile,
   useSearchFlightsMobile,
   useAirportsByCodesMobile,
   type FlightOffer,
@@ -53,6 +54,7 @@ import {
   splitSegmentsByLegs,
   airlinesForSegments,
   selectableFares,
+  fareDisplayName,
   cheapestFareSelection,
   resolveSelectedFare,
   initialFilters,
@@ -63,6 +65,7 @@ import {
   type CombinedFilterState,
   type FareSelection,
 } from '@workspace/ui/src/features/flights/logic/flightResults';
+import { fareRuleSummary, type FareRuleSummary } from '@workspace/ui/src/features/flights/logic/fareRules';
 import { FlightSearchFormScreen, type FlightSearchFormInitialValues } from './FlightSearchFormScreen';
 import { findAirportByCode, primeAirportCache } from '../../data/airports';
 import { styles } from './FlightResultsScreen.styles';
@@ -1394,32 +1397,15 @@ const FlightDetailsModal: React.FC<{
               })}
             </View>
 
-            {sortedFares.map((fare) => {
-              const isSelected = fare.fareId === selectedFare?.fareId;
-              return (
-                <TouchableOpacity
-                  key={fare.fareId}
-                  style={[styles.fareCard, isSelected && styles.fareCardSelected]}
-                  onPress={() => setActiveSelection((prev) => ({ ...prev, fareId: fare.fareId }))}
-                >
-                  <View style={styles.fareCardTopRow}>
-                    <View style={[styles.radioOuter, isSelected && styles.radioOuterSelected]}>
-                      {isSelected && <View style={styles.radioDot} />}
-                    </View>
-                    <Text style={styles.fareCardPrice}>{formatPrice(fare.totalAmount, fare.currencyCode)}/adult</Text>
-                    <Text style={fare.refundable ? styles.fareCardRefundable : styles.fareCardNonRefundable}>
-                      {fare.refundable ? 'Refundable' : 'Non-refundable'}
-                    </Text>
-                  </View>
-                  {(fare.checkInBaggage || fare.handBaggage) && (
-                    <Text style={styles.fareCardBaggage}>
-                      {fare.checkInBaggage ? `${fare.checkInBaggage} check-in` : 'No check-in baggage'}
-                      {fare.handBaggage ? ` · ${fare.handBaggage} hand baggage` : ''}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+            {sortedFares.map((fare) => (
+              <FareOptionCard
+                key={fare.fareId}
+                offerId={activeOffer.offerId}
+                fare={fare}
+                selected={fare.fareId === selectedFare?.fareId}
+                onSelect={() => setActiveSelection((prev) => ({ ...prev, fareId: fare.fareId }))}
+              />
+            ))}
           </ScrollView>
 
           <View style={styles.detailsFooter}>
@@ -1642,6 +1628,59 @@ interface FlightResultsScreenProps {
     tripType: TripType | undefined
   ) => void;
 }
+
+const RULE_TONE_COLORS: Record<FareRuleSummary['tone'], string> = {
+  included: '#007F20',
+  pay: '#CE6400',
+  na: '#C5001F',
+};
+
+// One fare in the flight details sheet: its name and price, refundability,
+// baggage, then the real cancellation / date change rules (the same summary
+// as the web fare cards). Until the rules load — or when there are none —
+// the refundable flag stands in for cancellation.
+const FareOptionCard: React.FC<{ offerId: string; fare: FareOption; selected: boolean; onSelect: () => void }> = ({
+  offerId,
+  fare,
+  selected,
+  onSelect,
+}) => {
+  const { data } = useFareRulesMobile([offerId], [fare.fareId]);
+  const rules = data?.legs.find((l) => l.offerId === offerId) ?? data?.legs[0];
+  const cancellation = fareRuleSummary(rules, 'Cancellation', fare.refundable, fare.totalAmount);
+  const dateChange = fareRuleSummary(rules, 'DateChange', fare.refundable, fare.totalAmount);
+  const refundable = cancellation ? cancellation.tone !== 'na' : fare.refundable;
+  const ruleLines = [cancellation, dateChange].filter((line): line is FareRuleSummary => !!line);
+
+  return (
+    <TouchableOpacity style={[styles.fareCard, selected && styles.fareCardSelected]} onPress={onSelect}>
+      <View style={styles.fareCardTopRow}>
+        <View style={[styles.radioOuter, selected && styles.radioOuterSelected]}>
+          {selected && <View style={styles.radioDot} />}
+        </View>
+        <View style={styles.fareCardTitle}>
+          <Text style={styles.fareCardName}>{fareDisplayName(fare)}</Text>
+          <Text style={styles.fareCardPrice}>{formatPrice(fare.totalAmount, fare.currencyCode)}/adult</Text>
+        </View>
+        <Text style={refundable ? styles.fareCardRefundable : styles.fareCardNonRefundable}>
+          {refundable ? 'Refundable' : 'Non-refundable'}
+        </Text>
+      </View>
+      {(fare.checkInBaggage || fare.handBaggage) && (
+        <Text style={styles.fareCardBaggage}>
+          {fare.checkInBaggage ? `${fare.checkInBaggage} check-in` : 'No check-in baggage'}
+          {fare.handBaggage ? ` · ${fare.handBaggage} hand baggage` : ''}
+        </Text>
+      )}
+      {ruleLines.map((line) => (
+        <View key={line.text} style={styles.fareCardRule}>
+          <View style={[styles.fareCardRuleDot, { borderColor: RULE_TONE_COLORS[line.tone] }]} />
+          <Text style={styles.fareCardRuleText}>{line.text}</Text>
+        </View>
+      ))}
+    </TouchableOpacity>
+  );
+};
 
 export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   offers,
