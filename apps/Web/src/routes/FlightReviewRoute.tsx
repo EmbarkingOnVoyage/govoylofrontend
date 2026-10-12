@@ -6,6 +6,7 @@ import {
   FlightReviewPageWeb,
   clearBookingSession,
   encodeFlightSearch,
+  useAuth,
   useBookingSession,
   type BookingConfirmation,
   type FlightBookingSelection,
@@ -58,12 +59,14 @@ export const FlightPaymentRoute: React.FC = () => {
 export const BookingConfirmedRoute: React.FC = () => {
   const navigate = useNavigate();
   const confirmation = useLocation().state as BookingConfirmation | null;
+  const { isGuest, isLoggedIn } = useAuth();
 
   if (!confirmation?.bookingRefNo) return <Navigate to="/my-trips" replace />;
 
   return (
     <BookingConfirmedWeb
       confirmation={confirmation}
+      isGuest={isGuest && !isLoggedIn}
       onViewBooking={() => navigate("/my-trips")}
       onBackToHome={() => navigate("/")}
     />

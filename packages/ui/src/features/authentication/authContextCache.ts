@@ -55,8 +55,40 @@ function loadSync(): AuthSession | null {
 
 let sessionCache: AuthSession | null = loadSync();
 
-// A guest checkout's token (see setGuestSession): memory-only, never refreshed.
+// A guest checkout's token (see setGuestSession): never refreshed. On the web
+// it's kept in sessionStorage so a refresh mid-checkout keeps the guest (and
+// the travellers they added); it ends with the tab. React Native has no
+// sessionStorage, so there it's memory-only.
+const GUEST_STORAGE_KEY = "govoylo_guest_session";
+
+function guestStore(): Storage | null {
+  try {
+    return typeof sessionStorage === "undefined" ? null : sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+function forgetGuest() {
+  try {
+    guestStore()?.removeItem(GUEST_STORAGE_KEY);
+  } catch {
+    // Storage unavailable — nothing to clean up.
+  }
+}
+
 let guestSession = false;
+if (!sessionCache) {
+  try {
+    const guestToken = guestStore()?.getItem(GUEST_STORAGE_KEY);
+    if (guestToken) {
+      sessionCache = { accessToken: guestToken, refreshToken: "" };
+      guestSession = true;
+    }
+  } catch {
+    // Storage unavailable — the guest gives their contact again.
+  }
+}
 
 // Told when the session ends (sign out, or a refresh token the server rejects),
 // so the app can leave the signed-in screens.
@@ -107,6 +139,7 @@ export const authContextCache = {
   },
   setSession(accessToken: string, refreshToken: string) {
     guestSession = false;
+    forgetGuest();
     sessionCache = { accessToken, refreshToken };
     const session = sessionCache;
     persist(() => storage.save(session));
@@ -117,6 +150,11 @@ export const authContextCache = {
   setGuestSession(accessToken: string) {
     guestSession = true;
     sessionCache = { accessToken, refreshToken: "" };
+    try {
+      guestStore()?.setItem(GUEST_STORAGE_KEY, accessToken);
+    } catch {
+      // Storage unavailable — the guest session lasts until a refresh.
+    }
   },
   isGuestSession(): boolean {
     return guestSession && sessionCache !== null;
@@ -130,10 +168,15 @@ export const authContextCache = {
   isLoggedIn(): boolean {
     return sessionCache !== null;
   },
+  // Signed in with a real account (not a guest checkout).
+  hasAccount(): boolean {
+    return sessionCache !== null && !guestSession;
+  },
   clearSession() {
     const hadSession = sessionCache !== null;
     sessionCache = null;
     guestSession = false;
+    forgetGuest();
     persist(() => storage.clear());
     if (hadSession) {
       sessionClearedListeners.forEach((listener) => listener());
