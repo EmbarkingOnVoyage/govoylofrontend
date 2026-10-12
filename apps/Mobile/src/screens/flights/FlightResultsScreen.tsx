@@ -1666,11 +1666,16 @@ const RULE_TONE_COLORS: Record<FareRuleSummary['tone'] | 'loading', string> = {
 
 // Per-fare accent, in list order (Phone Dev fare cards; same set as the web
 // cards): the card border, and the header tint while the card is picked.
-const FARE_CARD_STYLES: { border: string; header: string[]; start: number; end: number }[] = [
-  { border: '#ADB8CD', header: ['rgba(224,224,224,0)', 'rgba(160,160,160,0.7)'], start: -0.495, end: 1.347 },
-  { border: '#114BFF', header: ['rgba(255,255,255,0.4)', 'rgba(17,75,255,0.4)'], start: -0.11, end: 1.02 },
-  { border: '#7C1AEE', header: ['rgba(255,255,255,0.5)', 'rgba(224,162,255,0.5)', 'rgba(177,20,255,0.5)'], start: 0, end: 1.02 },
-  { border: '#D4AF37', header: ['#FFFFFF', '#D4AF37'], start: 0.04, end: 1.02 },
+type GradientPoint = { x: number; y: number };
+// Header tints as opaque stops, pre-blended over the white card: Android
+// interpolates semi-transparent stops premultiplied (a transparent stop acts
+// like black), which drew Figma's 70%-grey header ~10 levels too dark.
+const FARE_CARD_STYLES: { border: string; header: string[]; start: GradientPoint; end: GradientPoint }[] = [
+  // Figma's own diagonal gradient on the 327x52 header.
+  { border: '#ADB8CD', header: ['#FFFFFF', '#FAFAFA', '#F3F3F3', '#E9E9E9', '#DDDDDD', '#CECECE', '#BCBCBC'], start: { x: -0.481, y: 1.923 }, end: { x: 1.345, y: -0.419 } },
+  { border: '#114BFF', header: ['#FFFFFF', '#EFF3FF', '#DFE7FF', '#CFDBFF', '#C0CFFF', '#B0C3FF', '#A0B7FF'], start: { x: -0.11, y: 0.5 }, end: { x: 1.02, y: 0.5 } },
+  { border: '#7C1AEE', header: ['#FFFFFF', '#FAF0FF', '#F5E0FF', '#F0D0FF', '#E8B9FF', '#E0A1FF', '#D88AFF'], start: { x: 0, y: 0.5 }, end: { x: 1.02, y: 0.5 } },
+  { border: '#D4AF37', header: ['#FFFFFF', '#F8F2DE', '#F1E4BC', '#EAD79B', '#E2CA7A', '#DBBC58', '#D4AF37'], start: { x: 0.04, y: 0.5 }, end: { x: 1.02, y: 0.5 } },
 ];
 
 const RuleIcon: React.FC<{ tone: FareRuleSummary['tone'] | 'loading' }> = ({ tone }) => (
@@ -1725,8 +1730,8 @@ const FareOptionCard: React.FC<{ offerId: string; fare: FareOption; index: numbe
         {selected && (
           <LinearGradient
             colors={look.header as [string, string, ...string[]]}
-            start={{ x: look.start, y: 0.5 }}
-            end={{ x: look.end, y: 0.5 }}
+            start={look.start}
+            end={look.end}
             style={StyleSheet.absoluteFill}
           />
         )}
