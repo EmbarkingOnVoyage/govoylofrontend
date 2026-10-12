@@ -163,13 +163,58 @@ export function formatStripDate(date: Date): string {
 export const STRIP_DAYS_BEFORE = 3;
 export const STRIP_DAYS_AFTER = 3;
 
+// Flyshop sends a segment's duration as "HH:MM", Tripjack as plain minutes
+// ("120") — reading "120" as hours made every Tripjack flight 60x longer.
 export function parseDurationMinutes(duration: string): number {
-  const [hours, minutes] = duration.split(':').map(Number);
+  const text = (duration ?? '').trim();
+  if (!text.includes(':')) {
+    const minutes = Number(text);
+    return Number.isFinite(minutes) ? minutes : 0;
+  }
+  const [hours, minutes] = text.split(':').map(Number);
   return (hours || 0) * 60 + (minutes || 0);
 }
 
+// Door-to-door journey time: every flight plus every layover. Times are
+// airport-local with no offset, so first departure to last arrival would be
+// wrong across time zones — but a layover's arrival and next departure are at
+// the same airport, so those differences are exact.
 export function getTotalDurationMinutes(offer: FlightOffer): number {
-  return offer.segments.reduce((sum, segment) => sum + parseDurationMinutes(segment.duration), 0);
+  return offer.segments.reduce((sum, segment, index) => {
+    const next = offer.segments[index + 1];
+    const layover = next
+      ? (new Date(next.departureDateTime).getTime() - new Date(segment.arrivalDateTime).getTime()) / 60000
+      : 0;
+    return sum + parseDurationMinutes(segment.duration) + (Number.isFinite(layover) ? Math.max(0, layover) : 0);
+  }, 0);
+}
+
+// "Best" counts each stop as this much extra journey time: a connection costs
+// more than its layover (another boarding, a missed-connection risk).
+export const STOP_PENALTY_MINUTES = 60;
+
+function bestMinutes(offer: FlightOffer): number {
+  return getTotalDurationMinutes(offer) + STOP_PENALTY_MINUTES * Math.max(0, offer.segments.length - 1);
+}
+
+// "Best" = 50% price + 50% journey time (door-to-door plus the stop penalty),
+// each normalized 0-1 across the list; lower is better. Returns the items
+// ordered best first.
+function rankByBestScore<T>(items: T[], price: (item: T) => number, minutes: (item: T) => number): T[] {
+  const prices = items.map(price);
+  const times = items.map(minutes);
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+  const minTime = Math.min(...times);
+  const maxTime = Math.max(...times);
+  const norm = (value: number, min: number, max: number) => (max === min ? 0 : (value - min) / (max - min));
+  return items
+    .map((item, index) => ({
+      item,
+      score: norm(prices[index], minPrice, maxPrice) * 0.5 + norm(times[index], minTime, maxTime) * 0.5,
+    }))
+    .sort((a, b) => a.score - b.score)
+    .map((scored) => scored.item);
 }
 
 // One entry per stop (segments.length - 1) — the city of every intermediate
@@ -186,9 +231,9 @@ export interface FeaturedFlights {
   rest: FlightOffer[];
 }
 
-// "Best" balances price and duration (50/50, each normalized 0-1 across the result
-// set) rather than picking a single metric — it's meant to read as a sensible
-// default pick, distinct from the pure cheapest/fastest extremes shown alongside it.
+// "Best" balances price and journey time (see rankByBestScore) rather than
+// picking a single metric — it's meant to read as a sensible default pick,
+// distinct from the pure cheapest/fastest extremes shown alongside it.
 export function pickFeaturedFlights(offers: FlightOffer[]): FeaturedFlights {
   if (offers.length === 0) {
     return { best: null, fastest: null, cheapest: null, rest: [] };
@@ -199,24 +244,10 @@ export function pickFeaturedFlights(offers: FlightOffer[]): FeaturedFlights {
     getTotalDurationMinutes(b) < getTotalDurationMinutes(a) ? b : a
   );
 
-  const prices = offers.map((o) => o.totalAmount);
-  const durations = offers.map(getTotalDurationMinutes);
-  const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
-  const minDuration = Math.min(...durations);
-  const maxDuration = Math.max(...durations);
-
-  const scored = offers
-    .map((offer) => {
-      const priceScore = maxPrice === minPrice ? 0 : (offer.totalAmount - minPrice) / (maxPrice - minPrice);
-      const durationScore =
-        maxDuration === minDuration ? 0 : (getTotalDurationMinutes(offer) - minDuration) / (maxDuration - minDuration);
-      return { offer, score: priceScore * 0.5 + durationScore * 0.5 };
-    })
-    .sort((a, b) => a.score - b.score);
+  const ranked = rankByBestScore(offers, (o) => o.totalAmount, bestMinutes);
 
   const usedIds = new Set([cheapest.offerId, fastest.offerId]);
-  const best = scored.find((s) => !usedIds.has(s.offer.offerId))?.offer ?? scored[0].offer;
+  const best = ranked.find((o) => !usedIds.has(o.offerId)) ?? ranked[0];
   usedIds.add(best.offerId);
 
   const rest = offers.filter((o) => !usedIds.has(o.offerId));
@@ -319,8 +350,8 @@ export interface FeaturedCombined {
   rest: CombinedRoundTripOffer[];
 }
 
-// Same 50/50 price+duration scoring as pickFeaturedFlights, applied to
-// combined pairs instead of single offers.
+// Same "Best" scoring as pickFeaturedFlights, applied to combined pairs
+// (both directions' journey time and stops) instead of single offers.
 export function pickFeaturedCombined(pairs: CombinedRoundTripOffer[]): FeaturedCombined {
   if (pairs.length === 0) {
     return { best: null, fastest: null, cheapest: null, rest: [] };
@@ -331,26 +362,14 @@ export function pickFeaturedCombined(pairs: CombinedRoundTripOffer[]): FeaturedC
     getCombinedDurationMinutes(b) < getCombinedDurationMinutes(a) ? b : a
   );
 
-  const prices = pairs.map((p) => p.totalAmount);
-  const durations = pairs.map(getCombinedDurationMinutes);
-  const minPrice = Math.min(...prices);
-  const maxPrice = Math.max(...prices);
-  const minDuration = Math.min(...durations);
-  const maxDuration = Math.max(...durations);
-
-  const scored = pairs
-    .map((pair) => {
-      const priceScore = maxPrice === minPrice ? 0 : (pair.totalAmount - minPrice) / (maxPrice - minPrice);
-      const durationScore =
-        maxDuration === minDuration
-          ? 0
-          : (getCombinedDurationMinutes(pair) - minDuration) / (maxDuration - minDuration);
-      return { pair, score: priceScore * 0.5 + durationScore * 0.5 };
-    })
-    .sort((a, b) => a.score - b.score);
+  const ranked = rankByBestScore(
+    pairs,
+    (p) => p.totalAmount,
+    (p) => bestMinutes(p.onward) + (p.returnOffer ? bestMinutes(p.returnOffer) : 0)
+  );
 
   const usedIds = new Set([cheapest.id, fastest.id]);
-  const best = scored.find((s) => !usedIds.has(s.pair.id))?.pair ?? scored[0].pair;
+  const best = ranked.find((p) => !usedIds.has(p.id)) ?? ranked[0];
   usedIds.add(best.id);
 
   const rest = pairs.filter((p) => !usedIds.has(p.id)).sort((a, b) => a.totalAmount - b.totalAmount);
@@ -377,16 +396,6 @@ export const SORT_OPTIONS: { id: SortOptionId; title: string; description: strin
   { id: 'arrivalTime', title: 'Arrival time', description: 'Earliest first' },
 ];
 
-// Same 50/50 price+duration score used to pick the "Best" featured card above
-// — "Best" in the sort modal orders the whole list by that same score instead
-// of just picking the single top one.
-function bestScore(offer: FlightOffer, minPrice: number, maxPrice: number, minDuration: number, maxDuration: number) {
-  const priceScore = maxPrice === minPrice ? 0 : (offer.totalAmount - minPrice) / (maxPrice - minPrice);
-  const durationScore =
-    maxDuration === minDuration ? 0 : (getTotalDurationMinutes(offer) - minDuration) / (maxDuration - minDuration);
-  return priceScore * 0.5 + durationScore * 0.5;
-}
-
 export function sortOffers(offers: FlightOffer[], sortId: SortOptionId | null, passengerCount: number): FlightOffer[] {
   if (!sortId || offers.length === 0) return offers;
   const sorted = [...offers];
@@ -400,19 +409,9 @@ export function sortOffers(offers: FlightOffer[], sortId: SortOptionId | null, p
       const count = passengerCount > 0 ? passengerCount : 1;
       return sorted.sort((a, b) => a.totalAmount / count - b.totalAmount / count);
     }
-    case 'best': {
-      const prices = offers.map((o) => o.totalAmount);
-      const durations = offers.map(getTotalDurationMinutes);
-      const minPrice = Math.min(...prices);
-      const maxPrice = Math.max(...prices);
-      const minDuration = Math.min(...durations);
-      const maxDuration = Math.max(...durations);
-      return sorted.sort(
-        (a, b) =>
-          bestScore(a, minPrice, maxPrice, minDuration, maxDuration) -
-          bestScore(b, minPrice, maxPrice, minDuration, maxDuration)
-      );
-    }
+    // The same score as the "Best Value" card, ordering the whole list.
+    case 'best':
+      return rankByBestScore(sorted, (o) => o.totalAmount, bestMinutes);
     case 'totalJourneyTime':
       return sorted.sort((a, b) => getTotalDurationMinutes(a) - getTotalDurationMinutes(b));
     case 'departureTime':
