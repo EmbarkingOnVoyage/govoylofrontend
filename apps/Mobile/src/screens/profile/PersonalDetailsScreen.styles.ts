@@ -85,14 +85,22 @@ export const styles = StyleSheet.create({
   inputError: {
   borderColor: '#EF4444',
 },
+dateRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 10,
+},
   inputDisplay: {
     height: 44,
     borderWidth: 1,
     borderColor: '#ADB8CD',
     borderRadius: 8,
     paddingHorizontal: 12,
-    justifyContent: 'center',
     backgroundColor: '#FFFFFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+     gap: 10,
   },
   inputDisplayText: {
     fontSize: 14,
