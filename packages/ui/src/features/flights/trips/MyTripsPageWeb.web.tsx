@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   Armchair,
   Star,
+  X,
 } from 'lucide-react';
 import { useMyTripsMobile, type TripBooking } from '../useMyTripsMobile';
 import {
@@ -34,7 +35,16 @@ const TABS: TripTab[] = ['Upcoming', 'Completed', 'Cancelled'];
 // The design's chips; only flights can be booked today.
 const CATEGORIES = ['All', 'Flights', 'Hotels', 'Trains'] as const;
 type Category = (typeof CATEGORIES)[number];
-type SortOrder = 'newest' | 'oldest';
+type SortOrder = 'newest' | 'oldest' | 'travelDate';
+
+const SORT_OPTIONS: { id: SortOrder; label: string; short: string }[] = [
+  { id: 'newest', label: 'Newest booking first', short: 'Newest first' },
+  { id: 'oldest', label: 'Oldest booking first', short: 'Oldest first' },
+  { id: 'travelDate', label: 'Travel date: earliest', short: 'Travel date' },
+];
+
+const firstTravelTime = (trip: TripBooking) =>
+  Math.min(...trip.legs.map((leg) => new Date(leg.travelDate).getTime()).filter((t) => !isNaN(t)), Infinity);
 
 const SECTION_TITLE: Record<TripTab, string> = {
   Upcoming: 'Upcoming trips',
@@ -76,6 +86,8 @@ export const MyTripsPageWeb: React.FC<{
   const [category, setCategory] = useState<Category>('All');
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<SortOrder>('newest');
+  const [sortOpen, setSortOpen] = useState(false);
+  const [pendingSort, setPendingSort] = useState<SortOrder>('newest');
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ title: string; text: string } | null>(null);
 
@@ -90,7 +102,11 @@ export const MyTripsPageWeb: React.FC<{
     const sign = sortOrder === 'newest' ? -1 : 1;
     return byTab[activeTab]
       .filter((trip) => matchesSearch(trip, search))
-      .sort((a, b) => sign * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()));
+      .sort((a, b) =>
+        sortOrder === 'travelDate'
+          ? firstTravelTime(a) - firstTravelTime(b)
+          : sign * (new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+      );
   }, [byTab, activeTab, category, search, sortOrder]);
 
   const handleDownload = async (trip: TripBooking) => {
@@ -387,20 +403,76 @@ export const MyTripsPageWeb: React.FC<{
               </button>
             ))}
           </div>
-          <label className="relative w-[184px] h-9 flex items-center gap-[9px] pl-3 pr-3 rounded-[8px] bg-white text-[13px] leading-4">
-            <span className="text-[#697691]">Sort by</span>
-            <span className="flex-1 font-bold text-[#182339]">{sortOrder === 'newest' ? 'Newest first' : 'Oldest first'}</span>
-            <ChevronDown size={20} strokeWidth={1.67} className="text-[#182339]" />
-            <select
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              aria-label="Sort trips"
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setPendingSort(sortOrder);
+                setSortOpen((open) => !open);
+              }}
+              aria-expanded={sortOpen}
+              className="w-[184px] h-9 flex items-center gap-[9px] pl-3 pr-3 rounded-[8px] bg-white text-[13px] leading-4 text-left"
             >
-              <option value="newest">Newest first</option>
-              <option value="oldest">Oldest first</option>
-            </select>
-          </label>
+              <span className="text-[#697691]">Sort by</span>
+              <span className="flex-1 font-bold text-[#182339]">{SORT_OPTIONS.find((o) => o.id === sortOrder)?.short}</span>
+              <ChevronDown size={20} strokeWidth={1.67} className="text-[#182339]" />
+            </button>
+            {sortOpen && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setSortOpen(false)} />
+                {/* Web Dev "Sort trips" popover: 307 x 224, 12px radius. */}
+                <div
+                  role="dialog"
+                  aria-label="Sort trips"
+                  className="absolute right-0 top-full mt-2 z-40 w-[307px] rounded-[12px] border border-[#98A5BF] bg-white px-4 pt-4 pb-4"
+                >
+                  <div className="h-[42px] flex items-center justify-between">
+                    <h3 className="pl-px text-[16.5px] leading-5 font-semibold text-[#182339]">Sort trips</h3>
+                    <button
+                      type="button"
+                      onClick={() => setSortOpen(false)}
+                      aria-label="Close"
+                      className="-mr-[0.84px] w-[42px] h-[42px] rounded-full border border-[#98A5BF] flex items-center justify-center text-[#182339]"
+                    >
+                      <X size={18} strokeWidth={1.67} />
+                    </button>
+                  </div>
+                  <div className="mt-[9.4px] flex flex-col gap-3">
+                    {SORT_OPTIONS.map((option) => {
+                      const checked = pendingSort === option.id;
+                      return (
+                        <label key={option.id} className="h-5 flex items-center gap-[7px] cursor-pointer">
+                          <input
+                            type="radio"
+                            name="trip-sort"
+                            className="sr-only"
+                            checked={checked}
+                            onChange={() => setPendingSort(option.id)}
+                          />
+                          <span
+                            className={`w-5 h-5 shrink-0 rounded-full flex items-center justify-center ${
+                              checked ? 'bg-[#7C1AEE]' : 'border border-[#7C8CAD] scale-90'
+                            }`}
+                          />
+                          <span className="text-[15px] leading-5 font-medium text-[#182339]">{option.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSortOrder(pendingSort);
+                      setSortOpen(false);
+                    }}
+                    className="mt-[11px] w-full h-11 rounded-xl bg-[#7C1AEE] text-[16px] leading-5 font-bold text-white"
+                  >
+                    Apply sort
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
         <div className="mt-4 ml-[34px] mr-[34px] flex items-start gap-[9px]">
