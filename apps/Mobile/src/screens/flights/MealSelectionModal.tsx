@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, ActivityIndicator } from 'react-native';
 import { ModalSafeArea } from '../../components/ModalSafeArea';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Check } from 'lucide-react-native';
 import type { AncillaryOption } from '@workspace/ui';
 import { SelectField } from '../../components/SelectField';
 import { styles } from './MealSelectionModal.styles';
@@ -42,10 +42,12 @@ interface MealSelectionModalProps {
   isLoading: boolean;
   loadError: boolean;
   travelers: MealTraveler[];
-  // travelerId → the meal already chosen for them.
-  initialSelections: Record<string, AncillaryOption>;
+  // travelerId → the meals already chosen for them.
+  initialSelections: Record<string, AncillaryOption[]>;
+  // Flyshop takes several meals per traveller per flight; Tripjack only one.
+  multiple: boolean;
   currencyCode: string;
-  onSave: (selections: Record<string, AncillaryOption>) => void;
+  onSave: (selections: Record<string, AncillaryOption[]>) => void;
   onClose: () => void;
 }
 
@@ -58,11 +60,12 @@ export const MealSelectionModal: React.FC<MealSelectionModalProps> = ({
   loadError,
   travelers,
   initialSelections,
+  multiple,
   currencyCode,
   onSave,
   onClose,
 }) => {
-  const [picks, setPicks] = useState<Record<string, AncillaryOption>>({});
+  const [picks, setPicks] = useState<Record<string, AncillaryOption[]>>({});
 
   useEffect(() => {
     if (visible) setPicks({ ...initialSelections });
@@ -94,24 +97,32 @@ export const MealSelectionModal: React.FC<MealSelectionModalProps> = ({
   // A fare whose meals are all free comes with a meal — the choice is a preference.
   const included = meals.length > 0 && meals.every((m) => m.totalAmount === 0);
 
-  const total = Object.values(picks).reduce((sum, o) => sum + o.totalAmount, 0);
+  const total = Object.values(picks).flat().reduce((sum, o) => sum + o.totalAmount, 0);
 
-  const select = (travelerId: string, option: AncillaryOption | null) => {
+  const mealsOf = (travelerId: string) => picks[travelerId] ?? [];
+  const has = (travelerId: string, meal: AncillaryOption) => mealsOf(travelerId).some((m) => m.ssrKey === meal.ssrKey);
+  const setMeals = (travelerId: string, list: AncillaryOption[]) => {
     setPicks((prev) => {
       const next = { ...prev };
-      if (option) next[travelerId] = option;
+      if (list.length > 0) next[travelerId] = list;
       else delete next[travelerId];
       return next;
     });
   };
+  // With several meals allowed every card and list row adds or removes one;
+  // otherwise picking a meal replaces the traveller's meal.
+  const toggle = (travelerId: string, meal: AncillaryOption) => {
+    if (has(travelerId, meal)) setMeals(travelerId, mealsOf(travelerId).filter((m) => m.ssrKey !== meal.ssrKey));
+    else setMeals(travelerId, multiple ? [...mealsOf(travelerId), meal] : [meal]);
+  };
 
   const renderQuickCard = (travelerId: string, label: string, meal: AncillaryOption | null) => {
     if (!meal) return null;
-    const selected = picks[travelerId]?.ssrKey === meal.ssrKey;
+    const selected = has(travelerId, meal);
     return (
       <TouchableOpacity
         style={[styles.card, selected && styles.cardSelected]}
-        onPress={() => select(travelerId, meal)}
+        onPress={() => toggle(travelerId, meal)}
         activeOpacity={0.7}
       >
         <Text style={styles.cardText}>{label}</Text>
@@ -149,9 +160,12 @@ export const MealSelectionModal: React.FC<MealSelectionModalProps> = ({
             {meals.length === 0 && (
               <Text style={[styles.stateBox, styles.stateText]}>Meals can't be pre-booked on this flight online.</Text>
             )}
+            {meals.length > 0 && !multiple && (
+              <Text style={styles.singleNote}>This airline allows one meal per traveller on this flight.</Text>
+            )}
             {meals.length > 0 &&
               travelers.map((traveler, index) => {
-                const picked = picks[traveler.id] ?? null;
+                const picked = mealsOf(traveler.id)[0] ?? null;
                 const pickedOther =
                   !!picked && picked.ssrKey !== vegMeal?.ssrKey && picked.ssrKey !== nonVegMeal?.ssrKey;
                 return (
@@ -163,7 +177,7 @@ export const MealSelectionModal: React.FC<MealSelectionModalProps> = ({
                     <View style={styles.cardRow}>
                       <TouchableOpacity
                         style={[styles.card, styles.noneCard, !picked && styles.cardSelected]}
-                        onPress={() => select(traveler.id, null)}
+                        onPress={() => setMeals(traveler.id, [])}
                         activeOpacity={0.7}
                       >
                         <Text style={styles.cardText}>None{'\n'}Added</Text>
@@ -171,13 +185,42 @@ export const MealSelectionModal: React.FC<MealSelectionModalProps> = ({
                       {renderQuickCard(traveler.id, 'Veg', vegMeal)}
                       {renderQuickCard(traveler.id, 'Non-veg', nonVegMeal)}
                     </View>
-                    {otherMeals.length > 0 && (
+                    {otherMeals.length > 0 && multiple && (
+                      <>
+                        <Text style={styles.otherLabel}>Other meals</Text>
+                        {otherMeals.map((meal) => {
+                          const checked = has(traveler.id, meal);
+                          return (
+                            <TouchableOpacity
+                              key={meal.ssrKey}
+                              style={styles.checkRow}
+                              onPress={() => toggle(traveler.id, meal)}
+                              activeOpacity={0.7}
+                              accessibilityRole="checkbox"
+                              accessibilityState={{ checked }}
+                            >
+                              <View style={[styles.checkBox, checked && styles.checkBoxOn]}>
+                                {checked && <Check size={12} color="#FFFFFF" strokeWidth={3} />}
+                              </View>
+                              <Text style={styles.checkLabel}>{meal.ssrTypeDesc}</Text>
+                              {meal.totalAmount > 0 && (
+                                <Text style={styles.checkPrice}>{formatMoney(meal.totalAmount, currencyCode)}</Text>
+                              )}
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </>
+                    )}
+                    {otherMeals.length > 0 && !multiple && (
                       <>
                         <Text style={styles.otherLabel}>Other meal</Text>
                         <SelectField
                           value={pickedOther && picked ? mealLabel(picked, currencyCode) : ''}
                           options={otherMeals.map((m) => mealLabel(m, currencyCode))}
-                          onSelect={(label) => select(traveler.id, mealByLabel.get(label) ?? null)}
+                          onSelect={(label) => {
+                            const meal = mealByLabel.get(label);
+                            setMeals(traveler.id, meal ? [meal] : []);
+                          }}
                           title="Select a meal"
                         />
                       </>
