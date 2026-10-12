@@ -147,7 +147,9 @@ const MonthPanel: React.FC<MonthPanelProps> = ({ year, month, earliest, selected
                 onClick={() => onSelectDay(date)}
                 className={[
                   'h-14 m-0.5 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-colors',
-                  isPast ? 'opacity-30 cursor-not-allowed' : 'cursor-pointer hover:bg-[#F3E9FE]',
+                  // The selected day keeps its purple under the cursor: the
+                  // hover tint would hide its white text right after a click.
+                  isPast ? 'opacity-30 cursor-not-allowed' : isSelected ? 'cursor-pointer' : 'cursor-pointer hover:bg-[#F3E9FE]',
                   isSelected ? 'bg-[#7C1AEE]' : '',
                 ].join(' ')}
               >
@@ -216,6 +218,24 @@ export const FareCalendarDropdown: React.FC<FareCalendarDropdownProps> = ({
   // arrow indefinitely, same as mobile's infinite-scroll month list.
   const [pairOffset, setPairOffset] = React.useState(0);
 
+  // The panel opens at its field's left edge; when that would run past the
+  // window (fields on the right of the bar), slide it back inside.
+  const panelRef = React.useRef<HTMLDivElement>(null);
+  const [shiftX, setShiftX] = React.useState(0);
+  React.useLayoutEffect(() => {
+    const el = panelRef.current;
+    if (!el) return;
+    const place = () => {
+      const r = el.getBoundingClientRect();
+      const left = r.left - shiftX;
+      const maxRight = document.documentElement.clientWidth - 16;
+      setShiftX(Math.min(0, Math.max(16 - left, maxRight - (left + r.width))));
+    };
+    place();
+    window.addEventListener('resize', place);
+    return () => window.removeEventListener('resize', place);
+  }, [shiftX]);
+
   const today = startOfDay(new Date());
   const earliest = minDate ? startOfDay(minDate) : today;
   const base = new Date(earliest.getFullYear(), earliest.getMonth() + pairOffset * 2, 1);
@@ -226,7 +246,11 @@ export const FareCalendarDropdown: React.FC<FareCalendarDropdownProps> = ({
     : 'Select a date';
 
   return (
-    <div className="w-[808px] max-w-[95vw] bg-white rounded-2xl shadow-xl border border-[#ECEEF3] p-6">
+    <div
+      ref={panelRef}
+      style={shiftX ? { transform: `translateX(${shiftX}px)` } : undefined}
+      className="w-[808px] max-w-[95vw] bg-white rounded-2xl shadow-xl border border-[#ECEEF3] p-6"
+    >
       <div className="flex items-center justify-between mb-4">
         <button
           type="button"
