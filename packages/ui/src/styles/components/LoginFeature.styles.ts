@@ -46,6 +46,10 @@ export interface ILoginWebStyles {
   primaryButton: string;          // Added to match mobile
   disabledButton: string;         // Added to match mobile
   primaryButtonText: string;      // Added to match mobile
+  secondaryButton: string;
+  noteText: string;
+  fieldLabel: string;
+  linkButton: string;
   dividerLineWrapper: string;
   dividerLine: string;
   dividerText: string;
@@ -221,6 +225,10 @@ export const web: ILoginWebStyles = {
   primaryButton: "w-full h-11 mt-3 bg-[#7C1AEE] hover:bg-[#6A16D9] rounded-xl flex items-center justify-center cursor-pointer",
   disabledButton: "opacity-60 cursor-not-allowed",
   primaryButtonText: "text-white text-[15px] leading-5 font-medium",
+  secondaryButton: "w-full h-11 mt-3 rounded-xl border border-[#7C1AEE] bg-white hover:bg-[#F3E9FE] text-[15px] leading-5 font-medium text-[#7C1AEE] cursor-pointer",
+  noteText: "mt-2 text-[13px] leading-4 text-[#4C5973] text-center",
+  fieldLabel: "block mb-1.5 text-[13px] leading-4 font-medium text-[#3E4B64] text-left",
+  linkButton: "mt-5 text-[15px] leading-5 font-medium text-[#7C1AEE] cursor-pointer",
   dividerLineWrapper: "w-full h-4 mt-6 flex items-center gap-[5px]",
   dividerLine: "flex-1 h-px bg-[#D7DCE7]",
   dividerText: "text-[13px] leading-4 font-medium text-[#697691]",

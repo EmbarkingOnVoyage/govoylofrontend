@@ -89,7 +89,7 @@ const AppWorkflowRouter: React.FC = () => {
           path="/flights/review"
           element={
             <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
-              <RequireAuth>
+              <RequireAuth allowGuest>
                 <FlightReviewRoute />
               </RequireAuth>
             </DashboardLayout>
@@ -99,7 +99,7 @@ const AppWorkflowRouter: React.FC = () => {
           path="/flights/payment"
           element={
             <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
-              <RequireAuth>
+              <RequireAuth allowGuest>
                 <FlightPaymentRoute />
               </RequireAuth>
             </DashboardLayout>
@@ -109,7 +109,7 @@ const AppWorkflowRouter: React.FC = () => {
           path="/flights/booked"
           element={
             <DashboardLayout showSidebar={false} variant="wide" onNavigate={onNavigateLoose}>
-              <RequireAuth>
+              <RequireAuth allowGuest>
                 <BookingConfirmedRoute />
               </RequireAuth>
             </DashboardLayout>

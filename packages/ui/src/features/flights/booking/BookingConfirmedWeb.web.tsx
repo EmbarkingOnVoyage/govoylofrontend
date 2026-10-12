@@ -11,6 +11,8 @@ export interface BookingConfirmation {
   // "Paris (CDG) → Rome (FCO)"
   route?: string;
   breakdown?: FareBreakdown;
+  // Where the e-ticket goes (the checkout contact email).
+  email?: string;
 }
 
 const ReceiptRow: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
@@ -27,7 +29,9 @@ export const BookingConfirmedWeb: React.FC<{
   confirmation: BookingConfirmation;
   onViewBooking: () => void;
   onBackToHome: () => void;
-}> = ({ confirmation, onViewBooking, onBackToHome }) => (
+  // Booked as a guest: say how to see the trip in an account.
+  isGuest?: boolean;
+}> = ({ confirmation, onViewBooking, onBackToHome, isGuest }) => (
   <div className="relative max-w-[1440px] mx-auto px-8 pb-16">
     {confirmation.breakdown && (
       <div className="hidden xl:block absolute left-8 top-[27px]">
@@ -42,6 +46,12 @@ export const BookingConfirmedWeb: React.FC<{
       <p className="mt-2 w-[340px] text-center text-[16px] leading-5 text-[#3E4B64]">
         Your trip is booked and your payment has been confirmed.
       </p>
+      {isGuest && (
+        <p className="mt-3 w-[354px] px-4 py-3 rounded-xl bg-[#F3E9FE] text-center text-[14px] leading-5 text-[#3E4B64]">
+          Your e-ticket is on its way{confirmation.email ? ` to ${confirmation.email}` : ''}. Log in with that email to see this
+          trip and your travellers in My Trips.
+        </p>
+      )}
 
       <div className="mt-[26px] w-full flex flex-col p-5 bg-white border border-[#E1E5ED] rounded-2xl shadow-[0px_4px_14px_rgba(27,50,73,0.10)]">
         <div className="flex items-start justify-between gap-3 pb-3 border-b border-[#E1E5ED]">
