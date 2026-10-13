@@ -20,6 +20,7 @@ import {
   resolveSelectedFare,
   selectableFares,
   sortOffers,
+  tripsOfLeg,
   splitOfferByTrip,
   splitSegmentsByLegs,
 } from './flightResults';
@@ -269,5 +270,36 @@ describe('journey time and "Best"', () => {
 
     expect(sortOffers([longLayover, pricey, nonStop], 'best', 1)[0].offerId).toBe('nonstop');
     expect(sortOffers([longLayover, nonStop], 'totalJourneyTime', 1)[0].offerId).toBe('nonstop');
+  });
+});
+
+describe('trips of a combined fare', () => {
+  const seg = (origin: string, destination: string, dep: string) => ({
+    origin,
+    destination,
+    airlineCode: '6E',
+    airlineName: 'IndiGo',
+    flightNumber: '1',
+    departureDateTime: dep,
+    arrivalDateTime: dep,
+    duration: '01:00',
+  });
+  const search = [
+    { origin: 'DEL', destination: 'GOI', travelDate: '2026-12-08' },
+    { origin: 'GOI', destination: 'DEL', travelDate: '2026-12-11' },
+  ] as any;
+
+  test('a Flyshop special fare splits by the searched legs', () => {
+    const combined = offer('c', {
+      segments: [seg('DEL', 'BOM', '2026-12-08T08:00:00'), seg('BOM', 'GOI', '2026-12-08T11:35:00'), seg('GOI', 'DEL', '2026-12-11T08:10:00')],
+    });
+    const trips = tripsOfLeg(combined, search);
+    expect(trips.map((t) => t.segments.map((s) => s.origin + s.destination).join(','))).toEqual(['DELBOM,BOMGOI', 'GOIDEL']);
+  });
+
+  test('an ordinary one-way leg stays whole', () => {
+    const oneWay = offer('o', { segments: [seg('DEL', 'BOM', '2026-12-08T08:00:00'), seg('BOM', 'GOI', '2026-12-08T11:35:00')] });
+    expect(tripsOfLeg(oneWay, search)).toHaveLength(1);
+    expect(tripsOfLeg(oneWay, [])).toHaveLength(1);
   });
 });

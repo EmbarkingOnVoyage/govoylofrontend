@@ -638,6 +638,22 @@ export function splitSegmentsByLegs(
   return groups;
 }
 
+// The trips one booked leg actually flies. A combined fare comes as a single
+// leg covering every searched leg — Tripjack's whole-trip offers mark each
+// segment's tripIndex, but Flyshop's Booking_Type 2 (special return /
+// multi-city) leaves them all 0, so those are split by the searched legs.
+// Shown per trip, a DEL → GOI → DEL fare reads as two journeys instead of one
+// "2 stops · 74h" trip from Delhi to Delhi.
+export function tripsOfLeg(leg: FlightOffer, searchLegs: FlightSearchSegment[] = []): FlightOffer[] {
+  const byTrip = splitOfferByTrip(leg);
+  if (byTrip.length > 1) return byTrip;
+  if (searchLegs.length > 1) {
+    const groups = splitSegmentsByLegs(leg.segments, searchLegs);
+    if (groups.length > 1) return groups.map((segments) => ({ ...leg, segments }));
+  }
+  return [leg];
+}
+
 // "Trip-1 | Indigo, Akasa" in the Figma "Multicity" reference — every
 // distinct airline actually flown on that leg, in flight order.
 export function airlinesForSegments(segments: FlightOfferSegment[]): string {
