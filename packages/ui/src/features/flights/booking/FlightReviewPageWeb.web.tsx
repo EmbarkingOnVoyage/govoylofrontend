@@ -4,7 +4,7 @@ import type { FlightOffer, FlightOfferSegment } from '../useSearchFlightsMobile'
 import type { FlightBookingSelection, FlightCheckoutDetails } from '../flightBookingSession';
 import { useTravellerDetailMobile, useTravellersMobile, type Traveler } from '../../profile/useTravellersMobile';
 import { useCustomerProfileMobile } from '../../profile/useCustomerProfileMobile';
-import { formatPrice, formatTime24, formatTotalDuration, stopsLabel } from '../logic/flightResults';
+import { formatPrice, formatTime24, formatTotalDuration, stopsLabel, tripsOfLeg } from '../logic/flightResults';
 import {
   GSTIN_PATTERN,
   PAX_LABELS,
@@ -379,8 +379,8 @@ export const FlightReviewPageWeb: React.FC<{
   const legRoutes: AddOnLegRoute[] = legs.map((leg, index) => {
     const first = leg.segments[0];
     // A whole-trip offer is labelled by its turnaround point, not DEL → DEL.
-    const firstTrip = leg.segments.filter((s) => (s.tripIndex ?? 0) === (first?.tripIndex ?? 0));
-    const last = firstTrip.length < leg.segments.length ? firstTrip[firstTrip.length - 1] : leg.segments[leg.segments.length - 1];
+    const firstTrip = tripsOfLeg(leg, selection.summary.request.segments)[0].segments;
+    const last = firstTrip[firstTrip.length - 1];
     const fare = leg.fares.find((f) => f.fareId === leg.selectedFareId) ?? leg.fares[0];
     return {
       offerId: leg.offerId,
@@ -509,10 +509,13 @@ export const FlightReviewPageWeb: React.FC<{
                   {legLabels?.[index] ?? `Flight ${index + 1}`}
                 </span>
               )}
-              <div className="flex items-center gap-[35px]">
-                <ItineraryCard leg={leg} cityFor={cityFor} nameFor={nameFor} />
-                <BaggageInfo leg={leg} />
-              </div>
+              {/* A combined fare gets one card per trip (see tripsOfLeg). */}
+              {tripsOfLeg(leg, selection.summary.request.segments).map((trip, tripIndex) => (
+                <div key={tripIndex} className="flex items-center gap-[35px]">
+                  <ItineraryCard leg={trip} cityFor={cityFor} nameFor={nameFor} />
+                  {tripIndex === 0 && <BaggageInfo leg={leg} />}
+                </div>
+              ))}
             </div>
           ))}
 
