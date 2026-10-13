@@ -15,6 +15,7 @@
     "expo-dev-client": "~5.0.20",
     "expo-file-system": "~18.0.12",
     "expo-font": "~13.0.4",
+    "expo-image-picker": "~16.0.6",
     "expo-linear-gradient": "~14.0.2",
     "expo-secure-store": "~14.0.1",
     "expo-sharing": "~13.0.1",
