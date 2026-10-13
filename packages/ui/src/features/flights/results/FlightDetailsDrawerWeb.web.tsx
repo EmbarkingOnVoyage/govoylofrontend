@@ -50,7 +50,7 @@ const CARD_STYLES = [
   { border: '#D4AF37', header: 'linear-gradient(88.62deg, #FFFFFF 4.46%, #D4AF37 101.87%)' },
 ];
 
-const FEATURE_COLORS = { included: '#007F20', pay: '#CE6400', na: '#C5001F' } as const;
+const FEATURE_COLORS = { included: '#007F20', pay: '#CE6400', na: '#C5001F', loading: '#CCD3E0' } as const;
 
 function toFareRulesLeg(offer: FlightOffer, label: string, fare: FareOption | undefined): FareRulesLeg {
   const first = offer.segments[0];
@@ -70,24 +70,34 @@ function toFareRulesLeg(offer: FlightOffer, label: string, fare: FareOption | un
 }
 
 const Feature: React.FC<{ tone: keyof typeof FEATURE_COLORS; text: string }> = ({ tone, text }) => (
-  <li className="flex items-center gap-1">
+  <li className={`flex items-center gap-1 ${tone === 'loading' ? 'animate-pulse' : ''}`}>
     <span className="w-3.5 h-3.5 rounded-full shrink-0 flex items-center justify-center" style={{ backgroundColor: FEATURE_COLORS[tone] }}>
       <span className="w-[7px] h-[7px] rounded-full bg-white/90" />
     </span>
-    <span className="py-px text-[13px] leading-4 text-[#3E4B64]">{text}</span>
+    <span className={`py-px text-[13px] leading-4 ${tone === 'loading' ? 'text-[#697691]' : 'text-[#3E4B64]'}`}>{text}</span>
   </li>
 );
 
 // Cancellation and date change lines from the fare's real rules (the same
-// request as the Fare Rule tab, cached per fare). Until they load — or if
-// there are none — the card says what the fare itself tells us.
+// request as the Fare Rule tab, cached per fare). They take several seconds
+// (the fare is re-checked with the supplier first), so the lines say they're
+// loading meanwhile; if the supplier sends none, or the request fails, the
+// card says what the fare itself tells us.
 const FareRuleFeatures: React.FC<{ offerId: string; fareId: string; refundable: boolean; fareAmount: number }> = ({
   offerId,
   fareId,
   refundable,
   fareAmount,
 }) => {
-  const { data } = useFareRulesMobile([offerId], [fareId]);
+  const { data, isLoading } = useFareRulesMobile([offerId], [fareId]);
+  if (isLoading) {
+    return (
+      <>
+        <Feature tone="loading" text="Loading cancellation rules…" />
+        <Feature tone="loading" text="Loading date change rules…" />
+      </>
+    );
+  }
   const rules = data?.legs.find((l) => l.offerId === offerId) ?? data?.legs[0];
   const cancellation = fareRuleSummary(rules, 'Cancellation', refundable, fareAmount) ?? {
     text: refundable ? 'Cancellation: refundable' : 'Cancellation: non-refundable',

@@ -46,8 +46,8 @@ body {
   /* The ring itself is a geometrically uniform 3px gap on every side
      (verified directly against getBoundingClientRect) — this shadow isn't
      fixing a width bug, it's compensating for a *contrast* one: the
-     spinning gradient's magenta/pink stops read visually lighter than its
-     blue/purple stops against this light backdrop, so without it the ring
+     spinning gradient's pale gold stops read visually lighter than its
+     periwinkle stops against this light backdrop, so without it the ring
      looks like it's varying in thickness as it rotates, even though the
      pixels never move. */
   box-shadow: 0 0 0 1px rgba(24, 35, 57, 0.12);
@@ -60,7 +60,17 @@ body {
   left: 50%;
   width: 200px;
   height: 200px;
-  background: conic-gradient(from 0deg, #9335ff, #5731ff, #cf31ff, #9335ff);
+  /* Figma's animated pill border (Phone Dev "Privacy and data management"):
+     periwinkle through lavender to a pale gold highlight, sampled from the
+     frame. Same stops as the mobile ring (apps/Mobile/.../ring-conic.png). */
+  background: conic-gradient(
+    from 0deg,
+    #b7b3dc 0deg, #b1aee0 15deg, #a3a0e9 30deg, #928ff4 45deg, #8983fa 60deg, #8b86f8 75deg,
+    #8680fb 90deg, #837bfe 105deg, #9997ef 120deg, #dcd0bf 135deg, #f0dfae 150deg, #eeddb0 165deg,
+    #e6d7b8 180deg, #c3bdd3 195deg, #a6a3e8 210deg, #a19fea 225deg, #8f8bf6 240deg, #867ffc 255deg,
+    #8179ff 270deg, #8178ff 285deg, #837bfe 300deg, #9d9bed 315deg, #aface1 330deg, #b4b0de 345deg,
+    #b7b3dc 360deg
+  );
   animation: tab-ring-spin 3s linear infinite;
 }
 
