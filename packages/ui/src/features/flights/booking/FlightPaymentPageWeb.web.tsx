@@ -7,7 +7,7 @@ import { useReleaseHoldMobile } from '../useReleaseHoldMobile';
 import type { Traveler } from '../../profile/useTravellersMobile';
 import { useCreateRazorpayOrderMobile, useVerifyRazorpayPaymentMobile } from '../../payments/useRazorpayPaymentMobile';
 import { RazorpayCheckoutError, openRazorpayCheckout } from '../../payments/razorpayCheckout.web';
-import { CABIN_CLASS_LABELS, formatPrice, formatTime24 } from '../logic/flightResults';
+import { CABIN_CLASS_LABELS, formatPrice, formatTime24, tripsOfLeg } from '../logic/flightResults';
 import { PAX_TYPES, type PaxType } from '../logic/travellers';
 import { buildBookingLegs, buildBookingTravelers } from '../logic/booking';
 import { convenienceFeeFor } from '../logic/convenienceFee';
@@ -49,7 +49,8 @@ function tripTitle(selection: FlightBookingSelection): string {
   if (summary.request.tripType === 'RoundTrip') {
     return `${first.origin} ⇌ ${summary.destinationCode || legs[0].segments[legs[0].segments.length - 1].destination}`;
   }
-  const stops = [first.origin, ...legs.map((l) => l.segments[l.segments.length - 1].destination)];
+  const trips = legs.flatMap((l) => tripsOfLeg(l, summary.request.segments));
+  const stops = [first.origin, ...trips.map((t) => t.segments[t.segments.length - 1].destination)];
   return stops.join(' → ');
 }
 
@@ -88,7 +89,9 @@ export const FlightPaymentPageWeb: React.FC<{
   const currencyCode = breakdown.currencyCode;
   const money = (amount: number) => formatPrice(amount, currencyCode);
   const paxTypeOf = (t: Traveler): PaxType => checkout.paxTypes[t.id] ?? 'adult';
-  const allSegments = legs.flatMap((leg) => leg.segments.map((segment) => ({ leg, segment })));
+  // Combined fares are shown per trip (see tripsOfLeg).
+  const trips = legs.flatMap((leg) => tripsOfLeg(leg, summary.request.segments));
+  const allSegments = trips.flatMap((trip) => trip.segments.map((segment) => ({ leg: trip, segment })));
 
   const primary = checkout.travellers[0];
   const others = checkout.travellers.length - 1;
@@ -169,7 +172,13 @@ export const FlightPaymentPageWeb: React.FC<{
 
       const first = legs[0].segments[0];
       const lastLeg = legs[legs.length - 1];
-      const end = summary.request.tripType === 'RoundTrip' ? legs[0].segments[legs[0].segments.length - 1] : lastLeg.segments[lastLeg.segments.length - 1];
+      const lastTrip = trips[trips.length - 1];
+      // A trip that ends where it started (return, or a combined out-and-back
+      // fare) is named by its turnaround point, not "Delhi → Delhi".
+      const backHome = trips.length > 1 && lastTrip.segments[lastTrip.segments.length - 1].destination === first.origin;
+      const end = summary.request.tripType === 'RoundTrip' || backHome
+        ? trips[0].segments[trips[0].segments.length - 1]
+        : lastLeg.segments[lastLeg.segments.length - 1];
       const destination = summary.request.tripType === 'RoundTrip' && summary.destinationCode ? summary.destinationCode : end.destination;
       onBooked({
         bookingRefNo: booking.bookingRefNo,
@@ -216,7 +225,7 @@ export const FlightPaymentPageWeb: React.FC<{
               </span>
               <span className="flex-1 min-w-0 flex flex-col">
                 <span className="text-[18px] leading-6 font-bold text-[#182339]">{tripTitle(selection)}</span>
-                <span className="pt-0.5 max-w-[244px] text-[13px] leading-4 text-[#697691]">{legs[0] ? legLine(legs[0], cabin) : ''}</span>
+                <span className="pt-0.5 max-w-[244px] text-[13px] leading-4 text-[#697691]">{trips[0] ? legLine(trips[0], cabin) : ''}</span>
               </span>
               {expanded ? <ChevronUp size={18} className="text-[#3E4B64]" /> : <ChevronDown size={18} className="text-[#3E4B64]" />}
             </button>
@@ -287,7 +296,7 @@ export const FlightPaymentPageWeb: React.FC<{
 
       {summaryOpen && (
         <TripSummaryPanelWeb
-          legs={legs}
+          legs={trips}
           cabin={cabin}
           travellers={checkout.travellers}
           paxTypeOf={paxTypeOf}
