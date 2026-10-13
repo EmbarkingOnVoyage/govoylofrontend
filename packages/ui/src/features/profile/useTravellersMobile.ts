@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AUTH_BASE_URL } from "@workspace/api";
 import { authContextCache } from "../authentication/authContextCache";
 import { mobileAuthFetch } from "../authentication/mobileAuthFetch";
+import { travelerTypeForDob } from "../flights/logic/travellers";
 
 export interface Traveler {
   id: string;
@@ -109,7 +110,9 @@ export function useSaveTravellerMobile() {
       const { id, hasExistingPassport, payload } = params;
 
       const travelerBody = {
-        travelerType: "adult",
+        // From the date of birth: the API rejects a child's or infant's date
+        // of birth saved as an adult.
+        travelerType: travelerTypeForDob(payload.dateOfBirth),
         firstName: payload.firstName,
         lastName: payload.lastName,
         dateOfBirth: payload.dateOfBirth,

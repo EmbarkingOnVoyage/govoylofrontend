@@ -19,6 +19,21 @@ export function savedPaxType(traveler: Traveler): PaxType {
   return type === 'child' || type === 'infant' ? type : 'adult';
 }
 
+// The type a traveller is saved as, from their date of birth today — the
+// same rule the travellers API checks on create (age in days / 365.25:
+// under 2 infant, 2–12 child, over 12 adult). Booking uses the age on the
+// travel dates instead (checkTravelerAge). No date of birth: adult.
+export function travelerTypeForDob(dateOfBirth: string | null | undefined, today: Date = new Date()): PaxType {
+  const dob = calendarDate(dateOfBirth);
+  if (!dob) return 'adult';
+  const dobUtc = Date.UTC(dob[0], dob[1] - 1, dob[2]);
+  const todayUtc = Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+  const ageYears = (todayUtc - dobUtc) / 86_400_000 / 365.25;
+  if (ageYears < 2) return 'infant';
+  if (ageYears <= 12) return 'child';
+  return 'adult';
+}
+
 export const PAX_API_TYPES: Record<PaxType, 'Adult' | 'Child' | 'Infant'> = {
   adult: 'Adult',
   child: 'Child',
