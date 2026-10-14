@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useSaveTravellerMobile, useTravellerDetailMobile, type Traveler } from '../../profile/useTravellersMobile';
+import { useCustomerProfileMobile } from '../../profile/useCustomerProfileMobile';
 import { COUNTRY_OPTIONS, GENDER_OPTIONS } from '../../../data/selectOptions';
 import { FieldWeb, Separator, SubHeading, fieldInputClass } from './BookingLayoutWeb.web';
 
@@ -15,13 +16,16 @@ function dateInputValue(iso: string | null | undefined): string {
 // Web Dev "Adult 1" block: a new saved traveller, or edits to one, written
 // through the same travellers API as the mobile Co-traveller form. Passport
 // numbers only ever come back masked, so the number is re-entered to change it.
+// asSelf: "Add yourself" — the signed-in customer, started from their profile
+// and saved as the account holder ("(You)").
 export const TravellerFormWeb: React.FC<{
   heading: string;
   subtitle: string;
   traveller?: Traveler | null;
+  asSelf?: boolean;
   onSaved: (travellerId: string | undefined) => void;
   onCancel: () => void;
-}> = ({ heading, subtitle, traveller, onSaved, onCancel }) => {
+}> = ({ heading, subtitle, traveller, asSelf = false, onSaved, onCancel }) => {
   const { data: detail } = useTravellerDetailMobile(traveller?.id ?? null);
   const save = useSaveTravellerMobile();
   const [firstName, setFirstName] = useState(traveller?.firstName ?? '');
@@ -35,6 +39,18 @@ export const TravellerFormWeb: React.FC<{
   const [passportExpiry, setPassportExpiry] = useState('');
   const [passportCountry, setPassportCountry] = useState('');
   const [error, setError] = useState('');
+
+  const { data: profile } = useCustomerProfileMobile();
+  useEffect(() => {
+    if (!asSelf || traveller || !profile) return;
+    if (profile.firstName) setFirstName(profile.firstName);
+    if (profile.lastName) setLastName(profile.lastName);
+    if (profile.gender) setGender(profile.gender);
+    if (profile.dateOfBirth) setDateOfBirth(dateInputValue(profile.dateOfBirth));
+    if (profile.nationality) setNationality(profile.nationality);
+    if (profile.email) setEmail(profile.email);
+    if (profile.phone) setPhone(profile.phone.replace(/\D/g, '').slice(-10));
+  }, [asSelf, traveller, profile]);
 
   const existingPassport = detail?.passport ?? null;
   const today = new Date().toISOString().slice(0, 10);
@@ -73,6 +89,7 @@ export const TravellerFormWeb: React.FC<{
           passportNumber: passportEdited ? passportNumber.trim().toUpperCase() : undefined,
           passportExpiryDate: passportEdited ? passportExpiry : undefined,
           passportIssuingCountry: passportEdited ? passportCountry : undefined,
+          isAccountHolder: asSelf || undefined,
         },
       });
       onSaved(id);
