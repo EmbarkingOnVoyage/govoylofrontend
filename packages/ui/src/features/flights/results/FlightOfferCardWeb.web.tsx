@@ -82,16 +82,22 @@ const LayoverNote: React.FC<{ segments: FlightOfferSegment[]; cityFor: (code: st
     </span>
   );
 
-// The price charged, after the commission discount; the price before it struck
-// out alongside when there is one.
-const Price: React.FC<{ amount: number; currency: string; listAmount?: number }> = ({ amount, currency, listAmount }) => (
-  <div className="text-right text-[13px] leading-5 font-bold text-[#FF8011] whitespace-nowrap">
-    {listAmount != null && listAmount > amount + 0.5 && (
-      <span className="mr-1.5 text-[11px] font-normal text-[#697691] line-through">{formatPrice(listAmount, currency)}</span>
-    )}
-    {formatPrice(amount, currency)}
-  </div>
-);
+// The price charged, after the commission discount. With a discount, Desktop-15's
+// Frame 419 (top 22): the price before it struck out on a 20px line, the charged
+// price on the next line 16px below — so the charged price drops 8px.
+const Price: React.FC<{ amount: number; currency: string; listAmount?: number }> = ({ amount, currency, listAmount }) => {
+  const struck = listAmount != null && listAmount > amount + 0.5;
+  return (
+    <div className={`relative text-right text-[13px] leading-5 font-bold text-[#FF8011] whitespace-nowrap${struck ? ' mt-2' : ''}`}>
+      {struck && (
+        <div className="absolute right-0 -top-4 text-[11px] leading-5 font-normal text-[#697691] line-through">
+          {formatPrice(listAmount, currency)}
+        </div>
+      )}
+      {formatPrice(amount, currency)}
+    </div>
+  );
+};
 
 const DetailsLink: React.FC<{ onDetails: () => void }> = ({ onDetails }) => (
   <button type="button" onClick={onDetails} className="flex items-center gap-2 p-2 rounded-lg text-[13px] leading-4 font-medium text-[#7C1AEE]">
