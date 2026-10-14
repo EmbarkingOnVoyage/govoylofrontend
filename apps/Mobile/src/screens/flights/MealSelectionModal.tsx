@@ -96,10 +96,12 @@ export const MealSelectionModal: React.FC<MealSelectionModalProps> = ({
 
   const total = Object.values(picks).reduce((sum, o) => sum + o.totalAmount, 0);
 
-  const select = (travelerId: string, option: AncillaryOption | null) => {
+  const select = (travelerId: string, option: AncillaryOption | null, toggle = true) => {
     setPicks((prev) => {
       const next = { ...prev };
-      if (option) next[travelerId] = option;
+      // Tapping a card already picked unselects it, same as "None" (not the
+      // "Other meal" list, where choosing the current meal again keeps it).
+      if (option && (!toggle || prev[travelerId]?.ssrKey !== option.ssrKey)) next[travelerId] = option;
       else delete next[travelerId];
       return next;
     });
@@ -177,7 +179,7 @@ export const MealSelectionModal: React.FC<MealSelectionModalProps> = ({
                         <SelectField
                           value={pickedOther && picked ? mealLabel(picked, currencyCode) : ''}
                           options={otherMeals.map((m) => mealLabel(m, currencyCode))}
-                          onSelect={(label) => select(traveler.id, mealByLabel.get(label) ?? null)}
+                          onSelect={(label) => select(traveler.id, mealByLabel.get(label) ?? null, false)}
                           title="Select a meal"
                         />
                       </>
