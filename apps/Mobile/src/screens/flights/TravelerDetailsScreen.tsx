@@ -282,6 +282,7 @@ const selectedTravelers = useMemo(
         return {
           offerId: leg.offerId,
           fareId: leg.selectedFareId ?? null,
+          multipleMeals: leg.supplierCode === 'flyshop',
           label: legLabels?.[index] ?? `Flight ${index + 1}`,
           origin: first?.origin ?? '',
           destination: last?.destination ?? '',

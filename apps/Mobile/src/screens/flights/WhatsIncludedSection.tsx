@@ -52,6 +52,12 @@ function selectionKey(legIndex: number, category: AddOnCategory, travelerId: str
   return `${legIndex}:${category}:${travelerId}`;
 }
 
+// A traveller can have several meals on a leg, so meal keys carry the meal:
+// `${legIndex}:meal:${travelerId}:${ssrKey}`.
+function mealSelectionKey(legIndex: number, travelerId: string, ssrKey: string): string {
+  return `${legIndex}:meal:${travelerId}:${ssrKey}`;
+}
+
 // Seats are picked per flight segment (a connecting leg has several), so their
 // selection keys carry the segment: `${legIndex}:seat:${segmentIndex}:${travelerId}`.
 function seatSelectionKey(legIndex: number, segmentIndex: number, travelerId: string): string {
@@ -67,6 +73,8 @@ interface LegRoute {
   destination: string;
   handBaggage: string | null;
   checkInBaggage: string | null;
+  // Flyshop takes several meals per traveller per flight; Tripjack only one.
+  multipleMeals?: boolean;
 }
 
 interface WhatsIncludedSectionProps {
@@ -181,6 +189,39 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
     setOpenModal(null);
   };
 
+  // Meals already added on this leg, per traveller.
+  const mealPicksForLeg = (options: AncillaryOption[]): Record<string, AncillaryOption[]> => {
+    const picks: Record<string, AncillaryOption[]> = {};
+    Object.entries(selections).forEach(([key, selection]) => {
+      if (!key.startsWith(`${activeLegIndex}:meal:`)) return;
+      const option = options.find((o) => o.ssrKey === selection.ssrKey);
+      if (option) (picks[selection.travelerId] ??= []).push(option);
+    });
+    return picks;
+  };
+
+  const handleMealSave = (picks: Record<string, AncillaryOption[]>) => {
+    const next: SelectionMap = {};
+    Object.entries(selections).forEach(([key, selection]) => {
+      if (!key.startsWith(`${activeLegIndex}:meal:`)) next[key] = selection;
+    });
+    Object.entries(picks).forEach(([travelerId, meals]) => {
+      meals.forEach((option) => {
+        next[mealSelectionKey(activeLegIndex, travelerId, option.ssrKey)] = {
+          legIndex: activeLegIndex,
+          category: 'meal',
+          travelerId,
+          ssrKey: option.ssrKey,
+          label: option.ssrTypeDesc,
+          amount: option.totalAmount,
+        };
+      });
+    });
+    setSelections(next);
+    applyTotal(next);
+    setOpenModal(null);
+  };
+
   const handleSeatSave = (picks: SeatPick[]) => {
     const next: SelectionMap = {};
     Object.entries(selections).forEach(([key, selection]) => {
@@ -227,7 +268,9 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
   const hasSelection = (category: AddOnCategory, travelerId: string) =>
     category === 'seat'
       ? Object.keys(selections).some((key) => key.startsWith(`${activeLegIndex}:seat:`) && key.endsWith(`:${travelerId}`))
-      : !!selections[selectionKey(activeLegIndex, category, travelerId)];
+      : category === 'meal'
+        ? Object.keys(selections).some((key) => key.startsWith(`${activeLegIndex}:meal:${travelerId}:`))
+        : !!selections[selectionKey(activeLegIndex, category, travelerId)];
   const anySelected = (category: AddOnCategory) => travelers.some((t) => hasSelection(category, t.id));
 
   return (
@@ -360,9 +403,10 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
           isLoading={ancillaries.isLoading}
           loadError={ancillaries.isError}
           travelers={travelers}
-          initialSelections={picksForLeg('meal', mealOptions)}
+          initialSelections={mealPicksForLeg(mealOptions)}
+          multiple={!!activeLegRoute?.multipleMeals}
           currencyCode={currencyCode}
-          onSave={(picks) => handleCategorySave('meal', picks)}
+          onSave={handleMealSave}
           onClose={() => setOpenModal(null)}
         />
       )}

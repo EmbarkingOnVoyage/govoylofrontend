@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ChevronRight, Loader2, Luggage, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Loader2, Luggage, X } from 'lucide-react';
 import {
   SSR_STATUS_AVAILABLE,
   SSR_TYPE_BAGGAGE,
@@ -39,6 +39,9 @@ export interface AddOnLegRoute {
   airlineName?: string;
   flightNumbers?: string[];
   departureDateTime?: string;
+  // Flyshop takes several meals per traveller per flight; Tripjack only one
+  // ("Meals can only be added once per pax per segment").
+  multipleMeals?: boolean;
 }
 
 function rupees(amount: number, currencyCode: string): string {
@@ -180,7 +183,7 @@ const samePick = (a: AncillaryOption | undefined, b: AncillaryOption) =>
 
 const TravellerDivider = () => <div className="w-[334px] h-px bg-[#CCD3E0]" />;
 
-// Baggage or meals: one option (or none) per traveller.
+// Baggage: one option (or none) per traveller.
 const PerTravellerPanel: React.FC<{
   kind: 'baggage' | 'meal';
   route: AddOnLegRoute;
@@ -203,14 +206,6 @@ const PerTravellerPanel: React.FC<{
       else delete next[travellerId];
       return next;
     });
-
-  // Meals: the Veg / Non-veg chips pick the cheapest of each kind; every
-  // meal is also in the "Other meal" list.
-  const cheapest = (wanted: 'veg' | 'nonveg') =>
-    cards.filter((o) => mealKind(o) === wanted).sort((a, b) => a.totalAmount - b.totalAmount)[0];
-  const vegMeal = kind === 'meal' ? cheapest('veg') : undefined;
-  const nonVegMeal = kind === 'meal' ? cheapest('nonveg') : undefined;
-  const complimentary = cards.some((o) => o.ssrType === SSR_TYPE_COMPLIMENTARY_MEALS);
 
   const ready = !isLoading && !error && cards.length > 0;
 
@@ -272,46 +267,182 @@ const PerTravellerPanel: React.FC<{
                   })}
                 </div>
               </div>
-            ) : (
-              <div className="flex flex-col gap-3">
-                <span className="text-[15px] leading-5 font-bold text-[#3E4B64]">
-                  {t.firstName} {t.lastName}
-                  {complimentary && <span className="text-[#007F20]"> - Included</span>}
-                </span>
-                <div className="flex items-stretch gap-4">
-                  <OptionCard none className="w-[83px] h-[68px]" selected={!picks[t.id]} onClick={() => set(t.id, null)}>
-                    <span className="my-auto text-[15px] leading-5 font-bold text-black">
-                      None
-                      <br />
-                      Added
-                    </span>
-                  </OptionCard>
-                  {[
-                    { label: 'Veg', option: vegMeal, width: 'w-[63px]' },
-                    { label: 'Non-veg', option: nonVegMeal, width: 'w-[102px]' },
-                  ].map(({ label, option, width }) =>
-                    option ? (
-                      <OptionCard
-                        key={label}
-                        className={`${width} h-[68px] items-center`}
-                        selected={samePick(picks[t.id], option)}
-                        onClick={() => set(t.id, option)}
-                      >
-                        <span className="my-auto flex flex-col items-center">
-                          <span className="text-[15px] leading-5 font-bold text-black">{label}</span>
-                          {option.totalAmount > 0 && (
-                            <span className="text-[12px] leading-4 font-bold text-[#6A16CB]">{rupees(option.totalAmount, currencyCode)}</span>
-                          )}
-                        </span>
-                      </OptionCard>
-                    ) : null
-                  )}
-                </div>
-                <FieldWeb label="Other meal" className="w-[335px]">
+            ) : null}
+          </React.Fragment>
+        ))}
+    </PanelShell>
+  );
+};
+
+type MealPicks = Record<string, AncillaryOption[]>;
+
+// "Other meal" when several meals are allowed: a select-styled button that
+// opens a checkbox list of every meal on the flight.
+const MealMultiSelect: React.FC<{
+  meals: AncillaryOption[];
+  picked: AncillaryOption[];
+  currencyCode: string;
+  onToggle: (meal: AncillaryOption) => void;
+}> = ({ meals, picked, currencyCode, onToggle }) => {
+  const [open, setOpen] = useState(false);
+  const summary =
+    picked.length === 0 ? 'Select' : picked.length === 1 ? picked[0].ssrTypeDesc : `${picked[0].ssrTypeDesc} +${picked.length - 1} more`;
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className={`${fieldInputClass} flex items-center justify-between gap-2 text-left`}
+      >
+        <span className={`truncate ${picked.length === 0 ? 'text-[#697691]' : ''}`}>{summary}</span>
+        <ChevronDown size={16} className="shrink-0 text-[#3E4B64]" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+          <div
+            role="listbox"
+            aria-multiselectable="true"
+            className="absolute z-20 left-0 right-0 mt-1 max-h-[260px] overflow-y-auto bg-white border border-[#ADB8CD] rounded-lg shadow-lg py-1"
+          >
+            {meals.map((meal) => {
+              const checked = picked.some((p) => samePick(p, meal));
+              return (
+                <button
+                  key={meal.ssrKey}
+                  type="button"
+                  role="option"
+                  aria-selected={checked}
+                  onClick={() => onToggle(meal)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-[#F8F9FB]"
+                >
+                  <span
+                    className={`w-[18px] h-[18px] shrink-0 rounded flex items-center justify-center border ${
+                      checked ? 'bg-[#7C1AEE] border-[#7C1AEE]' : 'bg-white border-[#7C8CAD]'
+                    }`}
+                  >
+                    {checked && <Check size={12} strokeWidth={3} className="text-white" />}
+                  </span>
+                  <span className="flex-1 min-w-0 text-[14px] leading-5 text-[#182339]">{meal.ssrTypeDesc}</span>
+                  <span className="shrink-0 text-[13px] leading-4 font-bold text-[#6A16CB]">{rupees(meal.totalAmount, currencyCode)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
+    </div>
+  );
+};
+
+// Meals per traveller. On a flight that takes several meals (Flyshop) the
+// Veg / Non-veg chips and the "Other meal" list all add to the traveller's
+// meals; otherwise picking one replaces the other, as the supplier allows
+// only one.
+const MealPanel: React.FC<{
+  route: AddOnLegRoute;
+  options: AncillaryOption[];
+  isLoading: boolean;
+  error: boolean;
+  travellers: AddOnTraveller[];
+  initial: MealPicks;
+  currencyCode: string;
+  onSave: (picks: MealPicks) => void;
+  onClose: () => void;
+}> = ({ route, options, isLoading, error, travellers, initial, currencyCode, onSave, onClose }) => {
+  const [picks, setPicks] = useState<MealPicks>(initial);
+  const cards = useMemo(() => uniqueOptions(options), [options]);
+  const multiple = !!route.multipleMeals;
+  const total = Object.values(picks).flat().reduce((sum, o) => sum + o.totalAmount, 0);
+
+  const mealsOf = (travellerId: string) => picks[travellerId] ?? [];
+  const has = (travellerId: string, meal: AncillaryOption) => mealsOf(travellerId).some((p) => samePick(p, meal));
+  const update = (travellerId: string, meals: AncillaryOption[]) =>
+    setPicks((prev) => {
+      const next = { ...prev };
+      if (meals.length > 0) next[travellerId] = meals;
+      else delete next[travellerId];
+      return next;
+    });
+  const toggle = (travellerId: string, meal: AncillaryOption) => {
+    const current = mealsOf(travellerId);
+    if (has(travellerId, meal)) update(travellerId, current.filter((p) => !samePick(p, meal)));
+    else update(travellerId, multiple ? [...current, meal] : [meal]);
+  };
+
+  // The Veg / Non-veg chips stand for the cheapest meal of each kind; every
+  // meal is also in the "Other meal" list.
+  const cheapest = (wanted: 'veg' | 'nonveg') =>
+    cards.filter((o) => mealKind(o) === wanted).sort((a, b) => a.totalAmount - b.totalAmount)[0];
+  const vegMeal = cheapest('veg');
+  const nonVegMeal = cheapest('nonveg');
+  const complimentary = cards.some((o) => o.ssrType === SSR_TYPE_COMPLIMENTARY_MEALS);
+  const ready = !isLoading && !error && cards.length > 0;
+
+  return (
+    <PanelShell
+      title="Meal"
+      width={521}
+      route={route}
+      total={total}
+      currencyCode={currencyCode}
+      onSave={() => onSave(picks)}
+      onClose={onClose}
+    >
+      <PanelStatus isLoading={isLoading} error={error} empty={cards.length === 0} emptyText="No meals are offered on this flight." />
+      {ready && !multiple && (
+        <p className="-mt-2 text-[13px] leading-4 text-[#697691]">This airline allows one meal per traveller on this flight.</p>
+      )}
+      {ready &&
+        travellers.map((t, index) => (
+          <React.Fragment key={t.id}>
+            {index > 0 && <TravellerDivider />}
+            <div className="flex flex-col gap-3">
+              <span className="text-[15px] leading-5 font-bold text-[#3E4B64]">
+                {t.firstName} {t.lastName}
+                {complimentary && <span className="text-[#007F20]"> - Included</span>}
+              </span>
+              <div className="flex items-stretch gap-4">
+                <OptionCard none className="w-[83px] h-[68px]" selected={mealsOf(t.id).length === 0} onClick={() => update(t.id, [])}>
+                  <span className="my-auto text-[15px] leading-5 font-bold text-black">
+                    None
+                    <br />
+                    Added
+                  </span>
+                </OptionCard>
+                {[
+                  { label: 'Veg', option: vegMeal, width: 'w-[63px]' },
+                  { label: 'Non-veg', option: nonVegMeal, width: 'w-[102px]' },
+                ].map(({ label, option, width }) =>
+                  option ? (
+                    <OptionCard
+                      key={label}
+                      className={`${width} h-[68px] items-center`}
+                      selected={has(t.id, option)}
+                      onClick={() => toggle(t.id, option)}
+                    >
+                      <span className="my-auto flex flex-col items-center">
+                        <span className="text-[15px] leading-5 font-bold text-black">{label}</span>
+                        {option.totalAmount > 0 && (
+                          <span className="text-[12px] leading-4 font-bold text-[#6A16CB]">{rupees(option.totalAmount, currencyCode)}</span>
+                        )}
+                      </span>
+                    </OptionCard>
+                  ) : null
+                )}
+              </div>
+              <FieldWeb label={multiple ? 'Other meals' : 'Other meal'} className="w-[335px]">
+                {multiple ? (
+                  <MealMultiSelect meals={cards} picked={mealsOf(t.id)} currencyCode={currencyCode} onToggle={(meal) => toggle(t.id, meal)} />
+                ) : (
                   <select
                     className={fieldInputClass}
-                    value={picks[t.id] ? cards.find((o) => samePick(picks[t.id], o))?.ssrKey ?? '' : ''}
-                    onChange={(e) => set(t.id, cards.find((o) => o.ssrKey === e.target.value) ?? null)}
+                    value={cards.find((o) => has(t.id, o))?.ssrKey ?? ''}
+                    onChange={(e) => {
+                      const meal = cards.find((o) => o.ssrKey === e.target.value);
+                      update(t.id, meal ? [meal] : []);
+                    }}
                   >
                     <option value="">Select</option>
                     {cards.map((o) => (
@@ -320,9 +451,9 @@ const PerTravellerPanel: React.FC<{
                       </option>
                     ))}
                   </select>
-                </FieldWeb>
-              </div>
-            )}
+                )}
+              </FieldWeb>
+            </div>
           </React.Fragment>
         ))}
     </PanelShell>
@@ -588,6 +719,15 @@ export const AddOnsSectionWeb: React.FC<{
     setOpen(null);
   };
 
+  const mealPicks = (list: AncillaryOption[]): MealPicks => {
+    const picks: MealPicks = {};
+    for (const s of legSelections('meal')) {
+      const option = list.find((o) => o.ssrKey === s.ssrKey);
+      if (option) (picks[s.travelerId] ??= []).push(option);
+    }
+    return picks;
+  };
+
   const picksFor = (category: 'baggage' | 'meal', list: AncillaryOption[]): Picks =>
     Object.fromEntries(
       legSelections(category).flatMap((s) => {
@@ -769,27 +909,26 @@ export const AddOnsSectionWeb: React.FC<{
         />
       )}
       {open === 'meal' && (
-        <PerTravellerPanel
-          kind="meal"
+        <MealPanel
           route={route}
           options={mealOptions}
           isLoading={ancillaries.isLoading}
           error={ancillaries.isError}
           travellers={travellers}
-          initial={picksFor('meal', mealOptions)}
+          initial={mealPicks(mealOptions)}
           currencyCode={currencyCode}
           onClose={() => setOpen(null)}
           onSave={(picks) =>
             replace(
               'meal',
-              Object.entries(picks).map(([travelerId, o]) => ({
+              Object.entries(picks).flatMap(([travelerId, meals]) => meals.map((o) => ({
                 legIndex: activeLeg,
                 category: 'meal',
                 travelerId,
                 ssrKey: o.ssrKey,
                 label: o.ssrTypeDesc,
                 amount: o.totalAmount,
-              }))
+              })))
             )
           }
         />

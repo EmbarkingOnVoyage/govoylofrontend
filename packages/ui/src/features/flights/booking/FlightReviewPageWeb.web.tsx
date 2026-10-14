@@ -394,6 +394,7 @@ export const FlightReviewPageWeb: React.FC<{
       airlineName: leg.airlineName,
       flightNumbers: firstTrip.map((s) => `${s.airlineCode} ${s.flightNumber}`),
       departureDateTime: first?.departureDateTime,
+      multipleMeals: leg.supplierCode === 'flyshop',
     };
   });
 
