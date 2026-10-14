@@ -20,6 +20,7 @@ import {
   isExpiredHold,
   routeTitle,
 } from '../logic/myTrips';
+import { tripFareRows } from '../logic/booking';
 import { downloadETicketWeb } from './downloadETicket.web';
 import { NoticeDialogWeb } from './NoticeDialogWeb.web';
 import { useEscapeKey } from '../useEscapeKey.web';
@@ -322,8 +323,7 @@ export const TripDetailsPageWeb: React.FC<{ tripBookingId: string; onBack: () =>
       <span className={strong ? 'text-[16px] leading-5 font-bold text-[#182339]' : 'text-[13px] leading-4 text-[#182339]'}>{value}</span>
     </div>
   );
-  const otherCharges =
-    data.baseFare != null && data.taxesAndFees != null ? data.totalPaid - data.baseFare - data.taxesAndFees - convenienceFee : 0;
+  const fareRows = tripFareRows(data);
 
   return (
     <div className="pb-16 font-['Inter',sans-serif]">
@@ -397,10 +397,11 @@ export const TripDetailsPageWeb: React.FC<{ tripBookingId: string; onBack: () =>
           {/* Fare details. */}
           <h4 className="mt-[18px] pl-px text-[16px] leading-6 font-bold text-[#182339]">Fare details</h4>
           <div className="mt-[11px] flex flex-col gap-3">
-            {data.baseFare != null && row('Base fare', money(data.baseFare))}
-            {data.taxesAndFees != null && row('Taxes & fees', money(data.taxesAndFees))}
-            {otherCharges >= 1 && row('Add-ons & other charges', money(otherCharges))}
+            {fareRows.baseFare != null && row('Base fare', money(fareRows.baseFare))}
+            {fareRows.taxesAndFees != null && row('Taxes & fees', money(fareRows.taxesAndFees))}
+            {fareRows.addOns >= 1 && row('Add-ons & other charges', money(fareRows.addOns))}
             {convenienceFee > 0 && row('Convenience fee', money(convenienceFee))}
+            {fareRows.discount > 0 && row('Discount', `−${money(fareRows.discount)}`)}
           </div>
           <div className="mt-[11px] h-px bg-[#98A5BF]" />
           <div className="mt-[11px]">{row(isHeld ? 'Amount due' : 'Total paid', money(data.totalPaid), true)}</div>

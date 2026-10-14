@@ -6,6 +6,7 @@ import {
   useCancelTripBookingMobile,
   type TripBooking,
 } from '@workspace/ui';
+import { tripFareRows } from '@workspace/ui/src/features/flights/logic/booking';
 import { styles, RED } from './TripDetailsScreen.styles';
 import { PURPLE, MUTED, GREEN } from './MyTripsScreen.styles';
 import { AirlineLogo } from './FlightResultsScreen';
@@ -97,6 +98,7 @@ export const TripDetailsScreen: React.FC<TripDetailsScreenProps> = ({ tripBookin
 
   const { booking } = data;
   const convenienceFee = booking.convenienceFee ?? 0;
+  const fareRows = tripFareRows(data);
   const status = bookingStatus(booking);
   const StatusIcon = status.icon === 'check' ? Check : status.icon === 'clock' ? Clock : X;
   const lines = flightLines(data);
@@ -209,30 +211,36 @@ export const TripDetailsScreen: React.FC<TripDetailsScreenProps> = ({ tripBookin
               <Text style={styles.linkText}>View invoice</Text>
             </TouchableOpacity>
           </View>
-          {data.baseFare != null ? (
+          {fareRows.baseFare != null ? (
             <View style={styles.fareRow}>
               <Text style={styles.fareLabel}>Base Fare</Text>
-              <Text style={styles.fareValue}>{formatCurrency(data.baseFare, booking.currencyCode)}</Text>
+              <Text style={styles.fareValue}>{formatCurrency(fareRows.baseFare, booking.currencyCode)}</Text>
             </View>
           ) : null}
-          {data.taxesAndFees != null ? (
+          {fareRows.taxesAndFees != null ? (
             <View style={styles.fareRow}>
               <Text style={styles.fareLabel}>Taxes & Fees</Text>
-              <Text style={styles.fareValue}>{formatCurrency(data.taxesAndFees, booking.currencyCode)}</Text>
+              <Text style={styles.fareValue}>{formatCurrency(fareRows.taxesAndFees, booking.currencyCode)}</Text>
             </View>
           ) : null}
-          {data.baseFare != null && data.taxesAndFees != null && data.totalPaid - data.baseFare - data.taxesAndFees - convenienceFee >= 1 ? (
+          {fareRows.addOns >= 1 ? (
             <View style={styles.fareRow}>
               <Text style={styles.fareLabel}>Add-ons & other charges</Text>
-              <Text style={styles.fareValue}>
-                {formatCurrency(data.totalPaid - data.baseFare - data.taxesAndFees - convenienceFee, booking.currencyCode)}
-              </Text>
+              <Text style={styles.fareValue}>{formatCurrency(fareRows.addOns, booking.currencyCode)}</Text>
             </View>
           ) : null}
           {convenienceFee > 0 ? (
             <View style={styles.fareRow}>
               <Text style={styles.fareLabel}>Convenience Fee</Text>
               <Text style={styles.fareValue}>{formatCurrency(convenienceFee, booking.currencyCode)}</Text>
+            </View>
+          ) : null}
+          {fareRows.discount > 0 ? (
+            <View style={styles.fareRow}>
+              <Text style={styles.fareLabel}>Discount</Text>
+              <Text style={[styles.fareValue, { color: GREEN, fontWeight: '600' }]}>
+                −{formatCurrency(fareRows.discount, booking.currencyCode)}
+              </Text>
             </View>
           ) : null}
           {data.baseFare != null || data.taxesAndFees != null || convenienceFee > 0 ? <View style={styles.fareDivider} /> : null}

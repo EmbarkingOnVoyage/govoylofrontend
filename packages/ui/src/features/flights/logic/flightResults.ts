@@ -67,6 +67,18 @@ export function formatDateRange(summary: FlightSearchSummary): string {
 
 const CURRENCY_SYMBOLS: Record<string, string> = { INR: '₹' };
 
+// Commission discount on an offer (every passenger): its picked fare's, else
+// the offer's own. totalAmount is already after it.
+export function offerDiscount(offer: FlightOffer): number {
+  const fare = offer.selectedFareId ? offer.fares.find((f) => f.fareId === offer.selectedFareId) : undefined;
+  return (fare ? fare.bookingDiscountAmount : offer.discountAmount) ?? 0;
+}
+
+// The offer's price before the discount — shown struck out next to totalAmount.
+export function offerListAmount(offer: FlightOffer): number {
+  return offer.totalAmount + offerDiscount(offer);
+}
+
 export function formatPrice(amount: number, currencyCode: string): string {
   const symbol = CURRENCY_SYMBOLS[currencyCode] ?? `${currencyCode} `;
   // Indian digit grouping; paise only when there are any (₹1,588.50, ₹4,250).
