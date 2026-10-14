@@ -34,6 +34,8 @@ export const NAVIGATION_FLOW_ENGINE: Record<AppScreen, Partial<Record<Navigation
     ON_BACK: 'Landing',
     ON_NAVIGATE_TO_FLIGHTS: 'Landing',
     ON_SUBMIT_SUCCESS: "OTP",
+    // Continue with Google / Facebook signs in without the OTP step.
+    ON_OTP_VERIFIED: "Landing",
     ON_NAVIGATE_TO_PROFILE: 'Profile',
     ON_NAVIGATE_TO_SIGN_IN: 'SignIn',
     ON_CONTINUE_AS_GUEST: 'Landing',
