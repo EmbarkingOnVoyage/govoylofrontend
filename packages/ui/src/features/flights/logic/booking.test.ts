@@ -1,7 +1,8 @@
 import { describe, test, expect } from 'vitest';
 import type { FareOption, FlightOffer } from '../useSearchFlightsMobile';
 import type { Traveler } from '../../profile/useTravellersMobile';
-import { buildBookingLegs, buildBookingTravelers, legBaseFare } from './booking';
+import { buildBookingLegs, buildBookingTravelers, legBaseFare, legDiscount, legListAmount, tripFareRows } from './booking';
+import { offerListAmount } from './flightResults';
 import { GSTIN_PATTERN, checkTravelerAge } from './travellers';
 
 const fare = (overrides: Partial<FareOption>): FareOption => ({
@@ -89,5 +90,44 @@ describe('traveller rules', () => {
   test('GSTIN format', () => {
     expect(GSTIN_PATTERN.test('27AAPFU0939F1ZV')).toBe(true);
     expect(GSTIN_PATTERN.test('27AAPFU0939F1Z')).toBe(false);
+  });
+});
+
+describe('commission discount', () => {
+  // ₹7,297 fare for one adult, ₹500 commission, all of it given back.
+  const discounted = leg({
+    totalAmount: 7297,
+    discountAmount: 500,
+    fares: [fare({ bookingTotalAmount: 7297, bookingBaseAmount: 5500, bookingListAmount: 7797, bookingDiscountAmount: 500, bookingCommissionAmount: 500 })],
+  });
+
+  test('the base fare includes the commission and the discount comes off', () => {
+    expect(legBaseFare(discounted)).toBe(6000);
+    expect(legDiscount(discounted)).toBe(500);
+    expect(legListAmount(discounted)).toBe(7797);
+    expect(offerListAmount(discounted)).toBe(7797);
+  });
+
+  test('a fare without commission is shown as before', () => {
+    const plain = leg({ fares: [fare({})] });
+    expect(legBaseFare(plain)).toBe(3000);
+    expect(legDiscount(plain)).toBe(0);
+    expect(legListAmount(plain)).toBe(3089);
+  });
+
+  test('trip details add up to what was paid', () => {
+    const rows = tripFareRows({
+      booking: { commissionAmount: 500, discountAmount: 500, convenienceFee: 73 } as any,
+      supplierDetailsAvailable: true,
+      segments: [],
+      passengers: [],
+      baseFare: 5500,
+      taxesAndFees: 1797,
+      totalPaid: 7970,
+    });
+    expect(rows.baseFare).toBe(6000);
+    expect(rows.addOns).toBe(600);
+    expect(rows.discount).toBe(500);
+    expect(rows.baseFare! + rows.taxesAndFees! + rows.addOns + rows.convenienceFee - rows.discount).toBe(7970);
   });
 });

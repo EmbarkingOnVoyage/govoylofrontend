@@ -46,6 +46,10 @@ export interface TripBooking {
   // Everything the customer paid: fare, add-ons and convenience fee. Use this,
   // not totalAmount (the supplier's fare), wherever "paid" is shown.
   totalPaid?: number;
+  // Our commission on the fare and the part given as discount (0 for bookings
+  // made before discounts). See tripFareRows.
+  commissionAmount?: number;
+  discountAmount?: number;
 }
 
 // legIndex: which leg of the booking the flight belongs to (0 outbound, 1 return).

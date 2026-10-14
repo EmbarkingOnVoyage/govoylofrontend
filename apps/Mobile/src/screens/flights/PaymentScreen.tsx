@@ -8,6 +8,7 @@ import type { AddOnSelection } from './WhatsIncludedSection';
 import { styles } from './PaymentScreen.styles';
 import { PAYMENT_BADGE_SVG } from '../../components/paymentBadges';
 import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
+import { legBaseFare, legDiscount } from '@workspace/ui/src/features/flights/logic/booking';
 import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 export interface PaymentTraveller {
@@ -90,15 +91,6 @@ function tripsOf(leg: FlightOffer): FlightOffer['segments'][] {
   return [...byTrip.entries()].sort(([a], [b]) => a - b).map(([, segs]) => segs);
 }
 
-// The fare being booked on a leg and its base fare for every passenger — 0
-// when the supplier didn't split base and taxes.
-function legBaseFare(leg: FlightOffer): number {
-  const fare =
-    leg.fares.find((f) => f.fareId === leg.selectedFareId) ??
-    leg.fares.find((f) => Math.round(f.bookingTotalAmount) === Math.round(leg.totalAmount));
-  return fare?.bookingBaseAmount ?? 0;
-}
-
 const ADD_ON_LABELS: Record<AddOnSelection['category'], string> = {
   seat: 'Seats',
   meal: 'Meals',
@@ -170,6 +162,8 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   // Fare breakdown. The supplier splits base fare and taxes per fare; add-ons
   // are what the traveller picked. Any re-price at booking shows as its own row.
   const flightTotal = legs.reduce((sum, leg) => sum + leg.totalAmount, 0);
+  // Commission discount: base fare and taxes are shown before it, then taken off.
+  const discount = legs.reduce((sum, leg) => sum + legDiscount(leg), 0);
   const baseFare = legs.reduce((sum, leg) => sum + legBaseFare(leg), 0);
   const baseKnown = legs.every((leg) => legBaseFare(leg) > 0);
   const addOnTotal = addOnSelections.reduce((sum, s) => sum + s.amount, 0);
@@ -336,15 +330,22 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                   </View>
                   <View style={styles.fareRow}>
                     <Text style={styles.fareLabel}>Taxes & Fees</Text>
-                    <Text style={styles.fareValue}>{money(flightTotal - baseFare)}</Text>
+                    <Text style={styles.fareValue}>{money(flightTotal + discount - baseFare)}</Text>
                   </View>
                 </>
               ) : (
                 <View style={styles.fareRow}>
                   <Text style={styles.fareLabel}>Flight fare (incl. taxes)</Text>
-                  <Text style={styles.fareValue}>{money(flightTotal)}</Text>
+                  <Text style={styles.fareValue}>{money(flightTotal + discount)}</Text>
                 </View>
               )}
+
+              {discount > 0 ? (
+                <View style={styles.fareRow}>
+                  <Text style={styles.fareLabel}>Discount</Text>
+                  <Text style={[styles.fareValue, styles.discountValue]}>−{money(discount)}</Text>
+                </View>
+              ) : null}
 
               {addOnTotal > 0 ? (
                 <>

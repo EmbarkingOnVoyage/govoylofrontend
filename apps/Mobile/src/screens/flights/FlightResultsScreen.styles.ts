@@ -1181,6 +1181,21 @@ export const styles = StyleSheet.create({
     alignItems: 'flex-end',
     marginTop: -1.25,
   },
+  // Price before the commission discount, struck out (above the price on a
+  // card, or just before it on one line).
+  listPrice: {
+    fontSize: 11,
+    lineHeight: 14,
+    fontWeight: '400',
+    color: '#697691',
+    textDecorationLine: 'line-through',
+  },
+  listPriceInline: {
+    fontSize: 12,
+    fontWeight: '400',
+    color: '#697691',
+    textDecorationLine: 'line-through',
+  },
   routeSubtitleRow: {
     flexDirection: 'row',
     alignItems: 'center',

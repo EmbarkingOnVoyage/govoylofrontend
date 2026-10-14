@@ -64,6 +64,8 @@ import {
   type TimeSelection,
   type StopBucketId,
   type CombinedFilterState,
+  offerDiscount,
+  offerListAmount,
   type FareSelection,
 } from '@workspace/ui/src/features/flights/logic/flightResults';
 import { fareRuleSummary, type FareRuleSummary } from '@workspace/ui/src/features/flights/logic/fareRules';
@@ -830,6 +832,21 @@ const FilterScreen: React.FC<{
 // The airline's square mark, fetched once per airline from the API (see
 // airlineLogos.ts), or the plane badge when there's none for the code. Nothing
 // is drawn in the logo's place while it loads, so cards don't flash the badge.
+// The price before the commission discount, struck out — only when there is a
+// discount. Inline: a nested Text placed before the charged price.
+const ListPrice: React.FC<{ amount: number; charged: number; currencyCode: string; inline?: boolean }> = ({
+  amount,
+  charged,
+  currencyCode,
+  inline,
+}) =>
+  amount > charged + 0.5 ? (
+    <Text style={inline ? styles.listPriceInline : styles.listPrice}>
+      {formatPrice(amount, currencyCode)}
+      {inline ? ' ' : ''}
+    </Text>
+  ) : null;
+
 export const AirlineLogo: React.FC<{
   airlineCode: string;
   size: number;
@@ -959,6 +976,7 @@ const FlightOfferCard: React.FC<{ offer: FlightOffer; variant?: FeaturedVariant;
             arrivalDayOffset={arrivalDayOffset}
           />
           <View style={styles.priceBlock}>
+            <ListPrice amount={offerListAmount(offer)} charged={offer.totalAmount} currencyCode={offer.currencyCode} />
             <Text style={styles.priceText}>{formatPrice(offer.totalAmount, offer.currencyCode)}</Text>
           </View>
         </View>
@@ -1059,7 +1077,15 @@ const CombinedFlightOfferCard: React.FC<{
           <CombinedLegRow offer={pair.onward} label="Round trip" />
         )}
         <View style={styles.combinedPriceRow}>
-          <Text style={styles.priceText}>{formatPrice(pair.totalAmount, pair.currencyCode)}</Text>
+          <Text style={styles.priceText}>
+            <ListPrice
+              inline
+              amount={pair.totalAmount + offerDiscount(pair.onward) + (pair.returnOffer ? offerDiscount(pair.returnOffer) : 0)}
+              charged={pair.totalAmount}
+              currencyCode={pair.currencyCode}
+            />
+            {formatPrice(pair.totalAmount, pair.currencyCode)}
+          </Text>
           <Text style={styles.combinedBookText}>Book</Text>
         </View>
       </View>
@@ -1150,7 +1176,10 @@ const MultiCityCombinedOfferCard: React.FC<{
           </React.Fragment>
         ))}
         <View style={styles.combinedPriceRow}>
-          <Text style={styles.priceText}>{formatPrice(offer.totalAmount, offer.currencyCode)}</Text>
+          <Text style={styles.priceText}>
+            <ListPrice inline amount={offerListAmount(offer)} charged={offer.totalAmount} currencyCode={offer.currencyCode} />
+            {formatPrice(offer.totalAmount, offer.currencyCode)}
+          </Text>
           <Text style={styles.combinedBookText}>Book</Text>
         </View>
       </View>
@@ -1243,6 +1272,10 @@ const FlightDetailsModal: React.FC<{
     ? perLegSelectedFares.reduce((sum, fare) => sum + (fare?.bookingTotalAmount ?? 0), 0)
     : selectedFare?.bookingTotalAmount;
   const footerCurrency = selectedFare?.currencyCode ?? activeOffer.currencyCode;
+  // Before the commission discount, struck out next to it.
+  const footerListAmount = isMultiLegView
+    ? perLegSelectedFares.reduce((sum, fare) => sum + (fare?.bookingListAmount ?? fare?.bookingTotalAmount ?? 0), 0)
+    : selectedFare?.bookingListAmount ?? selectedFare?.bookingTotalAmount;
   // Every leg must have a fare selected for a combined total to mean
   // anything — a leg with no fares at all leaves part of the sum missing.
   const footerReady = isMultiLegView ? perLegSelectedFares.every((fare) => fare !== undefined) : !!selectedFare;
@@ -1420,6 +1453,7 @@ const FlightDetailsModal: React.FC<{
           <View style={styles.detailsFooter}>
             <View>
               <Text style={styles.detailsFooterPrice}>
+                {footerReady && <ListPrice inline amount={footerListAmount ?? 0} charged={footerAmount ?? 0} currencyCode={footerCurrency} />}
                 {footerReady ? formatPrice(footerAmount!, footerCurrency) : '--'}
               </Text>
               <Text style={styles.detailsFooterTravellerCount}>
@@ -1723,6 +1757,7 @@ const FareOptionCard: React.FC<{ offerId: string; fare: FareOption; index: numbe
           <Text style={styles.fareCardName} numberOfLines={1}>
             {fareDisplayName(fare).replace(/ Fare$/, '')}
             <Text style={styles.fareCardMuted}> | </Text>
+            <ListPrice inline amount={fare.listAmount ?? fare.totalAmount} charged={fare.totalAmount} currencyCode={fare.currencyCode} />
             <Text style={styles.fareCardPrice}>{formatPrice(fare.totalAmount, fare.currencyCode)}</Text>
             <Text style={styles.fareCardMuted}>/adult</Text>
           </Text>

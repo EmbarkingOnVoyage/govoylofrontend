@@ -314,6 +314,10 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: '#3E4B64',
   },
+  discountValue: {
+    color: '#007F20',
+    fontWeight: '600',
+  },
   addOnToggle: {
     flexDirection: 'row',
     alignItems: 'center',

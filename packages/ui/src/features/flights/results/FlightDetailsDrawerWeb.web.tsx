@@ -211,6 +211,8 @@ export const FlightDetailsDrawerWeb: React.FC<{
   const perLegFares = legs.map((leg, i) => resolveSelectedFare(leg, selections[i] ?? EMPTY_SELECTION));
   const ready = perLegFares.every((f) => f !== undefined);
   const totalPerAdult = perLegFares.reduce((sum, f) => sum + (f?.totalAmount ?? 0), 0);
+  // Before the commission discount, struck out next to it.
+  const listPerAdult = perLegFares.reduce((sum, f) => sum + (f?.listAmount ?? f?.totalAmount ?? 0), 0);
   const currency = perLegFares[0]?.currencyCode ?? activeOffer.currencyCode;
   const labelFor = (i: number) => legLabels?.[i] ?? `Flight ${i + 1}`;
   const subtitle = `${dayMonth(first.departureDateTime)} · ${stopsLabel(activeOffer.segments.length - 1)} · ${formatTotalDuration(
@@ -357,7 +359,11 @@ export const FlightDetailsDrawerWeb: React.FC<{
                       >
                         <div className="h-12 flex flex-col justify-center px-2 py-1 rounded" style={{ background: style.header }}>
                           <span className="py-0.5 text-[15px] leading-5 font-medium text-[#182339] whitespace-nowrap">
-                            {fareDisplayName(fare)} | {formatPrice(fare.totalAmount, fare.currencyCode)}/adult
+                            {fareDisplayName(fare)} |{' '}
+                            {(fare.listAmount ?? 0) > fare.totalAmount + 0.5 && (
+                              <span className="mr-1 text-[13px] text-[#697691] line-through">{formatPrice(fare.listAmount!, fare.currencyCode)}</span>
+                            )}
+                            {formatPrice(fare.totalAmount, fare.currencyCode)}/adult
                           </span>
                           <span className="text-[13px] leading-4 text-[#3E4B64]">
                             {fareTagline(fare)}
@@ -402,6 +408,9 @@ export const FlightDetailsDrawerWeb: React.FC<{
           <div className="flex items-center justify-between px-5 py-4 border-t border-[#ECEEF3]">
             <div>
               <div className="text-[18px] leading-6 font-bold text-[#182339]">
+                {ready && listPerAdult > totalPerAdult + 0.5 && (
+                  <span className="mr-1.5 text-[13px] font-normal text-[#697691] line-through">{formatPrice(listPerAdult, currency)}</span>
+                )}
                 {ready ? formatPrice(totalPerAdult, currency) : '--'}
                 <span className="text-[13px] font-normal text-[#697691]"> /adult</span>
               </div>

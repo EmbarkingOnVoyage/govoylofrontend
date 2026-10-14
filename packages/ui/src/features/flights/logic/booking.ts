@@ -4,6 +4,7 @@
 import type { FlightOffer } from '../useSearchFlightsMobile';
 import type { BookingLegRequest, BookingTravelerRequest } from '../useCreateBookingMobile';
 import type { Traveler } from '../../profile/useTravellersMobile';
+import type { TripBookingDetails } from '../useMyTripsMobile';
 import { PAX_API_TYPES, type PaxType } from './travellers';
 
 export type AddOnCategory = 'baggage' | 'seat' | 'meal';
@@ -66,9 +67,37 @@ export function bookedFare(leg: FlightOffer) {
 }
 
 // A leg's base fare for every passenger — 0 when the supplier didn't split
-// base and taxes.
+// base and taxes. Includes our commission, as the price breakups show it
+// before the commission discount is taken off.
 export function legBaseFare(leg: FlightOffer): number {
-  return bookedFare(leg)?.bookingBaseAmount ?? 0;
+  const fare = bookedFare(leg);
+  const base = fare?.bookingBaseAmount ?? 0;
+  return base > 0 ? base + (fare?.bookingCommissionAmount ?? 0) : 0;
+}
+
+// The commission discount on a leg's fare (every passenger).
+export function legDiscount(leg: FlightOffer): number {
+  const fare = bookedFare(leg);
+  return fare ? fare.bookingDiscountAmount ?? 0 : leg.discountAmount ?? 0;
+}
+
+// What a leg's fare is shown at before the discount (struck out).
+export function legListAmount(leg: FlightOffer): number {
+  return leg.totalAmount + legDiscount(leg);
+}
+
+// A booked trip's fare details, as the booking flow showed them: base fare with
+// our commission in it, taxes, add-ons (whatever else was paid), convenience
+// fee, then the commission discount taken off. baseFare is null when the
+// supplier didn't split base and taxes; addOns is then 0.
+export function tripFareRows(data: TripBookingDetails) {
+  const commission = data.booking.commissionAmount ?? 0;
+  const discount = data.booking.discountAmount ?? 0;
+  const convenienceFee = data.booking.convenienceFee ?? 0;
+  const baseFare = data.baseFare != null ? data.baseFare + commission : null;
+  const addOns =
+    baseFare != null && data.taxesAndFees != null ? data.totalPaid - baseFare - data.taxesAndFees - convenienceFee + discount : 0;
+  return { baseFare, taxesAndFees: data.taxesAndFees, addOns, convenienceFee, discount };
 }
 
 export const ADD_ON_LABELS: Record<AddOnCategory, string> = {
