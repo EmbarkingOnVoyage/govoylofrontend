@@ -4,6 +4,7 @@ import type { FlightOffer, FlightOfferSegment } from '../useSearchFlightsMobile'
 import type { FlightBookingSelection, FlightCheckoutDetails } from '../flightBookingSession';
 import { useTravellerDetailMobile, useTravellersMobile, type Traveler } from '../../profile/useTravellersMobile';
 import { useCustomerProfileMobile } from '../../profile/useCustomerProfileMobile';
+import { useAuth } from '../../authentication/AuthContext';
 import { formatPrice, formatTime24, formatTotalDuration, stopsLabel, tripsOfLeg } from '../logic/flightResults';
 import {
   GSTIN_PATTERN,
@@ -313,7 +314,11 @@ export const FlightReviewPageWeb: React.FC<{
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set(saved?.travellers.map((t) => t.id) ?? []));
   const [pendingSelectId, setPendingSelectId] = useState<string | null>(null);
   const [hint, setHint] = useState('');
-  const [form, setForm] = useState<{ heading: string; traveller: Traveler | null } | null>(null);
+  const [form, setForm] = useState<{ heading: string; traveller: Traveler | null; asSelf?: boolean } | null>(null);
+  const { isGuest } = useAuth();
+  // Signed in but not in their own list yet (no date of birth on the profile,
+  // e.g. a new Google or OTP account): offer to add themselves.
+  const canAddSelf = !isGuest && !!travellers && !travellers.some((t) => t.isAccountHolder);
   const [email, setEmail] = useState(saved?.email ?? '');
   const [phoneCode, setPhoneCode] = useState('+91');
   const [mobile, setMobile] = useState(saved?.mobile ?? '');
@@ -551,6 +556,15 @@ export const FlightReviewPageWeb: React.FC<{
                 onEdit={(t) => setForm({ heading: `Edit ${t.firstName} ${t.lastName}`, traveller: t })}
               />
               {hint && <p className="pb-3 text-[13px] leading-4 text-[#CE6400]">{hint}</p>}
+              {!form && canAddSelf && (
+                <button
+                  type="button"
+                  onClick={() => setForm({ heading: 'Add yourself', traveller: null, asSelf: true })}
+                  className="w-full h-11 flex items-center justify-center gap-2 rounded-2xl text-[15px] leading-5 font-medium text-[#7C1AEE]"
+                >
+                  Add yourself as a traveller <Plus size={20} />
+                </button>
+              )}
               {!form && (
                 <button
                   type="button"
@@ -567,10 +581,11 @@ export const FlightReviewPageWeb: React.FC<{
 
         {form && (
           <TravellerFormWeb
-            key={form.traveller?.id ?? 'new'}
+            key={form.traveller?.id ?? (form.asSelf ? 'self' : 'new')}
             heading={form.heading}
             subtitle={VISA_NOTE}
             traveller={form.traveller}
+            asSelf={form.asSelf}
             onCancel={() => setForm(null)}
             onSaved={(id) => {
               setForm(null);
