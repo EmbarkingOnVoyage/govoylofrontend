@@ -153,6 +153,8 @@ export function useSaveTravellerMobile() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["travellers"] });
+      // Saving "(You)" updates the profile too (name, date of birth, mobile...).
+      queryClient.invalidateQueries({ queryKey: ["customer-profile"] });
     },
   });
 }
