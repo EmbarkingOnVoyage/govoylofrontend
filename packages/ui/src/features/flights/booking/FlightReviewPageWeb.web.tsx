@@ -535,7 +535,10 @@ export const FlightReviewPageWeb: React.FC<{
         </div>
 
         <div className="max-w-[988px] flex flex-col gap-4">
-          <SectionHeading title="Traveller details" subtitle="Choose from the saved list or add a new passenger" />
+          {/* Scrolled to when an add-on is clicked before anyone is selected. */}
+          <div id="review-travellers" className="scroll-mt-[80px]">
+            <SectionHeading title="Traveller details" subtitle="Choose from the saved list or add a new passenger" />
+          </div>
           {travellersLoading ? (
             <Loader2 className="animate-spin text-[#7C1AEE]" />
           ) : (
