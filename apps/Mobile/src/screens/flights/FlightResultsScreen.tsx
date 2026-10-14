@@ -74,7 +74,7 @@ import { styles } from './FlightResultsScreen.styles';
 // Metro actually resolves a local RN import like this to an asset module id
 // (number), which is what Image.source expects — cast to match the runtime type.
 import insuranceBannerSrc from '../../assets/images/insurance-banner.png';
-import { AIRLINE_LOGO_XML } from '@workspace/ui/src/assets/airlines/airlineLogos';
+import { useAirlineLogoXml } from '@workspace/ui/src/assets/airlines/airlineLogos';
 import { useHardwareBack } from '../../navigation/useHardwareBack';
 import { BAGGAGE_ICON_SVG } from '../../components/figmaIcons';
 const insuranceBanner = insuranceBannerSrc as unknown as number;
@@ -827,54 +827,35 @@ const FilterScreen: React.FC<{
   );
 };
 
-// Flyshop's search response only gives an airline code/name, no logo. Known
-// Indian carriers use their real, current brand mark bundled locally (see
-// airlineLogos.ts) so they stay accurate even after a rebrand (e.g. Air
-// India's 2023 identity) and don't depend on a third party being up. Any
-// other airline code falls back to this CDN, keyed by IATA code, and finally
-// to the generic plane badge if that also fails.
-function airlineLogoUri(airlineCode: string): string {
-  return `https://pics.avs.io/200/200/${airlineCode}.png`;
-}
-
+// The airline's square mark, fetched once per airline from the API (see
+// airlineLogos.ts), or the plane badge when there's none for the code. Nothing
+// is drawn in the logo's place while it loads, so cards don't flash the badge.
 export const AirlineLogo: React.FC<{
   airlineCode: string;
   size: number;
-  // Shared between an Image/Svg and a View fallback with different style prop
+  // Shared between an Svg and a View fallback with different style prop
   // types — kept loose rather than fighting StyleProp<ImageStyle | ViewStyle>.
   style?: any;
 }> = ({ airlineCode, size, style }) => {
-  const [failed, setFailed] = useState(false);
-  const localLogoXml = AIRLINE_LOGO_XML[airlineCode];
+  const logoXml = useAirlineLogoXml(airlineCode);
+  const box = { width: size, height: size, borderRadius: 4, overflow: 'hidden' as const };
 
-  if (localLogoXml) {
-    return (
-      <View
-        style={[
-          { width: size, height: size, borderRadius: 4, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
-          style,
-        ]}
-      >
-        <SvgXml xml={localLogoXml} width="82%" height="82%" />
-      </View>
-    );
+  if (logoXml === undefined) {
+    return <View style={[box, style]} />;
   }
 
-  if (failed || !airlineCode) {
+  if (logoXml) {
     return (
-      <View style={[styles.airlineLogoBadge, { width: size, height: size, borderRadius: 4 }, style]}>
-        <Plane size={size * 0.6} color="#FFFFFF" strokeWidth={2} />
+      <View style={[box, style]}>
+        <SvgXml xml={logoXml} width={size} height={size} />
       </View>
     );
   }
 
   return (
-    <Image
-      source={{ uri: airlineLogoUri(airlineCode) }}
-      style={[{ width: size, height: size, borderRadius: 4, backgroundColor: '#FFFFFF' }, style]}
-      resizeMode="contain"
-      onError={() => setFailed(true)}
-    />
+    <View style={[styles.airlineLogoBadge, { width: size, height: size, borderRadius: 4 }, style]}>
+      <Plane size={size * 0.6} color="#FFFFFF" strokeWidth={2} />
+    </View>
   );
 };
 
