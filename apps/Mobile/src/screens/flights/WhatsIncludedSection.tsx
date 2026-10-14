@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import {
   useFlightAncillariesMobile,
@@ -89,6 +89,16 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
   const [activeLegIndex, setActiveLegIndex] = useState(0);
   const [selections, setSelections] = useState<SelectionMap>({});
   const [openModal, setOpenModal] = useState<AddOnCategory | null>(null);
+
+  // An add-on tapped before anyone is selected: explain instead of doing nothing.
+  // Seats and baggage are for adults and children only (infants have neither).
+  const askForTravelers = (category: AddOnCategory) =>
+    Alert.alert(
+      'Select a traveller first',
+      category === 'meal'
+        ? 'Choose who is travelling in Traveller Details above, then add meals.'
+        : `Choose an adult or child in Traveller Details above, then add ${category === 'seat' ? 'seats' : 'baggage'}.`,
+    );
   const activeLegRoute = legRoutes[activeLegIndex];
 
   const itineraryOfferIds = legRoutes.map((route) => route.offerId);
@@ -235,6 +245,7 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
       <Text style={styles.sectionTitle}>Whats included</Text>
       <Text style={styles.sectionSubtitle}>
         Check your included benefits and add the extras you need for a more comfortable trip.
+        {travelers.length === 0 ? ' Select travellers first to add extras.' : ''}
       </Text>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabScroll}>
@@ -271,9 +282,8 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
         </View>
         <TouchableOpacity
           style={[styles.ctaCard, seatTravelers.length === 0 && styles.ctaCardDisabled]}
-          onPress={() => seatTravelers.length > 0 && setOpenModal('baggage')}
+          onPress={() => (seatTravelers.length > 0 ? setOpenModal('baggage') : askForTravelers('baggage'))}
           activeOpacity={0.8}
-          disabled={seatTravelers.length === 0}
         >
           <Text style={styles.ctaCardText}>
             {anySelected('baggage') ? 'Baggage added' : 'Add extra Baggage'}
@@ -292,9 +302,8 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
         </View>
         <TouchableOpacity
           style={[styles.ctaCard, seatTravelers.length === 0 && styles.ctaCardDisabled]}
-          onPress={() => seatTravelers.length > 0 && setOpenModal('seat')}
+          onPress={() => (seatTravelers.length > 0 ? setOpenModal('seat') : askForTravelers('seat'))}
           activeOpacity={0.8}
-          disabled={seatTravelers.length === 0}
         >
           <Text style={styles.ctaCardText}>{anySelected('seat') ? 'Seat selected' : 'Pick exact seat on map'}</Text>
           <ChevronRight size={24} color="#FFFFFF" strokeWidth={2} />
@@ -311,9 +320,8 @@ export const WhatsIncludedSection: React.FC<WhatsIncludedSectionProps> = ({
         </View>
         <TouchableOpacity
           style={[styles.ctaCard, travelers.length === 0 && styles.ctaCardDisabled]}
-          onPress={() => travelers.length > 0 && setOpenModal('meal')}
+          onPress={() => (travelers.length > 0 ? setOpenModal('meal') : askForTravelers('meal'))}
           activeOpacity={0.8}
-          disabled={travelers.length === 0}
         >
           <Text style={styles.ctaCardText}>{anySelected('meal') ? 'Meal added' : 'Explore available meals'}</Text>
           <ChevronRight size={24} color="#FFFFFF" strokeWidth={2} />
