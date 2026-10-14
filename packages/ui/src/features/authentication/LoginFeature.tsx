@@ -1,9 +1,17 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Image, ActivityIndicator } from "react-native";
 import { MoveRight } from "lucide-react-native";
 import { useRequestOtpMutation } from "@workspace/api";
 import { LoginMobileStyles as s } from "@workspace/ui";
 import { authContextCache } from "./authContextCache";
+import {
+  SocialProvider,
+  SocialSignInCancelled,
+  exchangeSocialToken,
+  socialProviderReady,
+  socialUnavailableMessage,
+} from "./socialAuth";
+import { facebookAccessTokenNative, googleIdTokenNative } from "./socialAuthNative";
 import { LOGO_ASSETS } from "../../assets";
 
 interface LoginFeatureProps {
@@ -48,10 +56,34 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
   };
 
   const isWorking = mutation.isPending;
-  const SOCIAL_LOGIN_PROVIDERS = [
-    { id: "apple", onPress: () => {} },
-    { id: "google", onPress: () => {} },
-    { id: "facebook", onPress: () => {} },
+  const [socialBusy, setSocialBusy] = useState<SocialProvider | null>(null);
+  const [socialError, setSocialError] = useState("");
+
+  // Provider token → our session, then on like a verified OTP.
+  const handleSocial = async (provider: SocialProvider) => {
+    if (socialBusy) return;
+    setSocialError("");
+    if (!socialProviderReady(provider)) {
+      setSocialError(socialUnavailableMessage(provider));
+      return;
+    }
+    setSocialBusy(provider);
+    try {
+      const token = provider === "google" ? await googleIdTokenNative() : await facebookAccessTokenNative();
+      const { accessToken, refreshToken } = await exchangeSocialToken(provider, token);
+      authContextCache.setSession(accessToken, refreshToken);
+      onNavigate("ON_OTP_VERIFIED");
+    } catch (err: any) {
+      if (!(err instanceof SocialSignInCancelled)) setSocialError(err?.message || "We couldn't sign you in. Please try again.");
+    } finally {
+      setSocialBusy(null);
+    }
+  };
+
+  const SOCIAL_LOGIN_PROVIDERS: { id: SocialProvider; label: string }[] = [
+    { id: "apple", label: "Continue with Apple" },
+    { id: "google", label: "Continue with Google" },
+    { id: "facebook", label: "Continue with Facebook" },
   ];
 
   return (
@@ -102,14 +134,22 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate }) => {
           {SOCIAL_LOGIN_PROVIDERS.map((provider) => (
             <TouchableOpacity
               key={provider.id}
-              style={s.socialButton}
-              onPress={provider.onPress}
+              style={[s.socialButton, !!socialBusy && socialBusy !== provider.id && { opacity: 0.5 }]}
+              onPress={() => handleSocial(provider.id)}
+              disabled={!!socialBusy}
               activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={provider.label}
             >
-              <Image source={LOGO_ASSETS[provider.id]} style={s.socialIcon as any} />
+              {socialBusy === provider.id ? (
+                <ActivityIndicator size="small" color="#7C1AEE" />
+              ) : (
+                <Image source={LOGO_ASSETS[provider.id]} style={s.socialIcon as any} />
+              )}
             </TouchableOpacity>
           ))}
         </View>
+        {!!socialError && <Text style={[s.errorText, { textAlign: "center", marginTop: 8 }]}>{socialError}</Text>}
 
         <TouchableOpacity
           style={s.guestLink}

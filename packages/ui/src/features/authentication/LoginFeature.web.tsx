@@ -1,10 +1,20 @@
 import { X } from "lucide-react";
 import govoyloLogo from "../../assets/images/govoylo-logo.svg";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DashboardLayout } from '../../components/layout/Layout'; 
 import { useRequestOtpMutation } from "@workspace/api";
 import { LoginWebStyles as s } from "@workspace/ui"; 
 import { authContextCache } from "./authContextCache";
+import { useAuth } from "./AuthContext";
+import {
+  FACEBOOK_APP_ID,
+  SocialProvider,
+  SocialSignInCancelled,
+  exchangeSocialToken,
+  socialProviderReady,
+  socialUnavailableMessage,
+} from "./socialAuth";
+import { facebookAccessTokenWeb, googleIdTokenWeb, loadFacebookSdk } from "./socialAuth.web";
 import { LOGO_ASSETS } from "../../assets";
 
 interface LoginFeatureProps {
@@ -57,10 +67,41 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate, variant 
   };
 
   const isWorking = isApiLoading || mutation.isPending;
-  const SOCIAL_LOGIN_PROVIDERS = [
-    { id: "apple", onPress: () => alert("Apple Popup") },
-    { id: "google", onPress: () => alert("Google Popup") },
-    { id: "facebook", onPress: () => alert("Facebook Popup") },
+  const { login } = useAuth();
+  const [socialBusy, setSocialBusy] = useState<SocialProvider | null>(null);
+  const [socialError, setSocialError] = useState("");
+
+  // Facebook's SDK has to be loaded before the click (see loadFacebookSdk).
+  useEffect(() => {
+    if (FACEBOOK_APP_ID) loadFacebookSdk().catch(() => {});
+  }, []);
+
+  // The provider's popup has to open straight from the click, so the token
+  // request starts before any await.
+  const handleSocial = (provider: SocialProvider) => {
+    if (socialBusy) return;
+    setSocialError("");
+    if (!socialProviderReady(provider)) {
+      setSocialError(socialUnavailableMessage(provider));
+      return;
+    }
+    const providerToken = provider === "google" ? googleIdTokenWeb() : facebookAccessTokenWeb();
+    setSocialBusy(provider);
+    providerToken
+      .then((token) => exchangeSocialToken(provider, token))
+      .then(({ accessToken, refreshToken }) => {
+        login(accessToken, refreshToken);
+        onNavigate("ON_OTP_VERIFIED");
+      })
+      .catch((err) => {
+        if (!(err instanceof SocialSignInCancelled)) setSocialError(err?.message || "We couldn't sign you in. Please try again.");
+      })
+      .finally(() => setSocialBusy(null));
+  };
+  const SOCIAL_LOGIN_PROVIDERS: { id: SocialProvider; label: string }[] = [
+    { id: "apple", label: "Continue with Apple" },
+    { id: "google", label: "Continue with Google" },
+    { id: "facebook", label: "Continue with Facebook" },
   ];
 
   const content = (
@@ -129,8 +170,12 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate, variant 
           {SOCIAL_LOGIN_PROVIDERS.map((provider) => (
             <button
               key={provider.id}
-              className={s.socialButton}
-              onClick={() => alert(`${provider.onPress} Popup`)}
+              type="button"
+              className={`${s.socialButton} ${socialBusy && socialBusy !== provider.id ? "opacity-50" : ""}`}
+              onClick={() => handleSocial(provider.id)}
+              disabled={!!socialBusy}
+              aria-label={provider.label}
+              title={provider.label}
             >
               <img
                 src={LOGO_ASSETS[provider.id]} alt={provider.id}
@@ -139,6 +184,9 @@ export const LoginFeature: React.FC<LoginFeatureProps> = ({ onNavigate, variant 
             </button>
           ))}
         </div>
+        {!!socialError && (
+          <span role="alert" className={`${s.inputErrorMessage} block text-center mt-2`}>{socialError}</span>
+        )}
 
         {/* Privacy Legal Guidelines Block */}
         <p className={s.footerText}>
