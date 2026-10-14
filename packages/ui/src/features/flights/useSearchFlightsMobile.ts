@@ -65,6 +65,15 @@ export interface FareOption {
   // Base fare for one adult / one child — what the convenience fee is a
   // percentage of. 0 when the supplier didn't split it.
   adultBaseFare?: number;
+  // Commission discount: the price before it (shown struck out) and the
+  // discount, per adult and for every searched passenger. totalAmount /
+  // bookingTotalAmount are already after it. bookingCommissionAmount is our
+  // commission, which price breakups show inside the base fare.
+  listAmount?: number;
+  discountAmount?: number;
+  bookingListAmount?: number;
+  bookingDiscountAmount?: number;
+  bookingCommissionAmount?: number;
   childBaseFare?: number;
 }
 
@@ -87,6 +96,10 @@ export interface FlightOffer {
   // suppliers' prices are merged into one result set, so this is the only
   // thing that distinguishes them.
   supplierCode: string;
+  // totalAmount before the commission discount (shown struck out), and the
+  // discount — see FareOption.
+  listAmount?: number;
+  discountAmount?: number;
   // Set when a specific fare (not the default) is chosen for this leg — the
   // fare picker's choice, or the matched fare of a supplier package. totalAmount
   // and fares then reflect that fare; the booking sends it as the leg's fareId.

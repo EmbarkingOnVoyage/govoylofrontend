@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import type { FlightOffer } from '../useSearchFlightsMobile';
 import { formatPrice } from '../logic/flightResults';
-import { ADD_ON_LABELS, legBaseFare, type AddOnCategory, type AddOnSelection } from '../logic/booking';
+import { ADD_ON_LABELS, legBaseFare, legDiscount, type AddOnCategory, type AddOnSelection } from '../logic/booking';
 
 // Shared pieces of the Web Dev booking pages (Desktop-17 traveller details,
 // Desktop-19/20 payment, Desktop-21 payment successful).
@@ -13,6 +13,9 @@ export interface FareBreakdown {
   baseFare: number | null;
   taxes: number | null;
   flightTotal: number;
+  // Commission discount, already taken off flightTotal (base fare and taxes are
+  // before it). Optional: older saved confirmations don't have it.
+  discount?: number;
   addOns: { label: string; amount: number }[];
   // GoVoylo's convenience fee, included in total.
   convenienceFee: number;
@@ -29,6 +32,8 @@ export function buildFareBreakdown(
 ): FareBreakdown {
   const currencyCode = legs[0]?.currencyCode ?? 'INR';
   const flightTotal = legs.reduce((sum, leg) => sum + leg.totalAmount, 0);
+  // Commission discount: base fare and taxes are shown before it, then taken off.
+  const discount = legs.reduce((sum, leg) => sum + legDiscount(leg), 0);
   const baseKnown = legs.length > 0 && legs.every((leg) => legBaseFare(leg) > 0);
   const baseFare = baseKnown ? legs.reduce((sum, leg) => sum + legBaseFare(leg), 0) : null;
   const groups = (['seat', 'meal', 'baggage'] as AddOnCategory[])
@@ -41,8 +46,9 @@ export function buildFareBreakdown(
   return {
     currencyCode,
     baseFare,
-    taxes: baseFare != null ? flightTotal - baseFare : null,
+    taxes: baseFare != null ? flightTotal + discount - baseFare : null,
     flightTotal,
+    discount,
     addOns: groups,
     convenienceFee,
     total: flightTotal + addOnTotal + convenienceFee,
@@ -72,7 +78,13 @@ export const FareSummaryWeb: React.FC<{ breakdown: FareBreakdown }> = ({ breakdo
             <LineRow label="Total Tax" value={money(breakdown.taxes)} />
           </>
         ) : (
-          <LineRow label="Flight Fare (incl. taxes)" value={money(breakdown.flightTotal)} />
+          <LineRow label="Flight Fare (incl. taxes)" value={money(breakdown.flightTotal + (breakdown.discount ?? 0))} />
+        )}
+        {(breakdown.discount ?? 0) > 0 && (
+          <div className="flex items-center justify-between py-[13px] border-b border-[#98A5BF] text-[13px] leading-4 text-[#182339]">
+            <span>Discount</span>
+            <span className="font-semibold text-[#007F20]">−{money(breakdown.discount ?? 0)}</span>
+          </div>
         )}
         {breakdown.addOns.length > 0 && (
           <>

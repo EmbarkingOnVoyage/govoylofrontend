@@ -7,6 +7,8 @@ import {
   formatPrice,
   formatTime24,
   formatTotalDuration,
+  offerDiscount,
+  offerListAmount,
   splitOfferByTrip,
   splitSegmentsByLegs,
   stopsLabel,
@@ -80,8 +82,15 @@ const LayoverNote: React.FC<{ segments: FlightOfferSegment[]; cityFor: (code: st
     </span>
   );
 
-const Price: React.FC<{ amount: number; currency: string }> = ({ amount, currency }) => (
-  <div className="text-right text-[13px] leading-5 font-bold text-[#FF8011] whitespace-nowrap">{formatPrice(amount, currency)}</div>
+// The price charged, after the commission discount; the price before it struck
+// out alongside when there is one.
+const Price: React.FC<{ amount: number; currency: string; listAmount?: number }> = ({ amount, currency, listAmount }) => (
+  <div className="text-right text-[13px] leading-5 font-bold text-[#FF8011] whitespace-nowrap">
+    {listAmount != null && listAmount > amount + 0.5 && (
+      <span className="mr-1.5 text-[11px] font-normal text-[#697691] line-through">{formatPrice(listAmount, currency)}</span>
+    )}
+    {formatPrice(amount, currency)}
+  </div>
 );
 
 const DetailsLink: React.FC<{ onDetails: () => void }> = ({ onDetails }) => (
@@ -141,7 +150,7 @@ export const FlightOfferCardWeb: React.FC<{
           <Journey segments={offer.segments} />
         </div>
         <div className="absolute right-[23px] top-[30px]">
-          <Price amount={offer.totalAmount} currency={offer.currencyCode} />
+          <Price amount={offer.totalAmount} currency={offer.currencyCode} listAmount={offerListAmount(offer)} />
         </div>
         {/* Desktop-15 card footer: solid divider from the strip to the edge;
             layover note, "Flight Details" at a fixed column, Book on the right. */}
@@ -181,11 +190,12 @@ const LegRow: React.FC<{ label: string; segments: FlightOfferSegment[]; airlineC
 const MultiLegCard: React.FC<{
   rows: { label: string; segments: FlightOfferSegment[]; airlineCode?: string }[];
   amount: number;
+  listAmount?: number;
   currency: string;
   variant?: FeaturedVariant;
   onDetails: () => void;
   onBook: () => void;
-}> = ({ rows, amount, currency, variant, onDetails, onBook }) => (
+}> = ({ rows, amount, listAmount, currency, variant, onDetails, onBook }) => (
   <CardShell variant={variant}>
     <div className="relative">
       {rows.map((row, index) => (
@@ -194,7 +204,7 @@ const MultiLegCard: React.FC<{
         </div>
       ))}
       <div className="absolute right-[23px] top-[30px]">
-        <Price amount={amount} currency={currency} />
+        <Price amount={amount} currency={currency} listAmount={listAmount} />
       </div>
       <div className="relative h-[39px] mx-2 border-t border-dashed border-[#E1E5ED]">
         <div className="absolute right-[15px] top-[4px]">
@@ -222,6 +232,7 @@ export const CombinedOfferCardWeb: React.FC<{
         airlineCode: leg.airlineCode,
       }))}
       amount={pair.totalAmount}
+      listAmount={pair.totalAmount + offerDiscount(pair.onward) + (pair.returnOffer ? offerDiscount(pair.returnOffer) : 0)}
       currency={pair.currencyCode}
       variant={variant}
       onDetails={onDetails}
@@ -245,6 +256,7 @@ export const MultiCityOfferCardWeb: React.FC<{
       airlineCode: segments[0]?.airlineCode,
     }))}
     amount={offer.totalAmount}
+    listAmount={offerListAmount(offer)}
     currency={offer.currencyCode}
     variant={variant}
     onDetails={onDetails}
