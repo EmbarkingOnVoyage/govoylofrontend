@@ -199,7 +199,8 @@ const PerTravellerPanel: React.FC<{
   const set = (travellerId: string, option: AncillaryOption | null) =>
     setPicks((prev) => {
       const next = { ...prev };
-      if (option) next[travellerId] = option;
+      // Clicking the option already picked unselects it, same as "None".
+      if (option && !samePick(prev[travellerId], option)) next[travellerId] = option;
       else delete next[travellerId];
       return next;
     });

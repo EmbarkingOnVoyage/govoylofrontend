@@ -83,7 +83,8 @@ export const BaggageSelectionModal: React.FC<BaggageSelectionModalProps> = ({
   const select = (travelerId: string, option: AncillaryOption | null) => {
     setPicks((prev) => {
       const next = { ...prev };
-      if (option) next[travelerId] = option;
+      // Tapping the option already picked unselects it, same as "None".
+      if (option && prev[travelerId]?.ssrKey !== option.ssrKey) next[travelerId] = option;
       else delete next[travelerId];
       return next;
     });
