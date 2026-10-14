@@ -15,6 +15,9 @@ export default defineConfig(({ mode }) => {
     // to the local HTTPS backend.
     define: {
       'process.env.EXPO_PUBLIC_API_BASE_URL': JSON.stringify(env.VITE_API_BASE_URL ?? ''),
+      // Social sign-in client ids (see packages/ui/src/features/authentication/socialAuth.ts).
+      'process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID': JSON.stringify(env.VITE_GOOGLE_WEB_CLIENT_ID ?? ''),
+      'process.env.EXPO_PUBLIC_FACEBOOK_APP_ID': JSON.stringify(env.VITE_FACEBOOK_APP_ID ?? ''),
     },
     resolve: {
       alias: {
@@ -24,6 +27,9 @@ export default defineConfig(({ mode }) => {
         // icons from lucide-react-native, which needs react-native-svg's native
         // code; lucide-react exports the same icons for the web.
         'lucide-react-native': 'lucide-react',
+        // Native social sign-in SDKs, imported by the shared mobile login screen.
+        '@react-native-google-signin/google-signin': path.resolve(__dirname, 'src/stubs/nativeSocialSignIn.ts'),
+        'react-native-fbsdk-next': path.resolve(__dirname, 'src/stubs/nativeSocialSignIn.ts'),
         '@workspace/styles': path.resolve(__dirname, '../../packages/src/styles'),
         '@workspace/loginbuttonstyles': path.resolve(__dirname, '../../packages/src/styles/base/baseButtonstyles.ts')
       },

@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="robots" content="noindex">
+  <title>Signing in…</title>
+</head>
+<body style="font-family: Inter, system-ui, sans-serif; color: #3E4B64; text-align: center; padding-top: 40px">
+  Signing in…
+  <script>
+    // Google redirects the sign-in popup here with the ID token in the URL
+    // fragment. Hand it to the GoVoylo tab that opened the popup (same origin
+    // only) and close.
+    (function () {
+      var params = new URLSearchParams(window.location.hash.slice(1));
+      var message = {
+        type: 'govoylo-oauth',
+        idToken: params.get('id_token'),
+        state: params.get('state'),
+        error: params.get('error')
+      };
+      if (window.opener) {
+        window.opener.postMessage(message, window.location.origin);
+      }
+      window.close();
+    })();
+  </script>
+</body>
+</html>
