@@ -539,6 +539,8 @@ export const AddOnsSectionWeb: React.FC<{
 }> = ({ legRoutes, travellers, currencyCode, selections, onChange }) => {
   const [activeLeg, setActiveLeg] = useState(0);
   const [open, setOpen] = useState<AddOnCategory | null>(null);
+  // The add-on last clicked while no traveller was selected (see askForTravellers).
+  const [nudge, setNudge] = useState<AddOnCategory | null>(null);
   const route = legRoutes[activeLeg];
 
   const offerIds = legRoutes.map((r) => r.offerId);
@@ -659,12 +661,16 @@ export const AddOnsSectionWeb: React.FC<{
               priceColor="#7C1AEE"
             />
           )}
+          {/* Stays clickable with no traveller picked, so a click says why
+              nothing opens instead of doing nothing. */}
           <button
             type="button"
-            disabled={disabled}
-            onClick={() => setOpen(category)}
+            aria-disabled={disabled}
+            onClick={() => (disabled ? askForTravellers(category) : setOpen(category))}
             title={disabled ? 'Select travellers first' : undefined}
-            className="w-[108px] h-[84px] shrink-0 flex items-center justify-center p-2 bg-[#7C1AEE] border border-[#697691] rounded text-left disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`w-[108px] h-[84px] shrink-0 flex items-center justify-center p-2 bg-[#7C1AEE] border border-[#697691] rounded text-left ${
+              disabled ? 'opacity-50' : ''
+            }`}
           >
             <span className="w-[92px] flex items-center justify-between">
               <span className="text-[13px] leading-4 font-bold text-[#ECEEF3]">{picked ? 'Change' : cta}</span>
@@ -672,12 +678,25 @@ export const AddOnsSectionWeb: React.FC<{
             </span>
           </button>
         </div>
+        {disabled && nudge === category && (
+          <span role="alert" className="text-[12px] leading-4 font-medium text-[#C5001F]">
+            {category === 'meal'
+              ? 'Select a traveller in Traveller details above to add meals.'
+              : 'Select an adult or child in Traveller details above to add ' + (category === 'seat' ? 'seats.' : 'baggage.')}
+          </span>
+        )}
       </div>
     );
   };
 
   if (!route) return null;
   const noTravellers = travellers.length === 0;
+  // An add-on clicked before anyone is selected: say so under that button and
+  // bring the traveller list into view.
+  const askForTravellers = (category: AddOnCategory) => {
+    setNudge(category);
+    document.getElementById('review-travellers')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
   const dashed = <div className="border-t border-dashed border-[#CCD3E0]" />;
 
   return (

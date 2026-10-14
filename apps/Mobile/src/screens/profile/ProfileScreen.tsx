@@ -1,5 +1,8 @@
-import React from 'react';
-import { View, Text, Image, ImageBackground, ScrollView, TouchableOpacity } from 'react-native';
+// import React from 'react';
+import React, { useState } from 'react';
+import { View, Text, Image, ImageBackground, ScrollView, TouchableOpacity, Alert,ActivityIndicator } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   UserRound,
   Users,
@@ -12,12 +15,15 @@ import {
   ChevronRight,
   Check,
 } from 'lucide-react-native';
-import { useCustomerProfileMobile, AUTH_BASE_URL } from '@workspace/ui';
+// import { useCustomerProfileMobile, AUTH_BASE_URL} from '@workspace/ui';
+import {
+  useCustomerProfileMobile,
+  AUTH_BASE_URL,
+} from '@workspace/ui';
 import { styles } from './ProfileScreen.styles';
 // global.d.ts types *.png as string; Metro hands RN an asset id (number).
 import bannerBackgroundSrc from '../../assets/images/profile-banner-bg.png';
-
-// Gradient, glow and plane photo rendered from the Figma "Profile" frame.
+import { mobileAuthFetch } from '../../../../../packages/ui/src/features/authentication/mobileAuthFetch';// Gradient, glow and plane photo rendered from the Figma "Profile" frame.
 const bannerBackground = bannerBackgroundSrc as unknown as number;
 
 interface ProfileScreenProps {
@@ -49,6 +55,69 @@ const VerifiedMark = () => (
 export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, onSignOut }) => {
   const { data: profile } = useCustomerProfileMobile();
 
+const queryClient = useQueryClient();
+
+const [uploadingImage, setUploadingImage] = useState(false);
+const [localImageUri, setLocalImageUri] = useState<string | null>(null);
+
+const handleProfileImageUpload = async () => {
+  try {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled || !result.assets.length) {
+      return;
+    }
+
+    const asset = result.assets[0];
+    const formData = new FormData();
+
+    formData.append('file', {
+      uri: asset.uri,
+      name: asset.fileName || 'profile-image.jpg',
+      type: asset.mimeType || 'image/jpeg',
+    } as any);
+
+    setUploadingImage(true);
+
+    const response = await mobileAuthFetch(
+      `${AUTH_BASE_URL}/api/v1/customer/profile/image`,
+      {
+        method: 'POST',
+        body: formData,
+      },
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        (await response.text()) || 'Failed to upload profile image.',
+      );
+    }
+const data: { imageUrl: string } = await response.json();
+
+    setLocalImageUri(asset.uri);
+
+    await queryClient.invalidateQueries({
+      queryKey: ['customer-profile'],
+    });
+
+    Alert.alert('Success', 'Profile image updated successfully.');
+  } catch (error) {
+    console.error('Profile image upload failed:', error);
+
+    Alert.alert(
+      'Upload failed',
+      error instanceof Error ? error.message : 'Please try again.',
+    );
+  } finally {
+    setUploadingImage(false);
+  }
+};
+
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -58,7 +127,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, onSign
           style={styles.banner}
           imageStyle={styles.bannerImage}
         >
-          <View style={styles.avatarWrapper}>
+          {/* <View style={styles.avatarWrapper}>
             {profile?.profileImageUrl ? (
               <Image
                 source={{ uri: `${AUTH_BASE_URL}${profile.profileImageUrl}` }}
@@ -71,7 +140,39 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onNavigate, onSign
                 </Text>
               </View>
             )}
-          </View>
+          </View> */}
+
+          <TouchableOpacity
+  style={styles.avatarWrapper}
+  onPress={handleProfileImageUpload}
+  disabled={uploadingImage}
+  activeOpacity={0.8}
+>
+  {localImageUri || profile?.profileImageUrl ? (
+    <Image
+      source={{
+        uri: localImageUri
+          ? localImageUri
+          : profile?.profileImageUrl?.startsWith('http')
+            ? profile.profileImageUrl
+            : `${AUTH_BASE_URL}${profile?.profileImageUrl}`,
+      }}
+      style={styles.avatarImg}
+    />
+  ) : (
+    <View style={styles.avatarPlaceholder}>
+      <Text style={styles.avatarPlaceholderText}>
+        {getInitials(profile?.firstName, profile?.lastName)}
+      </Text>
+    </View>
+  )}
+
+  {uploadingImage && (
+    <View style={styles.uploadOverlay}>
+      <ActivityIndicator color="#FFFFFF" />
+    </View>
+  )}
+</TouchableOpacity>
           <View style={styles.bannerMeta}>
             <View style={styles.bannerRow}>
               <Text style={styles.bannerEmail} numberOfLines={1}>
