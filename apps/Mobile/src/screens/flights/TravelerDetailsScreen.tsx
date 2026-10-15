@@ -12,6 +12,7 @@ import {
   useCreateBookingMobile,
   useReleaseHoldMobile,
   useConvenienceFeeRules,
+  useConvenienceFeeOffer,
   convenienceFeeFor,
   BOOKING_STATUS_FAILED,
   type FlightOffer,
@@ -180,9 +181,11 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   // estimate from the shared rules; once the booking is held, the server's own
   // figure is what's charged.
   const { data: convenienceFeeRules } = useConvenienceFeeRules();
+  // Launch offer: a signed-in customer's first booking has no convenience fee.
+  const convenienceFeeWaived = useConvenienceFeeOffer(!isGuest);
   const estimatedConvenienceFee = useMemo(
-    () => convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, searchTripType),
-    [convenienceFeeRules, legs, passengerCounts, searchTripType]
+    () => (convenienceFeeWaived ? 0 : convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, searchTripType)),
+    [convenienceFeeWaived, convenienceFeeRules, legs, passengerCounts, searchTripType]
   );
   const [chargedConvenienceFee, setChargedConvenienceFee] = useState<number | null>(null);
   const convenienceFee = chargedConvenienceFee ?? estimatedConvenienceFee;
@@ -642,6 +645,7 @@ const getInlineTravelers = (ofType: Traveler[]) => {
           // row only ever reflects the airline's re-price.
           totalAmount={totalAmount + convenienceFee}
           convenienceFee={convenienceFee}
+          convenienceFeeWaived={convenienceFeeWaived && convenienceFee === 0}
           confirmedAmount={confirmedAmount}
           currencyCode={currencyCode}
           paymentState={paymentState}

@@ -39,6 +39,7 @@ import {
 import { useEscapeKey } from '../useEscapeKey.web';
 import { convenienceFeeFor } from '../logic/convenienceFee';
 import { useConvenienceFeeRules } from '../useConvenienceFeeRules';
+import { useConvenienceFeeOffer } from '../useConvenienceFeeOffer';
 
 export { BookingConfirmedWeb, type BookingConfirmation } from './BookingConfirmedWeb.web';
 
@@ -315,7 +316,9 @@ export const FlightReviewPageWeb: React.FC<{
   const [pendingSelectId, setPendingSelectId] = useState<string | null>(null);
   const [hint, setHint] = useState('');
   const [form, setForm] = useState<{ heading: string; traveller: Traveler | null; asSelf?: boolean } | null>(null);
-  const { isGuest } = useAuth();
+  const { isGuest, isLoggedIn } = useAuth();
+  // Launch offer: a signed-in customer's first booking has no convenience fee.
+  const convenienceFeeWaived = useConvenienceFeeOffer(isLoggedIn && !isGuest);
   // Signed in but not in their own list yet (no date of birth on the profile,
   // e.g. a new Google or OTP account): offer to add themselves.
   const canAddSelf = !isGuest && !!travellers && !travellers.some((t) => t.isAccountHolder);
@@ -369,7 +372,8 @@ export const FlightReviewPageWeb: React.FC<{
     legs,
     addOns,
     paxSummaryText(passengerCounts),
-    convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, selection.summary.request.tripType)
+    convenienceFeeWaived ? 0 : convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, selection.summary.request.tripType),
+    convenienceFeeWaived
   );
   const money = (amount: number) => formatPrice(amount, breakdown.currencyCode);
 
