@@ -7,6 +7,7 @@ import { PersonalDetailsScreen } from '../screens/profile/PersonalDetailsScreen'
 import { CoTravellerScreen } from '../screens/profile/CoTravellerScreen';
 import { showComingSoon } from '../components/comingSoon';
 import { CoTravellerFormScreen } from '../screens/profile/CoTravellerFormScreen';
+import { BookingTravellerFormScreen } from '../screens/flights/BookingTravellerFormScreen';
 import { PlaceholderScreen } from '../screens/profile/PlaceholderScreen';
 import { PreferencesScreen } from '../screens/profile/PreferencesScreen';
 import { LoginRequiredScreen } from '../screens/LoginRequiredScreen';
@@ -90,6 +91,8 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
   const [editingTravellerId, setEditingTravellerId] = useState<string | null>(null);
   // "Add yourself": the new traveller is the signed-in customer.
   const [addingSelf, setAddingSelf] = useState(false);
+  // The booking traveller form's title: the slot being filled, or the traveller's name.
+  const [travellerFormHeading, setTravellerFormHeading] = useState('');
   const [homeScreen, setHomeScreen] = useState<HomeStackScreen>('Buttons');
   const [flightOffers, setFlightOffers] = useState<FlightOffer[]>([]);
   const [flightSearchSummary, setFlightSearchSummary] = useState<FlightSearchSummary | null>(null);
@@ -184,23 +187,27 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
             searchTripType={travelerTripType}
             isGuest={isGuest}
             onBack={() => setHomeScreen('FlightResults')}
-            onAddTraveler={(asSelf) => {
+            onAddTraveler={(asSelf, heading) => {
               setEditingTravellerId(null);
-              setAddingSelf(!!asSelf);
+              setAddingSelf(asSelf);
+              setTravellerFormHeading(heading);
               setHomeScreen('AddTraveler');
             }}
-            onEditTraveler={(id) => {
+            onEditTraveler={(id, heading) => {
               setEditingTravellerId(id);
               setAddingSelf(false);
+              setTravellerFormHeading(heading);
               setHomeScreen('AddTraveler');
             }}
           />,
         )}
         {layer(
           'AddTraveler',
-          <CoTravellerFormScreen
+          <BookingTravellerFormScreen
             travellerId={editingTravellerId}
             asAccountHolder={addingSelf}
+            heading={travellerFormHeading}
+            legs={travelerLegs}
             onDone={() => setHomeScreen('TravelerDetails')}
           />,
         )}

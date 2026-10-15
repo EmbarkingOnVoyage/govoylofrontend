@@ -133,6 +133,7 @@ export {
 } from './features/flights/logic/convenienceFee';
 export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';
 export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';
+export { useIsInternationalTrip } from './features/flights/useIsInternationalTrip';
 export { useHolidaysWeb } from './features/flights/useHolidaysWeb';
 export { encodeFlightSearch, decodeFlightSearch, summaryFromRequest } from './features/flights/flightSearchParams';
 export { FlightResultsPageWeb } from './features/flights/results/FlightResultsPageWeb.web';
