@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator, Alert, SafeAreaView } from 'react-native';
+import { showComingSoon } from '../../components/comingSoon';
 import { ArrowLeft, Check, X, Clock, CircleAlert } from 'lucide-react-native';
 import {
   useTripBookingDetailsMobile,
@@ -206,8 +207,7 @@ export const TripDetailsScreen: React.FC<TripDetailsScreenProps> = ({ tripBookin
         <View style={styles.card}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Fare details</Text>
-            {/* No action yet — invoices aren't generated in the app. */}
-            <TouchableOpacity activeOpacity={0.7} hitSlop={8}>
+            <TouchableOpacity activeOpacity={0.7} hitSlop={8} onPress={() => showComingSoon('Invoices')}>
               <Text style={styles.linkText}>View invoice</Text>
             </TouchableOpacity>
           </View>

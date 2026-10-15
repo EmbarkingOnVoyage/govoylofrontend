@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import flightProtection from '../../../assets/images/promo/flight-protection.png';
 import peaceOfMind from '../../../assets/images/promo/peace-of-mind.png';
+import { showComingSoon } from '../../../components/comingSoon.web';
 
 // Bank offer chips from the Web Dev design. Static marketing content until
 // there's an offers source; they have no action.
@@ -104,15 +105,19 @@ const PromoCard: React.FC<PromoCardProps> = (p) => (
           <span className="text-[13px] font-medium"> / trip</span>
         </span>
       </div>
-      <button type="button" className={`text-[13px] leading-4 font-medium ${p.ctaClass}`}>
+      <button
+        type="button"
+        onClick={() => showComingSoon('Travel protection')}
+        className={`text-[13px] leading-4 font-medium ${p.ctaClass}`}
+      >
         {p.cta}
       </button>
     </div>
   </div>
 );
 
-// Desktop-15 right column ("Frame 421"): travel-protection promos. Static,
-// no action yet — GoVoylo doesn't sell protection plans.
+// Desktop-15 right column ("Frame 421"): travel-protection promos. GoVoylo
+// doesn't sell protection plans yet, so the buttons say "coming soon".
 export const PromoColumnWeb: React.FC = () => (
   <div className="w-[355px] shrink-0 flex flex-col items-center gap-4">
     <div className="p-2">

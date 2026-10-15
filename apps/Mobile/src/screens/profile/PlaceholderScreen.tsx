@@ -26,7 +26,8 @@ export const PlaceholderScreen: React.FC<PlaceholderScreenProps> = ({ title, onB
       </SafeAreaView>
     </LinearGradient>
     <View style={styles.content}>
-      <Text style={styles.text}>Component for "{title}" view coming soon!</Text>
+      <Text style={styles.heading}>Coming soon</Text>
+      <Text style={styles.text}>{title} will be available here soon.</Text>
     </View>
   </View>
   );
@@ -46,5 +47,6 @@ const styles = StyleSheet.create({
   backButton: { height: 20, justifyContent: 'center' },
   headerTitle: { color: '#ECEEF3', fontSize: 15, lineHeight: 20, fontWeight: '500' },
   content: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 },
+  heading: { fontSize: 18, lineHeight: 24, fontWeight: '700', color: '#182339', marginBottom: 6 },
   text: { fontSize: 15, color: '#4C5973', textAlign: 'center' },
 });

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator } from 'react-native';
+import { showComingSoon } from '../../components/comingSoon';
 import { ArrowDownUp, ArrowLeft, MapPin, Plane, Trash2, X } from 'lucide-react-native';
 import { useAirportsMobile } from '@workspace/ui';
 import {
@@ -154,7 +155,7 @@ export const AirportSearchScreen: React.FC<AirportSearchScreenProps> = ({
               </View>
             </>
           ) : (
-            <TouchableOpacity style={styles.nearbyRow}>
+            <TouchableOpacity style={styles.nearbyRow} onPress={() => showComingSoon('Finding airports near you')}>
               <MapPin size={20} color="#182339" strokeWidth={1.5} />
               <View>
                 <Text style={styles.nearbyTitle}>Nearby</Text>

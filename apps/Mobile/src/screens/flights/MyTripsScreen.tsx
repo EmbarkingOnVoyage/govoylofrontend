@@ -11,6 +11,7 @@ import {
   RefreshControl,
   Alert,
 } from 'react-native';
+import { showComingSoon } from '../../components/comingSoon';
 import { Bell, Search, Plane, Download, Star, ChevronRight, Luggage, Sparkles, Headset, Check } from 'lucide-react-native';
 import { useMyTripsMobile, useCustomerProfileMobile, type TripBooking } from '@workspace/ui';
 import { styles, PURPLE, MUTED } from './MyTripsScreen.styles';
@@ -247,13 +248,11 @@ export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onExploreTrips }) 
               <TouchableOpacity style={styles.primaryButton} onPress={() => setOpenTripId(item.id)}>
                 <Text style={styles.primaryButtonText}>View Details</Text>
               </TouchableOpacity>
-              {/* No action yet. */}
-              <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.7}>
+              <TouchableOpacity style={styles.secondaryButton} activeOpacity={0.7} onPress={() => showComingSoon('Book again')}>
                 <Text style={styles.secondaryButtonText}>Book Again</Text>
               </TouchableOpacity>
             </View>
-            {/* No action yet. */}
-            <TouchableOpacity style={styles.rateRow} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.rateRow} activeOpacity={0.7} onPress={() => showComingSoon('Trip ratings')}>
               <Star size={16} color={PURPLE} strokeWidth={2} />
               <Text style={styles.rateText}>Rate your trip</Text>
               <ChevronRight size={18} color={PURPLE} strokeWidth={2} />
@@ -327,15 +326,14 @@ export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onExploreTrips }) 
           <View style={styles.centerState}>
             <Text style={styles.stateText}>
               {category !== 'All' && category !== 'Flights'
-                ? `No ${category.toLowerCase()} bookings yet.`
+                ? `${category} bookings are coming soon.`
                 : 'No trips match your search.'}
             </Text>
           </View>
         }
         ListFooterComponent={
           activeTab === 'Cancelled' && visibleTrips.length > 0 ? (
-            // No action yet.
-            <TouchableOpacity style={styles.helpBanner} activeOpacity={0.7}>
+            <TouchableOpacity style={styles.helpBanner} activeOpacity={0.7} onPress={() => showComingSoon('Refund help')}>
               <Headset size={22} color="#1E3A8A" strokeWidth={2} />
               <View style={{ flex: 1 }}>
                 <Text style={styles.helpTitle}>Need help with a refund?</Text>
@@ -360,8 +358,7 @@ export const MyTripsScreen: React.FC<MyTripsScreenProps> = ({ onExploreTrips }) 
           ) : null}
           <Text style={styles.title}>My Trips</Text>
         </View>
-        {/* No action yet — notifications aren't built. */}
-        <TouchableOpacity style={styles.bellButton} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.bellButton} activeOpacity={0.7} onPress={() => showComingSoon('Notifications')}>
           <Bell size={20} color="#3E4B64" strokeWidth={2} />
           <View style={styles.bellDot} />
         </TouchableOpacity>
