@@ -34,6 +34,10 @@ export interface TravelerPassport {
 
 export interface TravelerDetail extends Traveler {
   passport?: TravelerPassport | null;
+  mealPreference?: string | null;
+  seatPreference?: string | null;
+  // SSR codes, e.g. "wchr" (wheelchair).
+  specialAssistance?: string[];
 }
 
 export interface TravelerPayload {
@@ -54,6 +58,9 @@ export interface TravelerPayload {
   passportIssuingCountry?: string;
   passportExpiryDate?: string | null;
   passportIssueDate?: string | null;
+  // Set to save the traveller's preferences too (they're replaced as a whole,
+  // so pass the meal/seat preference already saved).
+  preferences?: { mealPreference?: string | null; seatPreference?: string | null; specialAssistance: string[] };
 }
 
 const TRAVELLERS_URL = `${AUTH_BASE_URL}/api/v1/travellers`;
@@ -147,6 +154,14 @@ export function useSaveTravellerMobile() {
           hasExistingPassport ? "PUT" : "POST",
           passportBody
         );
+      }
+
+      if (payload.preferences && travelerId) {
+        await sendJson(`${TRAVELLERS_URL}/${travelerId}/preferences`, "PUT", {
+          mealPreference: payload.preferences.mealPreference ?? null,
+          seatPreference: payload.preferences.seatPreference ?? null,
+          specialAssistance: payload.preferences.specialAssistance,
+        });
       }
 
       return travelerId;
