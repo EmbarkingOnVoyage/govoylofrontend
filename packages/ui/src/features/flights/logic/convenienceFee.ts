@@ -2,12 +2,12 @@
 // ConvenienceFeeCalculator; the server recalculates it at booking time and its
 // figure (CreateBookingResponse.convenienceFee) is what gets charged.
 import type { FlightOffer, PassengerCounts, TripType } from '../useSearchFlightsMobile';
-import { bookedFare, legDiscount, type AddOnSelection } from './booking';
+import { bookedFare, legDiscount } from './booking';
 
 export interface ConvenienceFeeTripRate {
   tripType: TripType;
-  // % of what the adults and children pay per journey (fare before the
-  // commission discount + their add-ons): the first fullRateJourneys journeys at
+  // % of what the adults and children pay per journey (base fare before the
+  // commission discount + taxes; add-ons excluded): the first fullRateJourneys journeys at
   // firstJourneyPercent, every further one at extraJourneyPercent.
   firstJourneyPercent: number;
   extraJourneyPercent: number;
@@ -67,38 +67,31 @@ export function calculateConvenienceFee(
 
 // The journeys of the legs being booked: one per leg, or one per trip of a
 // whole-trip offer (its amount split evenly, as the backend does). A leg's
-// amount is its adults' and children's fares before the discount plus the
-// add-ons picked on it (an infant can't pick add-ons — suppliers only offer
-// them to adults and children).
-export function journeysFor(
-  legs: FlightOffer[],
-  passengerCounts: PassengerCounts,
-  addOns: AddOnSelection[] = []
-): JourneyFare[] {
-  return legs.flatMap((leg, legIndex) => {
+// amount is its adults' and children's fares before the discount (base +
+// taxes); add-ons don't count.
+export function journeysFor(legs: FlightOffer[], passengerCounts: PassengerCounts): JourneyFare[] {
+  return legs.flatMap((leg) => {
     const fare = bookedFare(leg);
     const fares = fare?.adultListFare
       ? passengerCounts.adult * fare.adultListFare + passengerCounts.child * (fare.childListFare ?? fare.adultListFare)
       // An older API without list fares: the whole booking before the discount.
       : leg.totalAmount + legDiscount(leg);
-    const legAddOns = addOns.filter((a) => a.legIndex === legIndex).reduce((sum, a) => sum + a.amount, 0);
     const tripCount = Math.max(1, new Set(leg.segments.map((s) => s.tripIndex ?? 0)).size);
-    return Array.from({ length: tripCount }, () => ({ chargeableAmount: (fares + legAddOns) / tripCount }));
+    return Array.from({ length: tripCount }, () => ({ chargeableAmount: fares / tripCount }));
   });
 }
 
-// The fee for booking these legs with these add-ons. searchTripType is the
+// The fee for booking these legs. searchTripType is the
 // search's own trip type; like the backend, two journeys are a round trip only
 // when the search was one, and any other multi-journey booking is multi-city.
 export function convenienceFeeFor(
   rules: ConvenienceFeeRules | undefined,
   legs: FlightOffer[],
   passengerCounts: PassengerCounts,
-  searchTripType: TripType | undefined,
-  addOns: AddOnSelection[] = []
+  searchTripType: TripType | undefined
 ): number {
   if (!rules) return 0;
-  const journeys = journeysFor(legs, passengerCounts, addOns);
+  const journeys = journeysFor(legs, passengerCounts);
   const tripType: TripType =
     journeys.length === 1
       ? 'OneWay'
