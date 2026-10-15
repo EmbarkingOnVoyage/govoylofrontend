@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { useSaveTravellerMobile, useTravellerDetailMobile, type Traveler } from '../../profile/useTravellersMobile';
 import { useCustomerProfileMobile } from '../../profile/useCustomerProfileMobile';
+import type { FlightOffer } from '../useSearchFlightsMobile';
+import { useIsInternationalTrip } from '../useIsInternationalTrip';
 import { COUNTRY_OPTIONS, GENDER_OPTIONS } from '../../../data/selectOptions';
 import { FieldWeb, Separator, SubHeading, fieldInputClass } from './BookingLayoutWeb.web';
 
@@ -18,14 +20,18 @@ function dateInputValue(iso: string | null | undefined): string {
 // numbers only ever come back masked, so the number is re-entered to change it.
 // asSelf: "Add yourself" — the signed-in customer, started from their profile
 // and saved as the account holder ("(You)").
+// Passport details are shown, and required, only for an international trip
+// (legs) or a non-Indian national.
 export const TravellerFormWeb: React.FC<{
   heading: string;
   subtitle: string;
   traveller?: Traveler | null;
   asSelf?: boolean;
+  legs: FlightOffer[];
   onSaved: (travellerId: string | undefined) => void;
   onCancel: () => void;
-}> = ({ heading, subtitle, traveller, asSelf = false, onSaved, onCancel }) => {
+}> = ({ heading, subtitle, traveller, asSelf = false, legs, onSaved, onCancel }) => {
+  const international = useIsInternationalTrip(legs);
   const { data: detail } = useTravellerDetailMobile(traveller?.id ?? null);
   const save = useSaveTravellerMobile();
   const [firstName, setFirstName] = useState(traveller?.firstName ?? '');
@@ -54,6 +60,7 @@ export const TravellerFormWeb: React.FC<{
 
   const existingPassport = detail?.passport ?? null;
   const today = new Date().toISOString().slice(0, 10);
+  const passportRequired = international || nationality !== 'India';
 
   const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim()) return setError('Please enter the first and last name as on the ID.');
@@ -62,7 +69,11 @@ export const TravellerFormWeb: React.FC<{
     if (dateOfBirth > today) return setError('Date of birth must be in the past.');
     if (email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return setError('Please enter a valid email address.');
     if (phone.trim() && !/^[6-9]\d{9}$/.test(phone.trim())) return setError('Please enter a valid 10-digit mobile number.');
-    const passportEdited = !!passportNumber.trim();
+    // Anything typed before switching back to Indian nationality is left out.
+    const passportEdited = passportRequired && !!passportNumber.trim();
+    if (passportRequired && !existingPassport && !passportEdited) {
+      return setError('Please enter the passport number, expiry date and issuing country.');
+    }
     if (passportEdited && (!passportExpiry || !passportCountry)) {
       return setError('Please enter the passport expiry date and issuing country.');
     }
@@ -168,31 +179,35 @@ export const TravellerFormWeb: React.FC<{
           </Field>
         </div>
       </div>
-      <Separator />
+      {passportRequired && (
+        <>
+          <Separator />
 
-      <div className="w-[709px] max-w-full flex flex-col gap-3">
-        <SubHeading>Documents Details</SubHeading>
-        <p className="-mt-2 text-[13px] leading-4 text-[#697691]">
-          Needed for international flights.
-          {existingPassport && ` Passport on file: ${existingPassport.maskedPassportNumber} — enter the full number only to change it.`}
-        </p>
-        <div className="flex items-center gap-4">
-          <Field label="Passport number" className="w-[343px]">
-            <input className={inputClass} placeholder="Text" value={passportNumber} onChange={(e) => setPassportNumber(e.target.value)} />
-          </Field>
-          <Field label="Expiry date" className="w-[343px]">
-            <input type="date" min={today} className={inputClass} value={passportExpiry} onChange={(e) => setPassportExpiry(e.target.value)} />
-          </Field>
-        </div>
-        <Field label="Issuing country" className="w-[343px]">
-          <select className={inputClass} value={passportCountry} onChange={(e) => setPassportCountry(e.target.value)}>
-            <option value="">Select</option>
-            {COUNTRY_OPTIONS.map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </Field>
-      </div>
+          <div className="w-[709px] max-w-full flex flex-col gap-3">
+            <SubHeading>Documents Details</SubHeading>
+            <p className="-mt-2 text-[13px] leading-4 text-[#697691]">
+              {international ? 'Required for international flights.' : 'Required for foreign nationals.'}
+              {existingPassport && ` Passport on file: ${existingPassport.maskedPassportNumber} — enter the full number only to change it.`}
+            </p>
+            <div className="flex items-center gap-4">
+              <Field label="Passport number" className="w-[343px]">
+                <input className={inputClass} placeholder="Text" value={passportNumber} onChange={(e) => setPassportNumber(e.target.value)} />
+              </Field>
+              <Field label="Expiry date" className="w-[343px]">
+                <input type="date" min={today} className={inputClass} value={passportExpiry} onChange={(e) => setPassportExpiry(e.target.value)} />
+              </Field>
+            </div>
+            <Field label="Issuing country" className="w-[343px]">
+              <select className={inputClass} value={passportCountry} onChange={(e) => setPassportCountry(e.target.value)}>
+                <option value="">Select</option>
+                {COUNTRY_OPTIONS.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </Field>
+          </div>
+        </>
+      )}
 
       {error && <p className="text-[13px] leading-4 text-[#C5001F]">{error}</p>}
 

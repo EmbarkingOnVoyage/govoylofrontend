@@ -590,6 +590,7 @@ export const FlightReviewPageWeb: React.FC<{
             subtitle={VISA_NOTE}
             traveller={form.traveller}
             asSelf={form.asSelf}
+            legs={legs}
             onCancel={() => setForm(null)}
             onSaved={(id) => {
               setForm(null);
