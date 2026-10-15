@@ -121,6 +121,7 @@ export {
 } from './features/flights/useMyTripsMobile';
 export { useHolidaysMobile, type Holiday, type HolidaysResponse } from './features/flights/useHolidaysMobile';
 export { useConvenienceFeeRules } from './features/flights/useConvenienceFeeRules';
+export { useConvenienceFeeOffer } from './features/flights/useConvenienceFeeOffer';
 export {
   calculateConvenienceFee,
   convenienceFeeFor,

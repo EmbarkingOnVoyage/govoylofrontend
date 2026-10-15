@@ -12,6 +12,8 @@ import { PAX_TYPES, type PaxType } from '../logic/travellers';
 import { buildBookingLegs, buildBookingTravelers } from '../logic/booking';
 import { convenienceFeeFor } from '../logic/convenienceFee';
 import { useConvenienceFeeRules } from '../useConvenienceFeeRules';
+import { useConvenienceFeeOffer } from '../useConvenienceFeeOffer';
+import { useAuth } from '../../authentication/AuthContext';
 import { AirlineLogoWeb } from '../results/AirlineLogoWeb.web';
 import { useAirportLookup } from '../results/useAirportLookup';
 import { BookingPageWeb, FareSummaryWeb, SectionHeading, Separator, buildFareBreakdown } from './BookingLayoutWeb.web';
@@ -83,8 +85,15 @@ export const FlightPaymentPageWeb: React.FC<{
   // The app's estimate of the convenience fee; the server's own figure from the
   // hold is what's charged.
   const { data: convenienceFeeRules } = useConvenienceFeeRules();
-  const convenienceFee = convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, summary.request.tripType);
-  const breakdown = buildFareBreakdown(legs, checkout.addOns, paxSummaryText(passengerCounts), convenienceFee);
+  // Launch offer: a signed-in customer's first booking has no convenience fee.
+  const { isGuest, isLoggedIn } = useAuth();
+  const convenienceFeeWaived = useConvenienceFeeOffer(isLoggedIn && !isGuest);
+  const convenienceFee = convenienceFeeWaived
+    ? 0
+    : convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, summary.request.tripType);
+  const breakdown = buildFareBreakdown(
+    legs, checkout.addOns, paxSummaryText(passengerCounts), convenienceFee, convenienceFeeWaived
+  );
   const totalAmount = breakdown.total;
   const currencyCode = breakdown.currencyCode;
   const money = (amount: number) => formatPrice(amount, currencyCode);
