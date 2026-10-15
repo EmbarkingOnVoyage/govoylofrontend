@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ArrowLeft, Calendar, Check, ChevronDown, ChevronUp } from 'lucide-react-native';
 import {
@@ -230,7 +229,8 @@ export const BookingTravellerFormScreen: React.FC<BookingTravellerFormScreenProp
   const loadingExisting = !!travellerId && (isLoading || (isError && !detail));
 
   return (
-    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+    // The app's root already keeps content clear of the status and navigation bars.
+    <View style={styles.screen}>
       <View style={styles.handle} />
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={onDone} accessibilityLabel="Back">
@@ -378,6 +378,6 @@ export const BookingTravellerFormScreen: React.FC<BookingTravellerFormScreenProp
           </View>
         </>
       )}
-    </SafeAreaView>
+    </View>
   );
 };
