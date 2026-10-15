@@ -28,6 +28,8 @@ interface PaymentScreenProps {
   totalAmount: number;
   // GoVoylo's convenience fee, included in totalAmount.
   convenienceFee: number;
+  // The launch offer (first booking free) took the fee off: shown as "Free".
+  convenienceFeeWaived?: boolean;
   confirmedAmount: number | null;
   currencyCode: string;
   paymentState: 'idle' | 'processing' | 'success';
@@ -113,6 +115,7 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
   addOnSelections,
   totalAmount,
   convenienceFee,
+  convenienceFeeWaived = false,
   confirmedAmount,
   currencyCode,
   paymentState,
@@ -376,10 +379,12 @@ export const PaymentScreen: React.FC<PaymentScreenProps> = ({
                 </>
               ) : null}
 
-              {convenienceFee > 0 ? (
+              {convenienceFee > 0 || convenienceFeeWaived ? (
                 <View style={styles.fareRow}>
                   <Text style={styles.fareLabel}>Convenience Fee</Text>
-                  <Text style={styles.fareValue}>{money(convenienceFee)}</Text>
+                  <Text style={[styles.fareValue, convenienceFeeWaived && styles.discountValue]}>
+                    {convenienceFeeWaived ? 'Free' : money(convenienceFee)}
+                  </Text>
                 </View>
               ) : null}
 
