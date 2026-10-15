@@ -739,7 +739,9 @@ const getInlineTravelers = (ofType: Traveler[]) => {
                         <View style={styles.durationRow}>
                           <View style={styles.carrierBadge}>
                             <AirlineLogo airlineCode={segment.airlineCode} size={24} style={styles.carrierLogo} />
-                            <Text style={styles.carrierName}>{segment.airlineName || leg.airlineName}</Text>
+                            <Text style={styles.carrierName} numberOfLines={1}>
+                              {segment.airlineName || leg.airlineName} · {segment.airlineCode} {segment.flightNumber}
+                            </Text>
                           </View>
                         </View>
 
