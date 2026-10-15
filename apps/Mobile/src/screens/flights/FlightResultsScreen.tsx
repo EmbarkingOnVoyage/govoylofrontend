@@ -1362,7 +1362,9 @@ const FlightDetailsModal: React.FC<{
                       <View style={styles.detailsDurationRow}>
                         <View style={styles.detailsCarrierBadge}>
                           <AirlineLogo airlineCode={segment.airlineCode} size={24} style={styles.detailsCarrierLogo} />
-                          <Text style={styles.detailsCarrierName}>{activeOffer.airlineName}</Text>
+                          <Text style={styles.detailsCarrierName} numberOfLines={1}>
+                            {segment.airlineName || activeOffer.airlineName} · {segment.airlineCode} {segment.flightNumber}
+                          </Text>
                         </View>
                       </View>
 

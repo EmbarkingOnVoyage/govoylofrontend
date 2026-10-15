@@ -186,6 +186,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   carrierName: {
+    flexShrink: 1,
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
