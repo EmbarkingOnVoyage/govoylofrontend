@@ -21,6 +21,9 @@ export interface FareBreakdown {
   convenienceFee: number;
   // The launch offer (first booking free) took the fee off: shown as "Free".
   convenienceFeeWaived?: boolean;
+  // The airline's re-price when the seats were held (+ dearer, − cheaper),
+  // included in total; see withHeldFare.
+  fareChange?: number;
   total: number;
   // "For 2 adults, 1 child"
   paxText: string;
@@ -58,6 +61,21 @@ export function buildFareBreakdown(
     // Charged in whole rupees.
     total: roundRupees(flightTotal + addOnTotal + convenienceFee),
     paxText,
+  };
+}
+
+// The breakdown once the seats are held: heldFare is what the airline confirmed
+// for the flights and add-ons, convenienceFee the server's own. Any difference
+// from the searched fare shows as its own row.
+export function withHeldFare(breakdown: FareBreakdown, heldFare: number, convenienceFee: number): FareBreakdown {
+  const addOnTotal = breakdown.addOns.reduce((sum, g) => sum + g.amount, 0);
+  const fareChange = heldFare - (breakdown.flightTotal + addOnTotal);
+  return {
+    ...breakdown,
+    convenienceFee,
+    convenienceFeeWaived: !!breakdown.convenienceFeeWaived && convenienceFee === 0,
+    fareChange: Math.abs(fareChange) >= 1 ? fareChange : undefined,
+    total: roundRupees(heldFare + convenienceFee),
   };
 }
 
@@ -120,6 +138,12 @@ export const FareSummaryWeb: React.FC<{ breakdown: FareBreakdown }> = ({ breakdo
             )}
           </>
         )}
+        {breakdown.fareChange ? (
+          <LineRow
+            label="Fare change by airline"
+            value={`${breakdown.fareChange > 0 ? '+' : '−'}${money(Math.abs(breakdown.fareChange))}`}
+          />
+        ) : null}
         {breakdown.convenienceFee > 0 ? (
           <LineRow label="Convenience Fee" value={money(breakdown.convenienceFee)} />
         ) : breakdown.convenienceFeeWaived ? (

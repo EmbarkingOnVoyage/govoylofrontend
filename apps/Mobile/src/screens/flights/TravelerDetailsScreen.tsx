@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, ActivityIndicator, Modal, Alert, KeyboardAvoidingView, Platform } from 'react-native';
 import { ArrowLeft, ArrowRight, ChevronRight, Clock3, MapPinPlus, Plus, Check, CheckCircle2, Share2 } from 'lucide-react-native';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -163,9 +163,10 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const [paymentState, setPaymentState] = useState<'idle' | 'processing' | 'success'>('idle');
   const [paymentError, setPaymentError] = useState('');
   const [bookingResult, setBookingResult] = useState<CreateBookingResponse | null>(null);
-  // Set once the supplier confirms a different amount than search showed and
-  // the customer accepts it — what the total/success copy then reflect.
-  const [confirmedAmount, setConfirmedAmount] = useState<number | null>(null);
+  // What the airline confirmed for the flights and add-ons when the seats were
+  // last held — set as soon as it differs from search, so the Payment page's
+  // total and fare summary show it behind the "Price updated" popup.
+  const [confirmedFare, setConfirmedFare] = useState<number | null>(null);
   // Next opens the Payment page (Figma "Booking details"), where Securely pay
   // runs the hold → Razorpay → verify flow below.
   const [step, setStep] = useState<'details' | 'payment'>('details');
@@ -191,7 +192,12 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   const [chargedConvenienceFee, setChargedConvenienceFee] = useState<number | null>(null);
   const convenienceFee = chargedConvenienceFee ?? estimatedConvenienceFee;
   // Charged in whole rupees.
-  const payableAmount = roundRupees(totalAmount + estimatedConvenienceFee);
+  const confirmedAmount = confirmedFare != null ? roundRupees(confirmedFare + convenienceFee) : null;
+
+  // Another traveller or add-on is another price: the next hold confirms it afresh.
+  useEffect(() => {
+    setConfirmedFare(null);
+  }, [totalAmount, selectedIds]);
 
   const requiredCounts: Record<PaxType, number> = {
     adult: passengerCounts.adult,
@@ -494,26 +500,34 @@ const selectedTravelers = useMemo(
 
       // The supplier re-prices at booking time and the fare can move from what
       // search showed (in either direction) — charge what it will actually
-      // charge, after the customer has seen and accepted any change.
+      // charge, after the customer has seen and accepted any change. The
+      // Payment page's total and fare summary switch to the new price at once.
+      const shownAmount = confirmedAmount ?? roundRupees(totalAmount + convenienceFee);
+      const shownFare = confirmedFare ?? totalAmount;
       const serverConvenienceFee = booking.convenienceFee ?? estimatedConvenienceFee;
       setChargedConvenienceFee(serverConvenienceFee);
-      const chargeAmount = roundRupees((booking.confirmedTotalAmount ?? totalAmount) + serverConvenienceFee);
-      if (Math.round(chargeAmount) !== Math.round(payableAmount)) {
+      const heldFare = booking.confirmedTotalAmount ?? shownFare;
+      const chargeAmount = roundRupees(heldFare + serverConvenienceFee);
+      if (Math.round(heldFare) !== Math.round(shownFare)) {
+        setConfirmedFare(heldFare);
+        const difference = chargeAmount - shownAmount;
         const accepted = await new Promise<boolean>((resolve) =>
           Alert.alert(
             'Price updated',
-            `The airline has updated the fare for this booking from ${formatMoney(payableAmount, currencyCode)} to ${formatMoney(chargeAmount, currencyCode)}.`,
+            `The airline has changed the fare for this booking.\n\n` +
+              `Previous price: ${formatMoney(shownAmount, currencyCode)}\n` +
+              `Updated price: ${formatMoney(chargeAmount, currencyCode)}\n` +
+              `${difference > 0 ? 'Increase' : 'Decrease'}: ${difference > 0 ? '+' : '−'}${formatMoney(Math.abs(difference), currencyCode)}`,
             [
               { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-              { text: 'Continue', onPress: () => resolve(true) },
+              { text: `Pay ${formatMoney(chargeAmount, currencyCode)}`, onPress: () => resolve(true) },
             ],
             { cancelable: false }
           )
         );
         if (!accepted) {
-          throw new Error('Booking cancelled — the fare changed.');
+          throw new Error('Booking cancelled — the fare changed. Pay again to book at the new price.');
         }
-        setConfirmedAmount(chargeAmount);
       }
 
       // Reuses Flyshop's own Booking_RefNo (not a client-generated id) so the
@@ -927,7 +941,7 @@ const getInlineTravelers = (ofType: Traveler[]) => {
             <CheckCircle2 size={28} color="#1E9E5A" strokeWidth={2} />
             <Text style={styles.paymentSuccessTitle}>Payment Successful</Text>
             <Text style={styles.paymentSuccessSubtitle}>
-              Your payment of {formatMoney(confirmedAmount ?? payableAmount, currencyCode)} was received. Your booking is confirmed.
+              Your payment of {formatMoney(confirmedAmount ?? roundRupees(totalAmount + convenienceFee), currencyCode)} was received. Your booking is confirmed.
             </Text>
             {!!bookingResult?.bookingRefNo && (
               <Text style={styles.paymentSuccessSubtitle}>Booking reference: {bookingResult.bookingRefNo}</Text>
