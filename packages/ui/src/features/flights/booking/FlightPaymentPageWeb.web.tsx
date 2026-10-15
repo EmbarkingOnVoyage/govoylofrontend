@@ -7,7 +7,7 @@ import { useReleaseHoldMobile } from '../useReleaseHoldMobile';
 import type { Traveler } from '../../profile/useTravellersMobile';
 import { useCreateRazorpayOrderMobile, useVerifyRazorpayPaymentMobile } from '../../payments/useRazorpayPaymentMobile';
 import { RazorpayCheckoutError, openRazorpayCheckout } from '../../payments/razorpayCheckout.web';
-import { CABIN_CLASS_LABELS, formatPrice, formatTime24, tripsOfLeg } from '../logic/flightResults';
+import { CABIN_CLASS_LABELS, formatPrice, formatTime24, roundRupees, tripsOfLeg } from '../logic/flightResults';
 import { PAX_TYPES, type PaxType } from '../logic/travellers';
 import { buildBookingLegs, buildBookingTravelers } from '../logic/booking';
 import { convenienceFeeFor } from '../logic/convenienceFee';
@@ -148,7 +148,7 @@ export const FlightPaymentPageWeb: React.FC<{
       // The supplier re-prices at booking time; charge what it will charge,
       // once the customer has accepted any change.
       const chargedConvenienceFee = booking.convenienceFee ?? convenienceFee;
-      const chargeAmount = (booking.confirmedTotalAmount ?? totalAmount - convenienceFee) + chargedConvenienceFee;
+      const chargeAmount = roundRupees((booking.confirmedTotalAmount ?? totalAmount - convenienceFee) + chargedConvenienceFee);
       if (Math.round(chargeAmount) !== Math.round(totalAmount)) {
         const accepted = await new Promise<boolean>((resolve) => setPriceChange({ from: totalAmount, to: chargeAmount, resolve }));
         setPriceChange(null);

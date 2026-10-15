@@ -64,7 +64,7 @@ describe('calculateConvenienceFee', () => {
   test.each([
     [1, 264],
     [2, 528],
-    [3, 673.2], // 0.85 x (3 x 264)
+    [3, 673], // 0.85 x (3 x 264) = 673.20, whole rupees
     [5, 1122], // 0.85 x (5 x 264)
     [7, 1386], // 0.75 x (7 x 264)
   ])('one way, %i passengers', (pax, expected) => {
@@ -73,7 +73,7 @@ describe('calculateConvenienceFee', () => {
 
   test.each([
     [2, 1056], // 2 x (2 x 264)
-    [3, 1346.4], // 2 x (0.85 x (3 x 264))
+    [3, 1346], // 2 x (0.85 x (3 x 264)) = 1,346.40
     [7, 2772], // 2 x (0.75 x (7 x 264))
   ])('round trip, %i passengers', (pax, expected) => {
     expect(calculateConvenienceFee(rules, 'RoundTrip', journeys(2, pax), pax, 0)).toBe(expected);
@@ -92,22 +92,22 @@ describe('calculateConvenienceFee', () => {
 describe('convenienceFeeFor', () => {
   test('takes the fare before the discount (base + taxes)', () => {
     // 2.64% x 6,747
-    expect(convenienceFeeFor(rules, [leg(6747)], { adult: 1, child: 0, infant: 0 }, 'OneWay')).toBe(178.12);
+    expect(convenienceFeeFor(rules, [leg(6747)], { adult: 1, child: 0, infant: 0 }, 'OneWay')).toBe(178); // 178.12
   });
 
   test('children pay on the child fare; infants pay nothing and are not counted', () => {
     // 2.64% x (2 x 6,000 + 1 x 4,000) x 0.85 (3 passengers)
-    expect(convenienceFeeFor(rules, [leg(6000, [0], 4000)], { adult: 2, child: 1, infant: 1 }, 'OneWay')).toBe(359.04);
+    expect(convenienceFeeFor(rules, [leg(6000, [0], 4000)], { adult: 2, child: 1, infant: 1 }, 'OneWay')).toBe(359); // 359.04
   });
 
   test('a round trip charges each leg', () => {
     // 2.64% x 5,000 + 2.64% x 4,000
-    expect(convenienceFeeFor(rules, [leg(5000), leg(4000)], { adult: 1, child: 0, infant: 0 }, 'RoundTrip')).toBe(237.6);
+    expect(convenienceFeeFor(rules, [leg(5000), leg(4000)], { adult: 1, child: 0, infant: 0 }, 'RoundTrip')).toBe(238); // 237.60
   });
 
   test('a whole-trip offer is split evenly into its trips', () => {
     // One offer, two trips: 2 x 2.64% x 4,500
-    expect(convenienceFeeFor(rules, [leg(9000, [0, 1])], { adult: 1, child: 0, infant: 0 }, 'RoundTrip')).toBe(237.6);
+    expect(convenienceFeeFor(rules, [leg(9000, [0, 1])], { adult: 1, child: 0, infant: 0 }, 'RoundTrip')).toBe(238); // 237.60
   });
 
   test('no rules yet, no fee', () => {

@@ -62,7 +62,8 @@ export function calculateConvenienceFee(
       0
     ) * factor;
   if (rate.maxFeePerPax != null) total = Math.min(total, rate.maxFeePerPax * chargeablePax);
-  return Math.round((total + Number.EPSILON) * 100) / 100;
+  // Whole rupees, like the server.
+  return Math.round(total + Number.EPSILON);
 }
 
 // The journeys of the legs being booked: one per leg, or one per trip of a
