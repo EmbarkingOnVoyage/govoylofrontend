@@ -183,9 +183,10 @@ describe('round trips and multi-city', () => {
 });
 
 describe('display helpers', () => {
-  test('prices use Indian grouping and show paise only when present', () => {
+  test('prices use Indian grouping, rounded to the nearest rupee', () => {
     expect(formatPrice(123456, 'INR')).toBe('₹1,23,456');
-    expect(formatPrice(1588.5, 'INR')).toBe('₹1,588.50');
+    expect(formatPrice(1588.5, 'INR')).toBe('₹1,589');
+    expect(formatPrice(1588.4, 'INR')).toBe('₹1,588');
     expect(formatPrice(99, 'USD')).toBe('USD 99');
   });
 
