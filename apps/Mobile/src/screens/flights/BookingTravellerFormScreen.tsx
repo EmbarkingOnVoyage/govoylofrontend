@@ -166,6 +166,11 @@ export const BookingTravellerFormScreen: React.FC<BookingTravellerFormScreenProp
     if (profile.nationality) setNationality(profile.nationality);
   }, [travellerId, asAccountHolder, profile]);
 
+  // A message from the last Save goes away once the form is changed.
+  useEffect(() => {
+    setError('');
+  }, [gender, firstName, lastName, dateOfBirth, nationality, wheelchair, passportNumber, passportExpiry, passportCountry]);
+
   const today = new Date();
   const handleSave = async () => {
     const dobIso = displayToIso(dateOfBirth);
