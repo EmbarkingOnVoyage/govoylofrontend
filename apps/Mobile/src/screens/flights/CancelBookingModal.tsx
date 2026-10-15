@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { showComingSoon } from '../../components/comingSoon';
 import { X, CircleAlert, CircleCheck, Info } from 'lucide-react-native';
 import {
   useCancellationQuoteMobile,
@@ -183,8 +184,7 @@ export const CancelBookingModal: React.FC<CancelBookingModalProps> = ({ visible,
               </>
             )}
 
-            {/* No action yet — post-booking fare rules aren't available in the app. */}
-            <TouchableOpacity activeOpacity={0.7}>
+            <TouchableOpacity activeOpacity={0.7} onPress={() => showComingSoon('Fare rules after booking')}>
               <Text style={styles.fareRulesLink}>View fare rules</Text>
             </TouchableOpacity>
 

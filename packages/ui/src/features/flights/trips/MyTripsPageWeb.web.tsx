@@ -30,6 +30,7 @@ import {
 import { downloadETicketWeb } from './downloadETicket.web';
 import { NoticeDialogWeb } from './NoticeDialogWeb.web';
 import { TripsTitleBlockWeb } from './TripsTitleBlockWeb.web';
+import { showComingSoon } from '../../../components/comingSoon.web';
 
 const TABS: TripTab[] = ['Upcoming', 'Completed', 'Cancelled'];
 // The design's chips; only flights can be booked today.
@@ -233,6 +234,7 @@ export const MyTripsPageWeb: React.FC<{
           {tab === 'Completed' && (
             <button
               type="button"
+              onClick={() => showComingSoon('Book again')}
               className="flex-1 h-11 rounded-[8px] border border-[#7C1AEE] bg-white text-[#7C1AEE] text-[16px] leading-5 font-semibold"
             >
               Book again
@@ -243,7 +245,11 @@ export const MyTripsPageWeb: React.FC<{
         {tab === 'Completed' && (
           <>
             <div className="mt-[8px] h-[2px] bg-[#98A5BF]" />
-            <button type="button" className="w-full h-[33px] flex items-center gap-[10px] pl-[2px] pr-[7px] text-[13px] leading-4 font-medium text-[#7C1AEE]">
+            <button
+              type="button"
+              onClick={() => showComingSoon('Trip ratings')}
+              className="w-full h-[33px] flex items-center gap-[10px] pl-[2px] pr-[7px] text-[13px] leading-4 font-medium text-[#7C1AEE]"
+            >
               <Star size={18} strokeWidth={1.67} />
               <span className="flex-1 text-left">Rate your trip</span>
               <ChevronRight size={18} strokeWidth={1.67} />
@@ -490,7 +496,11 @@ export const MyTripsPageWeb: React.FC<{
 
           {/* Side column (370px): refund help, and add-on ideas for upcoming trips. */}
           <div className="w-[370px] shrink-0 mt-[49.5px] flex flex-col gap-[14px]">
-            <div className="h-[88px] flex items-start gap-3 pl-[17px] pr-[18px] pt-[18px] rounded-[12px] border border-[#98A5BF] bg-[#E8EEFF]">
+            <button
+              type="button"
+              onClick={() => showComingSoon('Refund help')}
+              className="h-[88px] flex items-start gap-3 pl-[17px] pr-[18px] pt-[18px] rounded-[12px] border border-[#98A5BF] bg-[#E8EEFF] text-left"
+            >
               <span className="mt-[6px] w-10 h-10 shrink-0 rounded-[12px] bg-white flex items-center justify-center text-[#114BFF]">
                 <Headphones size={18} strokeWidth={1.67} />
               </span>
@@ -501,7 +511,7 @@ export const MyTripsPageWeb: React.FC<{
                 </div>
               </div>
               <ChevronRight size={18} strokeWidth={1.67} className="mt-[16.5px] text-[#182339] shrink-0" />
-            </div>
+            </button>
 
             {activeTab === 'Upcoming' && !tabIsEmpty && (
               <div className="h-[157px] rounded-[12px] border border-[#98A5BF] bg-white pl-[17px] pr-[40px] pt-[19.5px]">

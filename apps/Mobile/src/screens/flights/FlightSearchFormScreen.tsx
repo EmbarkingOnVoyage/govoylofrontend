@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, SafeAreaView, Dimensions } from 'react-native';
+import { showComingSoon } from '../../components/comingSoon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, ArrowLeftRight, ArrowRightLeft, UserRound, X } from 'lucide-react-native';
 import {
@@ -137,7 +138,6 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
   const [infantCount, setInfantCount] = useState(initialValues?.infantCount ?? 0);
   const [cabinClass, setCabinClass] = useState<CabinClass>(initialValues?.cabinClass ?? 'Economy');
 
-  const [selectedFare, setSelectedFare] = useState<'Student' | 'SeniorCitizen' | null>(null);
   const [nonStopOnly, setNonStopOnly] = useState(initialValues?.nonStopOnly ?? false);
   const [formError, setFormError] = useState('');
 
@@ -493,9 +493,9 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                 >
                   <Text style={styles.pillActiveText}>Flights</Text>
                 </LinearGradient>
-                <View style={styles.pillInactive}>
+                <TouchableOpacity style={styles.pillInactive} onPress={() => showComingSoon('Voylo AI')} activeOpacity={0.7}>
                   <Text style={styles.pillInactiveText}>Voylo AI</Text>
-                </View>
+                </TouchableOpacity>
               </View>
             </LinearGradient>
           </View>
@@ -699,23 +699,18 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
 
             <Text style={styles.sectionHeading}>Special Fares (Optional)</Text>
             <View style={styles.fareRow}>
+              {/* Not offered by the suppliers' search yet. */}
               <TouchableOpacity
-                style={[styles.fareButton, selectedFare === 'Student' && styles.fareButtonSelected]}
-                onPress={() => setSelectedFare(selectedFare === 'Student' ? null : 'Student')}
+                style={styles.fareButton}
+                onPress={() => showComingSoon('Student fares')}
               >
-                <Text style={[styles.fareButtonText, selectedFare === 'Student' && styles.fareButtonTextSelected]}>
-                  Student
-                </Text>
+                <Text style={styles.fareButtonText}>Student</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.fareButton, selectedFare === 'SeniorCitizen' && styles.fareButtonSelected]}
-                onPress={() => setSelectedFare(selectedFare === 'SeniorCitizen' ? null : 'SeniorCitizen')}
+                style={styles.fareButton}
+                onPress={() => showComingSoon('Senior citizen fares')}
               >
-                <Text
-                  style={[styles.fareButtonText, selectedFare === 'SeniorCitizen' && styles.fareButtonTextSelected]}
-                >
-                  Senior Citizen
-                </Text>
+                <Text style={styles.fareButtonText}>Senior Citizen</Text>
               </TouchableOpacity>
             </View>
 

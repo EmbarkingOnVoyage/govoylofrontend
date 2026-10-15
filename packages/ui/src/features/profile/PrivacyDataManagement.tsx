@@ -1,6 +1,7 @@
 import React from 'react';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
 import { useCustomerProfile } from './useCustomerProfile';
+import { showComingSoon } from '../../components/comingSoon.web';
 
 // Privacy and data management (Web Dev): the account email with "Manage",
 // and the explanation. "Manage" has no request form behind it yet.
@@ -25,7 +26,11 @@ export const PrivacyDataManagementContent: React.FC = () => {
             Select "Manage" to change your privacy settings and exercise your rights using our request form.
           </p>
         </div>
-        <button type="button" className="text-[15px] leading-5 font-medium text-[#6014B7] underline underline-offset-[3px]">
+        <button
+          type="button"
+          onClick={() => showComingSoon('Privacy requests')}
+          className="text-[15px] leading-5 font-medium text-[#6014B7] underline underline-offset-[3px]"
+        >
           Manage
         </button>
       </div>

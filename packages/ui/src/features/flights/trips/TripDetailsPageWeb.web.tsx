@@ -25,6 +25,7 @@ import { downloadETicketWeb } from './downloadETicket.web';
 import { NoticeDialogWeb } from './NoticeDialogWeb.web';
 import { useEscapeKey } from '../useEscapeKey.web';
 import { TripsTitleBlockWeb } from './TripsTitleBlockWeb.web';
+import { showComingSoon } from '../../../components/comingSoon.web';
 
 const RED = '#C8102E';
 const GREEN = '#15803D';
@@ -209,7 +210,11 @@ const CancelBookingDialogWeb: React.FC<{
           </>
         )}
         {error && <p className="mt-3 text-[13px] text-[#C5001F]">{error}</p>}
-        <button type="button" className="mt-4 text-[13px] leading-4 font-medium text-[#114BFF] underline underline-offset-[3px]">
+        <button
+          type="button"
+          onClick={() => showComingSoon('Fare rules after booking')}
+          className="mt-4 text-[13px] leading-4 font-medium text-[#114BFF] underline underline-offset-[3px]"
+        >
           View fare rules
         </button>
         <div className="mt-[15px] flex gap-[7px]">

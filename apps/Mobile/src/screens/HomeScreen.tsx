@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { showComingSoon } from '../components/comingSoon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SvgXml } from 'react-native-svg';
 import { GlowPill, PillIcon } from '../components/GlowPill';
@@ -26,7 +27,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onSelectFlights,
 }) => (
   <View style={styles.screen}>
-    <View style={styles.banner}>
+    <TouchableOpacity
+      style={styles.banner}
+      activeOpacity={0.8}
+      onPress={() => showComingSoon('Voylo AI')}
+      accessibilityLabel="Voylo AI"
+    >
       <LinearGradient colors={['#9335FF', '#5731FF']} style={styles.bannerBorder}>
         <View style={styles.bannerInner} />
         <SvgXml xml={SPARKLE_SVG} width={19} height={18} style={[styles.sparkle, { left: 15 }]} />
@@ -35,7 +41,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </Text>
         <SvgXml xml={SPARKLE_SVG} width={19} height={18} style={[styles.sparkle, { right: 16 }]} />
       </LinearGradient>
-    </View>
+    </TouchableOpacity>
 
     <View style={styles.panel}>
       <GlowPill height={67.47} onPress={onSelectFlightsAndHotels} accessibilityLabel="Flights + Hotels">
