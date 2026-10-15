@@ -41,7 +41,7 @@ import {
   type PaxType,
   type TravelerAgeCheck,
 } from '@workspace/ui/src/features/flights/logic/travellers';
-import { formatPrice as formatMoney } from '@workspace/ui/src/features/flights/logic/flightResults';
+import { formatPrice as formatMoney, roundRupees } from '@workspace/ui/src/features/flights/logic/flightResults';
 import { useHardwareBack } from '../../navigation/useHardwareBack';
 
 // The Add Travellers list only shows the first 4 saved travellers inline; a
@@ -189,7 +189,8 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   );
   const [chargedConvenienceFee, setChargedConvenienceFee] = useState<number | null>(null);
   const convenienceFee = chargedConvenienceFee ?? estimatedConvenienceFee;
-  const payableAmount = totalAmount + estimatedConvenienceFee;
+  // Charged in whole rupees.
+  const payableAmount = roundRupees(totalAmount + estimatedConvenienceFee);
 
   const requiredCounts: Record<PaxType, number> = {
     adult: passengerCounts.adult,
@@ -489,7 +490,7 @@ const selectedTravelers = useMemo(
       // charge, after the customer has seen and accepted any change.
       const serverConvenienceFee = booking.convenienceFee ?? estimatedConvenienceFee;
       setChargedConvenienceFee(serverConvenienceFee);
-      const chargeAmount = (booking.confirmedTotalAmount ?? totalAmount) + serverConvenienceFee;
+      const chargeAmount = roundRupees((booking.confirmedTotalAmount ?? totalAmount) + serverConvenienceFee);
       if (Math.round(chargeAmount) !== Math.round(payableAmount)) {
         const accepted = await new Promise<boolean>((resolve) =>
           Alert.alert(
@@ -643,7 +644,7 @@ const getInlineTravelers = (ofType: Traveler[]) => {
           addOnSelections={addOnSelections}
           // The fee being charged (the server's once held), so a "fare change"
           // row only ever reflects the airline's re-price.
-          totalAmount={totalAmount + convenienceFee}
+          totalAmount={roundRupees(totalAmount + convenienceFee)}
           convenienceFee={convenienceFee}
           convenienceFeeWaived={convenienceFeeWaived && convenienceFee === 0}
           confirmedAmount={confirmedAmount}

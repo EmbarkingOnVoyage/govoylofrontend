@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import type { FlightOffer } from '../useSearchFlightsMobile';
-import { formatPrice } from '../logic/flightResults';
+import { formatPrice, roundRupees } from '../logic/flightResults';
 import { ADD_ON_LABELS, legBaseFare, legDiscount, type AddOnCategory, type AddOnSelection } from '../logic/booking';
 
 // Shared pieces of the Web Dev booking pages (Desktop-17 traveller details,
@@ -55,7 +55,8 @@ export function buildFareBreakdown(
     addOns: groups,
     convenienceFee,
     convenienceFeeWaived,
-    total: flightTotal + addOnTotal + convenienceFee,
+    // Charged in whole rupees.
+    total: roundRupees(flightTotal + addOnTotal + convenienceFee),
     paxText,
   };
 }

@@ -79,14 +79,16 @@ export function offerListAmount(offer: FlightOffer): number {
   return offer.totalAmount + offerDiscount(offer);
 }
 
+// Nearest whole rupee (half up), matching the server's rounding of what's charged.
+export function roundRupees(amount: number): number {
+  return Math.round(amount + Number.EPSILON);
+}
+
 export function formatPrice(amount: number, currencyCode: string): string {
   const symbol = CURRENCY_SYMBOLS[currencyCode] ?? `${currencyCode} `;
-  // Indian digit grouping; paise only when there are any (₹1,588.50, ₹4,250).
-  const fractionDigits = Number.isInteger(amount) ? 0 : 2;
-  return `${symbol}${amount.toLocaleString('en-IN', {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits,
-  })}`;
+  // Indian digit grouping, rounded to the nearest rupee — prices are shown and
+  // charged without paise (₹1,588.50 → ₹1,589).
+  return `${symbol}${roundRupees(amount).toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
 }
 
 // Total journey duration (first departure to last arrival) — not the same as

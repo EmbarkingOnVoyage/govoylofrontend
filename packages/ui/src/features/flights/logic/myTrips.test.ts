@@ -87,8 +87,8 @@ describe('my trips helpers', () => {
     expect(matchesSearch(booking(), 'GOI')).toBe(false);
   });
 
-  test('rupee amounts use Indian grouping, paise only when present', () => {
+  test('rupee amounts use Indian grouping, rounded to the nearest rupee', () => {
     expect(formatCurrency(123456, 'INR')).toBe('₹1,23,456');
-    expect(formatCurrency(123456.4, 'INR')).toBe('₹1,23,456.40');
+    expect(formatCurrency(123456.4, 'INR')).toBe('₹1,23,456');
   });
 });
