@@ -74,7 +74,7 @@ export interface FareOption {
   bookingDiscountAmount?: number;
   bookingCommissionAmount?: number;
   childBaseFare?: number;
-  // One adult's / one child's fare before the discount — with the add-ons,
+  // One adult's / one child's fare before the discount (base + taxes) —
   // what the convenience fee is a percentage of.
   adultListFare?: number;
   childListFare?: number;
