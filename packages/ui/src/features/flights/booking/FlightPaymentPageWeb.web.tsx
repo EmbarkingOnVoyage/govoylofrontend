@@ -7,7 +7,7 @@ import { useReleaseHoldMobile } from '../useReleaseHoldMobile';
 import type { Traveler } from '../../profile/useTravellersMobile';
 import { useCreateRazorpayOrderMobile, useVerifyRazorpayPaymentMobile } from '../../payments/useRazorpayPaymentMobile';
 import { RazorpayCheckoutError, openRazorpayCheckout } from '../../payments/razorpayCheckout.web';
-import { CABIN_CLASS_LABELS, formatPrice, formatTime24, roundRupees, tripsOfLeg } from '../logic/flightResults';
+import { CABIN_CLASS_LABELS, formatPrice, formatTime24, tripsOfLeg } from '../logic/flightResults';
 import { PAX_TYPES, type PaxType } from '../logic/travellers';
 import { buildBookingLegs, buildBookingTravelers } from '../logic/booking';
 import { convenienceFeeFor } from '../logic/convenienceFee';
@@ -16,7 +16,7 @@ import { useConvenienceFeeOffer } from '../useConvenienceFeeOffer';
 import { useAuth } from '../../authentication/AuthContext';
 import { AirlineLogoWeb } from '../results/AirlineLogoWeb.web';
 import { useAirportLookup } from '../results/useAirportLookup';
-import { BookingPageWeb, FareSummaryWeb, SectionHeading, Separator, buildFareBreakdown } from './BookingLayoutWeb.web';
+import { BookingPageWeb, FareSummaryWeb, SectionHeading, Separator, buildFareBreakdown, withHeldFare } from './BookingLayoutWeb.web';
 import { SelectedTravellersWeb, paxSummaryText } from './FlightReviewPageWeb.web';
 import type { BookingConfirmation } from './BookingConfirmedWeb.web';
 import { TripSummaryPanelWeb, legLine } from './TripSummaryPanelWeb.web';
@@ -80,6 +80,10 @@ export const FlightPaymentPageWeb: React.FC<{
   const [payState, setPayState] = useState<PayState>('idle');
   const [error, setError] = useState('');
   const [priceChange, setPriceChange] = useState<{ from: number; to: number; resolve: (ok: boolean) => void } | null>(null);
+  // What the airline confirmed for the flights and add-ons when the seats were
+  // last held, and the server's convenience fee: from then on the page shows
+  // (and Pay Now charges) these instead of the search estimate.
+  const [heldPrice, setHeldPrice] = useState<{ fare: number; convenienceFee: number } | null>(null);
 
   const cabin = CABIN_CLASS_LABELS[summary.cabinClass];
   // The app's estimate of the convenience fee; the server's own figure from the
@@ -91,9 +95,11 @@ export const FlightPaymentPageWeb: React.FC<{
   const convenienceFee = convenienceFeeWaived
     ? 0
     : convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, summary.request.tripType);
-  const breakdown = buildFareBreakdown(
+  const estimate = buildFareBreakdown(
     legs, checkout.addOns, paxSummaryText(passengerCounts), convenienceFee, convenienceFeeWaived
   );
+  const estimatedFare = estimate.flightTotal + estimate.addOns.reduce((sum, g) => sum + g.amount, 0);
+  const breakdown = heldPrice ? withHeldFare(estimate, heldPrice.fare, heldPrice.convenienceFee) : estimate;
   const totalAmount = breakdown.total;
   const currencyCode = breakdown.currencyCode;
   const money = (amount: number) => formatPrice(amount, currencyCode);
@@ -146,13 +152,17 @@ export const FlightPaymentPageWeb: React.FC<{
       held = booking;
 
       // The supplier re-prices at booking time; charge what it will charge,
-      // once the customer has accepted any change.
+      // once the customer has accepted any change. The fare summary shows the
+      // new price straight away, behind the popup.
       const chargedConvenienceFee = booking.convenienceFee ?? convenienceFee;
-      const chargeAmount = roundRupees((booking.confirmedTotalAmount ?? totalAmount - convenienceFee) + chargedConvenienceFee);
-      if (Math.round(chargeAmount) !== Math.round(totalAmount)) {
+      const heldFare = booking.confirmedTotalAmount ?? heldPrice?.fare ?? estimatedFare;
+      const heldBreakdown = withHeldFare(estimate, heldFare, chargedConvenienceFee);
+      const chargeAmount = heldBreakdown.total;
+      setHeldPrice({ fare: heldFare, convenienceFee: chargedConvenienceFee });
+      if (Math.round(heldFare) !== Math.round(heldPrice?.fare ?? estimatedFare)) {
         const accepted = await new Promise<boolean>((resolve) => setPriceChange({ from: totalAmount, to: chargeAmount, resolve }));
         setPriceChange(null);
-        if (!accepted) throw new Error('Booking cancelled — the fare changed.');
+        if (!accepted) throw new Error('Booking cancelled — the fare changed. Pay again to book at the new price.');
       }
 
       setPayState('paying');
@@ -195,7 +205,7 @@ export const FlightPaymentPageWeb: React.FC<{
         amount: chargeAmount,
         currencyCode,
         route: `${cityFor(first.origin)} (${first.origin}) → ${cityFor(destination)} (${destination})`,
-        breakdown: { ...breakdown, convenienceFee: chargedConvenienceFee, total: chargeAmount },
+        breakdown: heldBreakdown,
         email: checkout.email,
       });
     } catch (err) {
@@ -322,16 +332,30 @@ export const FlightPaymentPageWeb: React.FC<{
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-2xl p-6 max-w-sm w-full" role="alertdialog" aria-label="Price updated">
             <h3 className="text-[18px] leading-6 font-bold text-[#182339] mb-2">Price updated</h3>
-            <p className="text-[15px] leading-5 text-[#3E4B64] mb-5">
-              The airline has updated the fare for this booking from {money(priceChange.from)} to{' '}
-              <strong className="text-[#182339]">{money(priceChange.to)}</strong>.
-            </p>
+            <p className="text-[15px] leading-5 text-[#3E4B64] mb-4">The airline has changed the fare for this booking.</p>
+            <div className="flex flex-col gap-2 mb-5 p-3 rounded-lg bg-[#F4F5F8] text-[15px] leading-5">
+              <div className="flex justify-between text-[#697691]">
+                <span>Previous price</span>
+                <span className="line-through">{money(priceChange.from)}</span>
+              </div>
+              <div className="flex justify-between font-bold text-[#182339]">
+                <span>Updated price</span>
+                <span>{money(priceChange.to)}</span>
+              </div>
+              <div className={`flex justify-between text-[13px] ${priceChange.to > priceChange.from ? 'text-[#C5001F]' : 'text-[#007F20]'}`}>
+                <span>{priceChange.to > priceChange.from ? 'Increase' : 'Decrease'}</span>
+                <span>
+                  {priceChange.to > priceChange.from ? '+' : '−'}
+                  {money(Math.abs(priceChange.to - priceChange.from))}
+                </span>
+              </div>
+            </div>
             <div className="flex justify-end gap-3">
               <button type="button" onClick={() => priceChange.resolve(false)} className="h-10 px-4 rounded-lg border border-[#ADB8CD] text-[15px] text-[#3E4B64]">
                 Cancel
               </button>
               <button type="button" onClick={() => priceChange.resolve(true)} className="h-10 px-5 rounded-lg bg-[#7C1AEE] text-white text-[15px] font-medium">
-                Continue
+                Pay {money(priceChange.to)}
               </button>
             </div>
           </div>
