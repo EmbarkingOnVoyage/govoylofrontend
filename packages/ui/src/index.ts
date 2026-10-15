@@ -128,7 +128,7 @@ export {
   type ConvenienceFeeRules,
   type ConvenienceFeeTripRate,
   type ConvenienceFeePaxBand,
-  type JourneyBaseFare,
+  type JourneyFare,
 } from './features/flights/logic/convenienceFee';
 export { useAirportsMobile, type AirportResult } from './features/flights/useAirportsMobile';
 export { useAirportsByCodesMobile } from './features/flights/useAirportsByCodesMobile';

@@ -83,7 +83,9 @@ export const FlightPaymentPageWeb: React.FC<{
   // The app's estimate of the convenience fee; the server's own figure from the
   // hold is what's charged.
   const { data: convenienceFeeRules } = useConvenienceFeeRules();
-  const convenienceFee = convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, summary.request.tripType);
+  const convenienceFee = convenienceFeeFor(
+    convenienceFeeRules, legs, passengerCounts, summary.request.tripType, checkout.addOns
+  );
   const breakdown = buildFareBreakdown(legs, checkout.addOns, paxSummaryText(passengerCounts), convenienceFee);
   const totalAmount = breakdown.total;
   const currencyCode = breakdown.currencyCode;
