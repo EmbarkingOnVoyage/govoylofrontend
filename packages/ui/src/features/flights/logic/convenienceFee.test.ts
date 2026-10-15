@@ -1,6 +1,5 @@
 import { describe, test, expect } from 'vitest';
 import type { FareOption, FlightOffer } from '../useSearchFlightsMobile';
-import type { AddOnSelection } from './booking';
 import { calculateConvenienceFee, convenienceFeeFor, type ConvenienceFeeRules } from './convenienceFee';
 
 // The rules the backend seeds (ConvenienceFeeOnFarePlusAddOns migration).
@@ -61,15 +60,6 @@ function leg(adultListFare: number, tripIndexes: number[] = [0], childListFare =
   } as FlightOffer;
 }
 
-const addOn = (legIndex: number, amount: number): AddOnSelection => ({
-  legIndex,
-  category: 'baggage',
-  travelerId: 'T1',
-  ssrKey: `K${legIndex}${amount}`,
-  label: 'Extra bag',
-  amount,
-});
-
 describe('calculateConvenienceFee', () => {
   test.each([
     [1, 264],
@@ -100,11 +90,9 @@ describe('calculateConvenienceFee', () => {
 });
 
 describe('convenienceFeeFor', () => {
-  test('takes the fare before the discount plus the add-ons', () => {
-    // 2.64% x (6,747 + 1,000 bag)
-    expect(convenienceFeeFor(rules, [leg(6747)], { adult: 1, child: 0, infant: 0 }, 'OneWay', [addOn(0, 1000)])).toBe(
-      204.52
-    );
+  test('takes the fare before the discount (base + taxes)', () => {
+    // 2.64% x 6,747
+    expect(convenienceFeeFor(rules, [leg(6747)], { adult: 1, child: 0, infant: 0 }, 'OneWay')).toBe(178.12);
   });
 
   test('children pay on the child fare; infants pay nothing and are not counted', () => {
@@ -112,11 +100,9 @@ describe('convenienceFeeFor', () => {
     expect(convenienceFeeFor(rules, [leg(6000, [0], 4000)], { adult: 2, child: 1, infant: 1 }, 'OneWay')).toBe(359.04);
   });
 
-  test("a round trip's add-ons count on their own leg", () => {
-    // 2.64% x (5,000 + 500) + 2.64% x 4,000
-    expect(
-      convenienceFeeFor(rules, [leg(5000), leg(4000)], { adult: 1, child: 0, infant: 0 }, 'RoundTrip', [addOn(0, 500)])
-    ).toBe(250.8);
+  test('a round trip charges each leg', () => {
+    // 2.64% x 5,000 + 2.64% x 4,000
+    expect(convenienceFeeFor(rules, [leg(5000), leg(4000)], { adult: 1, child: 0, infant: 0 }, 'RoundTrip')).toBe(237.6);
   });
 
   test('a whole-trip offer is split evenly into its trips', () => {

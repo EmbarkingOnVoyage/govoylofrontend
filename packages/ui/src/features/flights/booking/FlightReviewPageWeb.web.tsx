@@ -369,7 +369,7 @@ export const FlightReviewPageWeb: React.FC<{
     legs,
     addOns,
     paxSummaryText(passengerCounts),
-    convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, selection.summary.request.tripType, addOns)
+    convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, selection.summary.request.tripType)
   );
   const money = (amount: number) => formatPrice(amount, breakdown.currencyCode);
 

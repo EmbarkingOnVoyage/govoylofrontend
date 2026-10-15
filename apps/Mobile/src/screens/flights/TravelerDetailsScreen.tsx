@@ -181,8 +181,8 @@ export const TravelerDetailsScreen: React.FC<TravelerDetailsScreenProps> = ({
   // figure is what's charged.
   const { data: convenienceFeeRules } = useConvenienceFeeRules();
   const estimatedConvenienceFee = useMemo(
-    () => convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, searchTripType, addOnSelections),
-    [convenienceFeeRules, legs, passengerCounts, searchTripType, addOnSelections]
+    () => convenienceFeeFor(convenienceFeeRules, legs, passengerCounts, searchTripType),
+    [convenienceFeeRules, legs, passengerCounts, searchTripType]
   );
   const [chargedConvenienceFee, setChargedConvenienceFee] = useState<number | null>(null);
   const convenienceFee = chargedConvenienceFee ?? estimatedConvenienceFee;
