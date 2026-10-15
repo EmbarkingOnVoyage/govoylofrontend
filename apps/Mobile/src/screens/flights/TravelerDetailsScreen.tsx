@@ -98,10 +98,11 @@ interface TravelerDetailsScreenProps {
   searchTripType?: TripType;
   onBack: () => void;
   // asSelf: "Add yourself" (the signed-in customer isn't a saved traveller yet).
-  onAddTraveler: (asSelf?: boolean) => void;
+  // heading: the slot being filled ("Adult 2"), the traveller form's title.
+  onAddTraveler: (asSelf: boolean, heading: string) => void;
   // Booking as a guest: no account, so no "Add yourself".
   isGuest?: boolean;
-  onEditTraveler: (id: string) => void;
+  onEditTraveler: (id: string, heading: string) => void;
 }
 
 // The Figma frame this matches is titled "Flight Details" again — a
@@ -242,6 +243,12 @@ const selectedTravelers = useMemo(
 
 
   const selectedCount = (type: PaxType) => travelersByType[type].filter((t) => selectedIds.has(t.id)).length;
+  // The next traveller slot to fill, for the traveller form's title ("Adult 2").
+  const nextSlot = (): string => {
+    const type = visiblePaxTypes.find((t) => selectedCount(t) < requiredCounts[t]) ?? 'adult';
+    const label = type === 'adult' ? 'Adult' : type === 'child' ? 'Child' : 'Infant';
+    return `${label} ${Math.min(selectedCount(type) + 1, Math.max(requiredCounts[type], 1))}`;
+  };
 
   const addOnTravelers = useMemo(
     () =>
@@ -604,7 +611,7 @@ const selectedTravelers = useMemo(
             )}
           </View>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => onEditTraveler(traveler.id)}>
+        <TouchableOpacity onPress={() => onEditTraveler(traveler.id, `${traveler.firstName} ${traveler.lastName}`.trim())}>
           <Text style={styles.editLink}>Edit</Text>
         </TouchableOpacity>
       </View>
@@ -842,11 +849,11 @@ const getInlineTravelers = (ofType: Traveler[]) => {
         {!!selectionHint && <Text style={styles.selectionHintText}>{selectionHint}</Text>}
 
         {!isGuest && !!travelers && !travelers.some((t) => t.isAccountHolder) && (
-          <TouchableOpacity style={styles.addTravelerRow} onPress={() => onAddTraveler(true)} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.addTravelerRow} onPress={() => onAddTraveler(true, nextSlot())} activeOpacity={0.7}>
             <Text style={styles.addTravelerText}>Add yourself as a traveller</Text>
           </TouchableOpacity>
         )}
-        <TouchableOpacity style={styles.addTravelerRow} onPress={() => onAddTraveler()} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.addTravelerRow} onPress={() => onAddTraveler(false, nextSlot())} activeOpacity={0.7}>
           <Text style={styles.addTravelerText}>Add new travellers</Text>
           <Plus size={20} color="#7C1AEE" strokeWidth={1.5} />
         </TouchableOpacity>
