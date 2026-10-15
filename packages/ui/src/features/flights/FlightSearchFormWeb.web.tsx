@@ -16,6 +16,7 @@ import { MenuBar } from '../../components/layout/MenuBar';
 import iconFlights from '../../assets/images/icon-flights.png';
 import iconHotels from '../../assets/images/icon-hotels.png';
 import iconFlightsHotels from '../../assets/images/icon-flights-hotels.png';
+import { showComingSoon } from '../../components/comingSoon.web';
 
 // Web Dev Desktop-7 / Desktop-13 colours and shadows (from the Figma export).
 const HERO_GRADIENT =
@@ -147,8 +148,6 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
   const [infantCount, setInfantCount] = useState(initial?.infantCount ?? 0);
   const [cabinClass, setCabinClass] = useState<CabinClass>(initial?.cabinClass ?? 'Economy');
   const [nonStopOnly, setNonStopOnly] = useState(initialSummary?.nonStopOnly ?? false);
-
-  const [selectedFare, setSelectedFare] = useState<'Student' | 'SeniorCitizen' | null>(null);
   const [formError, setFormError] = useState('');
 
   const closeDropdown = () => setActiveDropdown(null);
@@ -610,11 +609,12 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
             <button
               key={fare}
               type="button"
-              onClick={() => setSelectedFare((cur) => (cur === fare ? null : fare))}
+              // Not offered by the suppliers' search yet.
+              onClick={() => showComingSoon(fare === 'Student' ? 'Student fares' : 'Senior citizen fares')}
               className={[
                 'h-7 px-3 rounded border text-[15px] leading-5 font-medium bg-white',
                 'shadow-[0px_0px_1px_rgba(41,47,55,0.3),0px_1px_4px_rgba(79,94,113,0.12)]',
-                selectedFare === fare ? 'border-[#7C1AEE] text-[#7C1AEE]' : 'border-[#697691] text-[#697691]',
+                'border-[#697691] text-[#697691]',
               ].join(' ')}
             >
               {fare === 'Student' ? 'Student' : 'Senior Citizen'}
@@ -717,9 +717,13 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
                 >
                   Flights
                 </span>
-                <span className="w-[66px] h-6 rounded-[12px] flex items-center justify-center text-black text-[12.5px] font-medium">
+                <button
+                  type="button"
+                  onClick={() => showComingSoon('Voylo AI')}
+                  className="w-[66px] h-6 rounded-[12px] flex items-center justify-center text-black text-[12.5px] font-medium"
+                >
                   Voylo AI
-                </span>
+                </button>
               </div>
             </div>
 
@@ -825,10 +829,11 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
                 <button
                   key={fare}
                   type="button"
-                  onClick={() => setSelectedFare((cur) => (cur === fare ? null : fare))}
+                  // Not offered by the suppliers' search yet.
+              onClick={() => showComingSoon(fare === 'Student' ? 'Student fares' : 'Senior citizen fares')}
                   className={[
                     'h-7 px-3 rounded-[4px] border text-[15px] leading-5',
-                    selectedFare === fare ? 'border-[#7C1AEE] bg-[#F3E8FF] text-[#7C1AEE]' : 'border-[#697691] bg-white text-[#697691]',
+                    'border-[#697691] bg-white text-[#697691]',
                   ].join(' ')}
                   style={{ boxShadow: CHIP_SHADOW }}
                 >

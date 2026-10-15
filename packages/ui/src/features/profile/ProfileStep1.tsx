@@ -40,8 +40,9 @@ export const ProfileStep1: React.FC<ProfileStep1Props> = ({ onNavigate }) => {
         return <PrivacyDataManagementContent />;
       default:
         return (
-          <div className="text-gray-500 text-center py-12">
-            Component for "{activeTab}" view coming soon!
+          <div className="text-center py-12">
+            <p className="text-[18px] leading-6 font-bold text-[#182339]">Coming soon</p>
+            <p className="mt-1 text-[15px] text-[#4C5973]">{activeTab} will be available here soon.</p>
           </div>
         );
     }

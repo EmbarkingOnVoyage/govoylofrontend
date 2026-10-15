@@ -4,6 +4,7 @@ import { useAuth } from "../../features/authentication/AuthContext";
 import { useCustomerProfile } from "../../features/profile/useCustomerProfile";
 import { AUTH_BASE_URL } from "@workspace/api";
 import govoyloLogo from "../../assets/images/govoylo-logo.svg";
+import { showComingSoon } from "../comingSoon.web";
 
 // India flag for the currency switch (Figma uses a flag image; an emoji flag
 // doesn't render on Windows).
@@ -69,6 +70,9 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate, showProductLinks =
       case "BOOKINGS":
         onNavigate("ON_NAVIGATE_TO_MY_TRIPS");
         break;
+      case "SAVED":
+        showComingSoon("Saved trips");
+        break;
       case "SIGNOUT":
         logout();
         onNavigate("ON_NAVIGATE_TO_SIGN_IN");
@@ -103,19 +107,41 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate, showProductLinks =
                 >
                   Flights
                 </button>
-                <span className="py-3 text-[14px] leading-5 font-medium text-[#182339]">Hotels</span>
-                <span className="py-3 text-[14px] leading-5 font-medium text-[#182339]">Flights+Hotels</span>
+                <button
+                  type="button"
+                  onClick={() => showComingSoon("Hotels")}
+                  className="py-3 text-[14px] leading-5 font-medium text-[#182339]"
+                >
+                  Hotels
+                </button>
+                <button
+                  type="button"
+                  onClick={() => showComingSoon("Flights + Hotels")}
+                  className="py-3 text-[14px] leading-5 font-medium text-[#182339]"
+                >
+                  Flights+Hotels
+                </button>
               </nav>
             )}
           </div>
 
           <div className="relative flex items-center gap-3">
             <div className="flex items-center gap-6">
-              <span className="flex items-center gap-2 py-3 text-[14px] leading-5 font-medium text-[#182339]">
+              <button
+                type="button"
+                onClick={() => showComingSoon("Other currencies")}
+                className="flex items-center gap-2 py-3 text-[14px] leading-5 font-medium text-[#182339]"
+              >
                 <IndiaFlag />
                 INR
-              </span>
-              <span className="py-3 text-[14px] leading-5 font-medium text-[#182339] cursor-pointer">Help &amp; support</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => showComingSoon("Help & support")}
+                className="py-3 text-[14px] leading-5 font-medium text-[#182339]"
+              >
+                Help &amp; support
+              </button>
               {isLoggedIn ? (
                 <button
                   type="button"

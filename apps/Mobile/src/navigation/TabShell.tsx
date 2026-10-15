@@ -5,6 +5,7 @@ import { TAB_ICON_SVG } from '../components/figmaIcons';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { PersonalDetailsScreen } from '../screens/profile/PersonalDetailsScreen';
 import { CoTravellerScreen } from '../screens/profile/CoTravellerScreen';
+import { showComingSoon } from '../components/comingSoon';
 import { CoTravellerFormScreen } from '../screens/profile/CoTravellerFormScreen';
 import { PlaceholderScreen } from '../screens/profile/PlaceholderScreen';
 import { PreferencesScreen } from '../screens/profile/PreferencesScreen';
@@ -119,8 +120,8 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
     if (homeScreen === 'Buttons') {
       return (
         <HomeScreen
-          onSelectFlightsAndHotels={() => {}}
-          onSelectHotels={() => {}}
+          onSelectFlightsAndHotels={() => showComingSoon('Flights + Hotels')}
+          onSelectHotels={() => showComingSoon('Hotels')}
           onSelectFlights={() => setHomeScreen('FlightSearch')}
         />
       );

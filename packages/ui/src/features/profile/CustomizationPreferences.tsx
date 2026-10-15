@@ -1,5 +1,6 @@
 import React from 'react';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
+import { showComingSoon } from '../../components/comingSoon.web';
 
 // Customization preferences (Web Dev): currency and language, 343px selects.
 // Only INR / English are offered today.
@@ -11,7 +12,7 @@ export const CustomizationPreferencesContent: React.FC = () => {
           <h1 className={s.sectionTitle}>Customization preferences</h1>
           <p className={s.sectionSub}>Personalize your account to meet your needs.</p>
         </div>
-        <button type="button" className={s.saveBtn}>
+        <button type="button" className={s.saveBtn} onClick={() => showComingSoon('More currencies and languages')}>
           Save
         </button>
       </div>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CreditCard, Trash2 } from 'lucide-react';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
 import { ProfileConfirmModal } from './ProfileConfirmModal';
+import { showComingSoon } from '../../components/comingSoon.web';
 
 interface SavedCard {
   name: string;
@@ -33,10 +34,10 @@ export const PaymentMethodsContent: React.FC = () => {
     setIsAdding(true);
   };
 
+  // There's no payment-methods API yet, so a card "saved" here would only live
+  // in this page: say it's coming soon instead.
   const handleAddCard = () => {
-    setCardholderName('');
-    setCardNumber('');
-    setIsAdding(true);
+    showComingSoon('Saved cards');
   };
 
   return (
