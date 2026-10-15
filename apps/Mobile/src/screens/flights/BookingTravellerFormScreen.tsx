@@ -180,17 +180,20 @@ export const BookingTravellerFormScreen: React.FC<BookingTravellerFormScreenProp
     if (new Date(dobIso) > today) return setError('Date of birth must be in the past.');
     if (!nationality) return setError('Please select the nationality.');
 
+    // The passport is only asked for (and saved) when it's needed; anything typed
+    // before switching back to Indian nationality is left out.
+    const passportChanged = passportRequired && passportEdited;
     const hasPassport = !!detail?.passport && !passportEdited;
     if (passportRequired && !hasPassport && (!passportNumber.trim() || !passportExpiry || !passportCountry)) {
       setDocumentsOpen(true);
       return setError('Please enter the passport number, expiry date and issuing country.');
     }
     // A saved number only comes back masked — it has to be typed again to change the passport.
-    if (passportEdited && detail?.passport && passportNumber === detail.passport.maskedPassportNumber) {
+    if (passportChanged && detail?.passport && passportNumber === detail.passport.maskedPassportNumber) {
       return setError('Please re-enter the full passport number to update the passport.');
     }
-    const passportIso = passportEdited && passportNumber.trim() ? displayToIso(passportExpiry) : null;
-    if (passportEdited && passportNumber.trim()) {
+    const passportIso = passportChanged && passportNumber.trim() ? displayToIso(passportExpiry) : null;
+    if (passportChanged && passportNumber.trim()) {
       if (!passportIso || !passportCountry) return setError('Please enter the passport expiry date and issuing country.');
       if (new Date(passportIso) <= today) return setError('The passport has expired.');
     }
@@ -314,58 +317,62 @@ export const BookingTravellerFormScreen: React.FC<BookingTravellerFormScreenProp
               </View>
             </TouchableOpacity>
 
-            <View style={styles.divider} />
-
-            <TouchableOpacity style={styles.documentsHeader} onPress={() => setDocumentsOpen(!documentsOpen)} activeOpacity={0.7}>
-              <Text style={styles.sectionHeading}>Documents Details</Text>
-              {documentsOpen ? (
-                <ChevronUp size={24} color="#182339" strokeWidth={2} />
-              ) : (
-                <ChevronDown size={24} color="#182339" strokeWidth={2} />
-              )}
-            </TouchableOpacity>
-
-            {documentsOpen && (
+            {passportRequired && (
               <>
-                <View style={styles.field}>
-                  <Label text="Passport number" required={passportRequired} />
-                  <TextInput
-                    style={styles.input}
-                    value={passportNumber}
-                    onChangeText={(text) => {
-                      setPassportNumber(text);
-                      setPassportEdited(true);
-                    }}
-                    placeholder="Text"
-                    placeholderTextColor="#697691"
-                    autoCapitalize="characters"
-                    autoCorrect={false}
-                  />
-                </View>
-                <View style={styles.field}>
-                  <Label text="Expiry date" required={passportRequired} />
-                  <DatePickerField
-                    value={passportExpiry}
-                    onChange={(value) => {
-                      setPassportExpiry(value);
-                      setPassportEdited(true);
-                    }}
-                    minimumDate={today}
-                  />
-                </View>
-                <View style={styles.field}>
-                  <Label text="Issuing country" required={passportRequired} />
-                  <SelectField
-                    value={passportCountry}
-                    options={COUNTRY_OPTIONS}
-                    onSelect={(value) => {
-                      setPassportCountry(value);
-                      setPassportEdited(true);
-                    }}
-                    placeholder="Select"
-                    title="Select issuing country"
-                  />
-                </View>
+                <View style={styles.divider} />
+
+                <TouchableOpacity style={styles.documentsHeader} onPress={() => setDocumentsOpen(!documentsOpen)} activeOpacity={0.7}>
+                  <Text style={styles.sectionHeading}>Documents Details</Text>
+                  {documentsOpen ? (
+                    <ChevronUp size={24} color="#182339" strokeWidth={2} />
+                  ) : (
+                    <ChevronDown size={24} color="#182339" strokeWidth={2} />
+                  )}
+                </TouchableOpacity>
+
+                {documentsOpen && (
+                  <>
+                    <View style={styles.field}>
+                      <Label text="Passport number" required />
+                      <TextInput
+                        style={styles.input}
+                        value={passportNumber}
+                        onChangeText={(text) => {
+                          setPassportNumber(text);
+                          setPassportEdited(true);
+                        }}
+                        placeholder="Text"
+                        placeholderTextColor="#697691"
+                        autoCapitalize="characters"
+                        autoCorrect={false}
+                      />
+                    </View>
+                    <View style={styles.field}>
+                      <Label text="Expiry date" required />
+                      <DatePickerField
+                        value={passportExpiry}
+                        onChange={(value) => {
+                          setPassportExpiry(value);
+                          setPassportEdited(true);
+                        }}
+                        minimumDate={today}
+                      />
+                    </View>
+                    <View style={styles.field}>
+                      <Label text="Issuing country" required />
+                      <SelectField
+                        value={passportCountry}
+                        options={COUNTRY_OPTIONS}
+                        onSelect={(value) => {
+                          setPassportCountry(value);
+                          setPassportEdited(true);
+                        }}
+                        placeholder="Select"
+                        title="Select issuing country"
+                      />
+                    </View>
+                  </>
+                )}
               </>
             )}
           </ScrollView>
