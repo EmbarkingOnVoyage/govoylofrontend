@@ -76,12 +76,15 @@ interface MonthPanelProps {
   month: number;
   earliest: Date;
   selected: Date | null;
+  rangeEnd?: Date | null;
+  selectionMode?: 'single' | 'range';
   origin?: string;
   destination?: string;
   onSelectDay: (date: Date) => void;
 }
 
-const MonthPanel: React.FC<MonthPanelProps> = ({ year, month, earliest, selected, origin, destination, onSelectDay }) => {
+const MonthPanel: React.FC<MonthPanelProps> = ({ year, month, earliest, selected,rangeEnd = null,  selectionMode = 'single',
+ origin, destination, onSelectDay }) => {
   const canFetch = !!origin && !!destination;
   const { data } = useFareCalendarWeb(canFetch ? { origin: origin!, destination: destination!, month: month + 1, year } : null);
   const { data: holidaysData } = useHolidaysWeb(year);
@@ -131,49 +134,83 @@ const MonthPanel: React.FC<MonthPanelProps> = ({ year, month, earliest, selected
 
       {buildMonthGrid(year, month).map((week, wi) => (
         <div key={wi} className="grid grid-cols-7">
-          {week.map((date, di) => {
-            if (!date) return <div key={di} className="h-14" />;
-            const isPast = date < earliest;
-            const isSelected = isSameDay(selected, date);
-            const iso = toLocalIsoDate(date);
-            const holiday = holidayByDay.get(iso);
-            const priceDay = priceByDay.get(iso);
-            const isCheap = cheapByDay.get(iso);
-            return (
-              <button
-                key={di}
-                type="button"
-                disabled={isPast}
-                onClick={() => onSelectDay(date)}
+          
+      {week.map((date, di) => {
+        if (!date) return <div key={di} className="h-14" />;
+
+        const isPast = startOfDay(date) < earliest;
+        const isStart = isSameDay(selected, date);
+        const isEnd =
+          selectionMode === 'range' && isSameDay(rangeEnd, date);
+
+        const isInRange =
+          selectionMode === 'range' &&
+          !!selected &&
+          !!rangeEnd &&
+          startOfDay(date) > startOfDay(selected) &&
+          startOfDay(date) < startOfDay(rangeEnd);
+
+        const isSelected = isStart || isEnd;
+        const iso = toLocalIsoDate(date);
+        const holiday = holidayByDay.get(iso);
+        const priceDay = priceByDay.get(iso);
+        const isCheap = cheapByDay.get(iso);
+
+        return (
+          <button
+            key={di}
+            type="button"
+            disabled={isPast}
+            onClick={() => onSelectDay(date)}
+            className={[
+              'h-14 m-0.5 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-colors',
+              isPast
+                ? 'opacity-30 cursor-not-allowed'
+                : 'cursor-pointer',
+              isSelected
+                ? 'bg-[#7C1AEE]'
+                : isInRange
+                  ? 'bg-[#F0E2FF]'
+                  : 'hover:bg-[#F3E9FE]',
+            ].join(' ')}
+          >
+            <span className="flex items-center gap-1">
+              <span
                 className={[
-                  'h-14 m-0.5 rounded-lg flex flex-col items-center justify-center gap-0.5 transition-colors',
-                  // The selected day keeps its purple under the cursor: the
-                  // hover tint would hide its white text right after a click.
-                  isPast ? 'opacity-30 cursor-not-allowed' : isSelected ? 'cursor-pointer' : 'cursor-pointer hover:bg-[#F3E9FE]',
-                  isSelected ? 'bg-[#7C1AEE]' : '',
+                  'text-sm font-medium',
+                  isSelected ? 'text-white font-bold' : 'text-[#182339]',
                 ].join(' ')}
               >
-                <span className="flex items-center gap-1">
-                  <span className={['text-sm font-medium', isSelected ? 'text-white font-bold' : 'text-[#182339]'].join(' ')}>
-                    {date.getDate()}
-                  </span>
-                  {!!holiday && (
-                    <span className={['w-1 h-1 rounded-full', isSelected ? 'bg-white' : 'bg-[#16A34A]'].join(' ')} />
-                  )}
-                </span>
-                {!!priceDay && (
-                  <span
-                    className={[
-                      'text-[10px] font-semibold leading-none',
-                      isSelected ? 'text-white' : isCheap ? 'text-[#16A34A]' : 'text-[#D97706]',
-                    ].join(' ')}
-                  >
-                    {formatPrice(priceDay.amount)}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+                {date.getDate()}
+              </span>
+
+              {!!holiday && (
+                <span
+                  className={[
+                    'w-1 h-1 rounded-full',
+                    isSelected ? 'bg-white' : 'bg-[#16A34A]',
+                  ].join(' ')}
+                />
+              )}
+            </span>
+
+            {!!priceDay && (
+              <span
+                className={[
+                  'text-[10px] font-semibold leading-none',
+                  isSelected
+                    ? 'text-white'
+                    : isCheap
+                      ? 'text-[#16A34A]'
+                      : 'text-[#D97706]',
+                ].join(' ')}
+              >
+                {formatPrice(priceDay.amount)}
+              </span>
+            )}
+          </button>
+        );
+      })}
         </div>
       ))}
 
@@ -193,25 +230,66 @@ const MonthPanel: React.FC<MonthPanelProps> = ({ year, month, earliest, selected
 export interface FareCalendarDropdownProps {
   footerLabel: string;
   initialDate: string | null;
+  initialReturnDate?: string | null;
   minDate?: Date;
   origin?: string;
   destination?: string;
+  selectionMode?: 'single' | 'range';
   showAddReturnLink?: boolean;
   onAddReturnDate?: () => void;
-  onConfirm: (date: Date) => void;
+  onConfirm: (date: Date, returnDate?: Date) => void;
 }
 
 export const FareCalendarDropdown: React.FC<FareCalendarDropdownProps> = ({
   footerLabel,
   initialDate,
+  initialReturnDate,
   minDate,
   origin,
   destination,
+  selectionMode = 'single',
   showAddReturnLink,
   onAddReturnDate,
   onConfirm,
 }) => {
   const [selected, setSelected] = React.useState<Date | null>(initialDate ? new Date(initialDate) : null);
+  const [returnSelected, setReturnSelected] =
+    React.useState<Date | null>(
+      initialReturnDate ? new Date(initialReturnDate) : null
+    );
+     
+React.useEffect(() => {
+  setSelected(initialDate ? new Date(initialDate) : null);
+  setReturnSelected(
+    initialReturnDate ? new Date(initialReturnDate) : null
+  );
+}, [initialDate, initialReturnDate]);
+
+const handleSelectDay = (date: Date) => {
+  if (selectionMode === 'single') {
+    setSelected(date);
+    return;
+  }
+
+  // First click: choose departure.
+  // After a completed range, start a new selection.
+  if (!selected || returnSelected) {
+    setSelected(date);
+    setReturnSelected(null);
+    return;
+  }
+
+  // If the second click is before or on departure,
+  // make it the new departure date.
+  if (startOfDay(date) <= startOfDay(selected)) {
+    setSelected(date);
+    setReturnSelected(null);
+    return;
+  }
+
+  // Second click after departure: choose return.
+  setReturnSelected(date);
+};
   // How many month-pairs forward from the earliest allowed month the user has
   // paged — there's no upper bound, so the calendar is never "capped" the way
   // a fixed date-range picker would be; the user can keep clicking the right
@@ -241,9 +319,32 @@ export const FareCalendarDropdown: React.FC<FareCalendarDropdownProps> = ({
   const base = new Date(earliest.getFullYear(), earliest.getMonth() + pairOffset * 2, 1);
   const next = new Date(earliest.getFullYear(), earliest.getMonth() + pairOffset * 2 + 1, 1);
 
-  const formattedSelected = selected
-    ? selected.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
+  // const formattedSelected = selected
+  //   ? selected.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
+  //   : 'Select a date';
+
+
+const formatDateLabel = (date: Date | null) =>
+  date
+    ? date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      })
     : 'Select a date';
+
+const formattedSelected =
+  selectionMode === 'range'
+    ? `${formatDateLabel(selected)}${
+        returnSelected
+          ? ` – ${formatDateLabel(returnSelected)}`
+          : ' – Select return date'
+      }`
+    : formatDateLabel(selected);
+
+const canConfirm =
+  !!selected &&
+  (selectionMode === 'single' || !!returnSelected);
 
   return (
     <div
@@ -278,18 +379,23 @@ export const FareCalendarDropdown: React.FC<FareCalendarDropdownProps> = ({
           month={base.getMonth()}
           earliest={earliest}
           selected={selected}
+          rangeEnd={returnSelected}
+          selectionMode={selectionMode}
           origin={origin}
           destination={destination}
-          onSelectDay={setSelected}
+          onSelectDay={handleSelectDay}
         />
+        
         <MonthPanel
           year={next.getFullYear()}
           month={next.getMonth()}
           earliest={earliest}
           selected={selected}
+          rangeEnd={returnSelected}
+          selectionMode={selectionMode}
           origin={origin}
           destination={destination}
-          onSelectDay={setSelected}
+          onSelectDay={handleSelectDay}
         />
       </div>
 
@@ -312,17 +418,31 @@ export const FareCalendarDropdown: React.FC<FareCalendarDropdownProps> = ({
         )}
       </div>
 
-      <button
-        type="button"
-        disabled={!selected}
-        onClick={() => selected && onConfirm(selected)}
-        className={[
-          'w-full h-12 mt-4 rounded-full text-white font-semibold text-base transition-colors',
-          selected ? 'bg-[#7C1AEE] hover:bg-[#6B15D1]' : 'bg-[#CEAAFF] cursor-not-allowed',
-        ].join(' ')}
-      >
-        Confirm
-      </button>
+      
+      
+        <button
+          type="button"
+          disabled={!canConfirm}
+          onClick={() => {
+            if (!selected || !canConfirm) return;
+
+            onConfirm(
+              selected,
+              selectionMode === 'range'
+                ? returnSelected ?? undefined
+                : undefined
+            );
+          }}
+          className={[
+            'w-full h-12 mt-4 rounded-full text-white font-semibold text-base transition-colors',
+            canConfirm
+              ? 'bg-[#7C1AEE] hover:bg-[#6B15D1]'
+              : 'bg-[#CEAAFF] cursor-not-allowed',
+          ].join(' ')}
+        >
+          Confirm
+        </button>
+
     </div>
   );
 };

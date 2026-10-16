@@ -182,13 +182,13 @@ function isValidPhoneNumber(value: string): boolean {
 
   const requiredFieldsMissing =
     !firstName.trim() ||
-    !lastName.trim() ||
+    // !lastName.trim() ||
     !dateOfBirth.trim() ||
-    !nationality.trim() ||
-    !maritalStatus.trim() ||
-    !cityOfResidence.trim() ||
-    !state.trim() ||
-    !phone.trim();
+    !nationality.trim();
+    // !maritalStatus.trim() ||
+    // !cityOfResidence.trim() ||
+    // !state.trim() ||
+    // !phone.trim();
 
   if (requiredFieldsMissing) {
     setShowValidation(true);
@@ -202,11 +202,11 @@ if (!isValidDateOfBirth(dateOfBirth)) {
     return;
   }
 
-  if (!isValidPhoneNumber(phone)) {
-    setShowValidation(true);
-    setSaveError('Please enter a valid 10-digit mobile number.');
-    return;
-  }
+  // if (!isValidPhoneNumber(phone)) {
+  //   setShowValidation(true);
+  //   setSaveError('Please enter a valid 10-digit mobile number.');
+  //   return;
+  // }
 
   setShowValidation(false);
     

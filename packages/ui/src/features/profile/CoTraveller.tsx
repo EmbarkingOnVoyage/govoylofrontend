@@ -263,8 +263,8 @@ export const CoTravellerContent: React.FC = () => {
           <h2 className={s.formHeading}>General information</h2>
           <div className={s.gridForm}>
             <div className={s.inputWrapper}>
-              <label className={s.label}>First name</label>
-              <input type="text" placeholder="Text" className={s.input} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              <label className={s.label}>First name <span className="text-red-500">*</span></label>
+              <input type="text" placeholder="Text" className={s.input} value={firstName} onChange={(e) => setFirstName(e.target.value)}  required/>
             </div>
             <div className={s.inputWrapper}>
               <label className={s.label}>Last name</label>
@@ -272,20 +272,20 @@ export const CoTravellerContent: React.FC = () => {
             </div>
             <div className="grid grid-cols-[124px_1fr] gap-4">
               <div className={s.inputWrapper}>
-                <label className={s.label}>Gender</label>
-                <select className={s.select} value={gender} onChange={(e) => setGender(e.target.value)}>
+                <label className={s.label}>Gender <span className="text-red-500">*</span></label>
+                <select className={s.select} value={gender} onChange={(e) => setGender(e.target.value)} required>
                   <option value="">Select</option>
                   {optionList(GENDER_OPTIONS, gender)}
                 </select>
               </div>
               <div className={s.inputWrapper}>
                 <label className={s.label}>Date of birth</label>
-                <input type="text" placeholder="DD/MM/YYYY" className={s.input} value={dob} onChange={(e) => setDob(e.target.value)} />
+                <input type="text" placeholder="DD/MM/YYYY" className={s.input} value={dob} onChange={(e) => setDob(e.target.value)} required />
               </div>
             </div>
             <div className={s.inputWrapper}>
               <label className={s.label}>Nationality</label>
-              <select className={s.select} value={nationality} onChange={(e) => setNationality(e.target.value)}>
+              <select className={s.select} value={nationality} onChange={(e) => setNationality(e.target.value)} required>
                 <option value="">Select</option>
                 {optionList(COUNTRY_OPTIONS, nationality)}
               </select>

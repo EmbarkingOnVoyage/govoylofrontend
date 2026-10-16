@@ -1,7 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { profileStyles as s } from '../../styles/components/ProfileStep1.styles';
-import { useUpdateCustomerProfile, type CustomerProfile } from './useCustomerProfile';
+
+import {
+  GENDER_OPTIONS,
+  MARITAL_STATUS_OPTIONS,
+  INDIAN_STATE_OPTIONS,
+  INDIAN_CITY_OPTIONS,
+  COUNTRY_OPTIONS,
+} from '@workspace/ui/src/data/selectOptions';
+
+import {
+  useUpdateCustomerProfile,
+  useUploadProfileImage,
+  useDeleteProfileImage,
+  type CustomerProfile,
+} from './useCustomerProfile';
 
 // 20x11 India flag for the phone code (an emoji flag doesn't render on Windows).
 const IndiaFlag: React.FC = () => (
@@ -69,7 +83,53 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
   const [saveError, setSaveError] = useState('');
 
   const updateProfile = useUpdateCustomerProfile();
+  const uploadProfileImage = useUploadProfileImage();
+const deleteProfileImage = useDeleteProfileImage();
+const [imageError, setImageError] = useState('');
 
+const handleImageChange = (
+  event: React.ChangeEvent<HTMLInputElement>
+) => {
+  const file = event.target.files?.[0];
+
+  if (!file) return;
+
+  setImageError('');
+
+  if (!file.type.startsWith('image/')) {
+    setImageError('Please select a valid image file.');
+    event.target.value = '';
+    return;
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    setImageError('Image size must be less than 5 MB.');
+    event.target.value = '';
+    return;
+  }
+
+  uploadProfileImage.mutate(file, {
+    onError: (error) => {
+      setImageError(error.message || 'Failed to upload profile photo.');
+    },
+  });
+
+  event.target.value = '';
+};
+
+const handleDeleteImage = () => {
+  if (!window.confirm('Are you sure you want to remove your profile photo?')) {
+    return;
+  }
+
+  setImageError('');
+
+  deleteProfileImage.mutate(undefined, {
+    onError: (error) => {
+      setImageError(error.message || 'Failed to remove profile photo.');
+    },
+  });
+};
   // Only overwrite a field when the API actually has a value for it — fields
   // with no value keep whatever the form already had (its default/placeholder).
   useEffect(() => {
@@ -129,7 +189,7 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
 
   return (
     <>
-      <div className={s.headerRow}>
+      <div className={s.headerRow}> 
         <div>
           <h1 className={s.sectionTitle}>Personal details</h1>
           <p className={s.sectionSub}>Update your info and find out how it's used.</p>
@@ -150,13 +210,15 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
         <h2 className={s.formHeading}>General information</h2>
         <div className={s.gridForm}>
           <div className={s.inputWrapper}>
-            <label className={s.label}>First name</label>
+            <label className={s.label}>First name <span className="text-red-500">*</span>
+            </label>
             <input
               type="text"
               placeholder="Text"
               className={s.input}
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
+              required
             />
           </div>
           <div className={s.inputWrapper}>
@@ -171,61 +233,141 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
           </div>
           <div className="grid grid-cols-[124px_1fr] gap-4">
             <div className={s.inputWrapper}>
-              <label className={s.label}>Gender</label>
-              <select className={s.select} value={gender} onChange={(e) => setGender(e.target.value)}>
-                <option>Male</option>
-                <option>Female</option>
-              </select>
+              <label className={s.label}>Gender<span className="text-red-500">*</span>
+              </label>
+              
+              <select
+              className={s.select}
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+            >
+              {GENDER_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+              required
+            </select>
             </div>
             <div className={s.inputWrapper}>
-              <label className={s.label}>Date of birth</label>
-              <input
-                type="text"
-                placeholder="DD/MM/YYYY"
-                className={s.input}
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-              />
+              <label className={s.label}>Date of birth<span className="text-red-500">*</span></label>
+              
+               <input
+            type="date"
+            className={s.input}
+            value={dateOfBirth ? dateOfBirth.split('/').reverse().join('-') : ''}
+            max={new Date().toISOString().split('T')[0]}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value) {
+                const [year, month, day] = value.split('-');
+                setDateOfBirth(`${day}/${month}/${year}`);
+              } else {
+                setDateOfBirth('');
+              }
+            }}
+            required
+/>
             </div>
           </div>
           <div className={s.inputWrapper}>
-            <label className={s.label}>Nationality</label>
-            <select className={s.select} value={nationality} onChange={(e) => setNationality(e.target.value)}>
-              <option value="">Select</option>
-              {withValueOption(nationality)}
-            </select>
+            <label className={s.label}>Nationality <span className="text-red-500">*</span></label>
+          
+            <select
+            className={s.select}
+            value={nationality}
+            onChange={(e) => setNationality(e.target.value)}
+          >
+            <option value="">Select</option>
+            {COUNTRY_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+            required
+          </select>
+
           </div>
           <div className={s.inputWrapper}>
             <label className={s.label}>Marital status</label>
-            <select className={s.select} value={maritalStatus} onChange={(e) => setMaritalStatus(e.target.value)}>
-              <option value="">Select</option>
-              {withValueOption(maritalStatus)}
-            </select>
+
+            <select
+            className={s.select}
+            value={maritalStatus}
+            onChange={(e) => setMaritalStatus(e.target.value)}
+          >
+            <option value="">Select</option>
+            {MARITAL_STATUS_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
           </div>
           <div className={s.inputWrapper}>
             <label className={s.label}>Anniversary</label>
-            <select className={s.select} value={anniversary} onChange={(e) => setAnniversary(e.target.value)}>
+            {/* <select className={s.select} value={anniversary} onChange={(e) => setAnniversary(e.target.value)}>
               <option value="">Select</option>
               {withValueOption(anniversary)}
-            </select>
+            </select> */}
+
+             <input
+  type="date"
+  className={s.input}
+  value={anniversary ? anniversary.split('/').reverse().join('-') : ''}
+  onChange={(e) => {
+    const value = e.target.value;
+    if (value) {
+      const [year, month, day] = value.split('-');
+      setAnniversary(`${day}/${month}/${year}`);
+    } else {
+      setAnniversary('');
+    }
+  }}
+/>
           </div>
           <div className={s.inputWrapper}>
             <label className={s.label}>State</label>
-            <select className={s.select} value={state} onChange={(e) => setState(e.target.value)}>
+            {/* <select className={s.select} value={state} onChange={(e) => setState(e.target.value)}>
               <option value="">Select</option>
               {withValueOption(state)}
-            </select>
+            </select> */}
+
+            <select
+  className={s.select}
+  value={state}
+  onChange={(e) => setState(e.target.value)}
+>
+  <option value="">Select</option>
+  {INDIAN_STATE_OPTIONS.map((option) => (
+    <option key={option} value={option}>
+      {option}
+    </option>
+  ))}
+</select>
           </div>
           <div className={s.inputWrapper}>
             <label className={s.label}>City of residents</label>
-            <select
+            {/* <select
               className={s.select}
               value={cityOfResidence}
               onChange={(e) => setCityOfResidence(e.target.value)}
             >
               <option value="">Select</option>
               {withValueOption(cityOfResidence)}
-            </select>
+            </select> */}
+            <select
+  className={s.select}
+  value={cityOfResidence}
+  onChange={(e) => setCityOfResidence(e.target.value)}
+>
+  <option value="">Select</option>
+  {INDIAN_CITY_OPTIONS.map((option) => (
+    <option key={option} value={option}>
+      {option}
+    </option>
+  ))}
+</select>
           </div>
         </div>
         </div>
@@ -287,24 +429,53 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
           </div>
           <div className={s.inputWrapper}>
             <label className={s.label}>Expiry date</label>
-            <input
+            {/* <input
               type="text"
               placeholder="DD/MM/YYYY"
               className={s.input}
               value={passportExpiryDate}
               onChange={(e) => setPassportExpiryDate(e.target.value)}
-            />
+            /> */}
+
+             <input
+  type="date"
+  className={s.input}
+  value={passportExpiryDate ? passportExpiryDate.split('/').reverse().join('-') : ''}
+  min={new Date().toISOString().split('T')[0]}
+  onChange={(e) => {
+    const value = e.target.value;
+    if (value) {
+      const [year, month, day] = value.split('-');
+      setPassportExpiryDate(`${day}/${month}/${year}`);
+    } else {
+      setPassportExpiryDate('');
+    }
+  }}
+/>
           </div>
           <div className={s.inputWrapper}>
             <label className={s.label}>Issuing country</label>
-            <select
+            {/* <select
               className={s.select}
               value={passportIssuingCountry}
               onChange={(e) => setPassportIssuingCountry(e.target.value)}
             >
               <option value="">Select</option>
               {withValueOption(passportIssuingCountry)}
-            </select>
+            </select> */}
+
+            <select
+  className={s.select}
+  value={passportIssuingCountry}
+  onChange={(e) => setPassportIssuingCountry(e.target.value)}
+>
+  <option value="">Select</option>
+  {COUNTRY_OPTIONS.map((option) => (
+    <option key={option} value={option}>
+      {option}
+    </option>
+  ))}
+</select>
           </div>
           <div className={s.inputWrapper}>
             <label className={s.label}>PAN card number</label>
