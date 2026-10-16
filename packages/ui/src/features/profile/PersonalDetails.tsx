@@ -12,8 +12,8 @@ import {
 
 import {
   useUpdateCustomerProfile,
-  useUploadProfileImage,
-  useDeleteProfileImage,
+  // useUploadProfileImage,
+  // useDeleteProfileImage,
   type CustomerProfile,
 } from './useCustomerProfile';
 
@@ -83,8 +83,8 @@ export const PersonalDetailsContent: React.FC<PersonalDetailsContentProps> = ({ 
   const [saveError, setSaveError] = useState('');
 
   const updateProfile = useUpdateCustomerProfile();
-  const uploadProfileImage = useUploadProfileImage();
-const deleteProfileImage = useDeleteProfileImage();
+//   const uploadProfileImage = useUploadProfileImage();
+// const deleteProfileImage = useDeleteProfileImage();
 const [imageError, setImageError] = useState('');
 
 const handleImageChange = (
@@ -108,11 +108,11 @@ const handleImageChange = (
     return;
   }
 
-  uploadProfileImage.mutate(file, {
-    onError: (error) => {
-      setImageError(error.message || 'Failed to upload profile photo.');
-    },
-  });
+  // uploadProfileImage.mutate(file, {
+  //   onError: (error) => {
+  //     setImageError(error.message || 'Failed to upload profile photo.');
+  //   },
+  // });
 
   event.target.value = '';
 };
@@ -124,11 +124,11 @@ const handleDeleteImage = () => {
 
   setImageError('');
 
-  deleteProfileImage.mutate(undefined, {
-    onError: (error) => {
-      setImageError(error.message || 'Failed to remove profile photo.');
-    },
-  });
+  // deleteProfileImage.mutate(undefined, {
+  //   onError: (error) => {
+  //     setImageError(error.message || 'Failed to remove profile photo.');
+  //   },
+  // });
 };
   // Only overwrite a field when the API actually has a value for it — fields
   // with no value keep whatever the form already had (its default/placeholder).
