@@ -5,6 +5,7 @@ import { useCustomerProfile } from "../../features/profile/useCustomerProfile";
 import { AUTH_BASE_URL } from "@workspace/api";
 import govoyloLogo from "../../assets/images/govoylo-logo.svg";
 import { showComingSoon } from "../comingSoon.web";
+import { openComingSoonPage, type ComingSoonFeature } from "../../features/comingSoon/comingSoonPage.web";
 
 // India flag for the currency switch (Figma uses a flag image; an emoji flag
 // doesn't render on Windows).
@@ -41,12 +42,17 @@ interface MenuBarProps {
   // Extra content inside the white header block, below the top row — the
   // results page's search bar (Web Dev "NavigationBar").
   children?: React.ReactNode;
+  // A product's "Coming soon" page highlights that product instead of Flights.
+  activeProduct?: ComingSoonFeature;
 }
+
+const TAB_ACTIVE = "py-3 text-[15px] leading-5 font-medium text-[#7C1AEE]";
+const TAB_INACTIVE = "py-3 text-[14px] leading-5 font-medium text-[#182339]";
 
 // Web Dev "NavigationBar (Desktop)": white, 12px/32px padding, soft shadow;
 // 64px tall — a 40px row with the logo and product links on the left and currency,
 // help, account and menu on the right (Inter 14–15px medium).
-export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate, showProductLinks = true, children }) => {
+export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate, showProductLinks = true, children, activeProduct }) => {
   const [isOpen, setIsOpen] = useState(false);
   const { isLoggedIn, openLogin, logout } = useAuth();
   const { data: profile } = useCustomerProfile();
@@ -103,21 +109,21 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onNavigate, showProductLinks =
                 <button
                   type="button"
                   onClick={() => handleAction("FLIGHTS")}
-                  className="py-3 text-[15px] leading-5 font-medium text-[#7C1AEE]"
+                  className={activeProduct ? TAB_INACTIVE : TAB_ACTIVE}
                 >
                   Flights
                 </button>
                 <button
                   type="button"
-                  onClick={() => showComingSoon("Hotels")}
-                  className="py-3 text-[14px] leading-5 font-medium text-[#182339]"
+                  onClick={() => openComingSoonPage("Hotels")}
+                  className={activeProduct === "Hotels" ? TAB_ACTIVE : TAB_INACTIVE}
                 >
                   Hotels
                 </button>
                 <button
                   type="button"
-                  onClick={() => showComingSoon("Flights + Hotels")}
-                  className="py-3 text-[14px] leading-5 font-medium text-[#182339]"
+                  onClick={() => openComingSoonPage("Flights + Hotels")}
+                  className={activeProduct === "Flights + Hotels" ? TAB_ACTIVE : TAB_INACTIVE}
                 >
                   Flights+Hotels
                 </button>
