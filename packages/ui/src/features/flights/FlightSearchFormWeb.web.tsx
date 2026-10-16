@@ -344,18 +344,53 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
       {activeDropdown?.type === field && activeDropdown.segmentIndex === segIndex && (
         <div className="absolute z-30 top-full left-0 mt-2 w-0">
           <FareCalendarDropdown
-            footerLabel={field === 'departure' ? 'Departure date' : 'Return date'}
-            initialDate={parseDisplayDate(value)}
-            minDate={field === 'return' ? parseDisplayDateLocal(departureDate) ?? undefined : undefined}
+            // footerLabel={field === 'departure' ? 'Departure date' : 'Return date'}
+            // initialDate={parseDisplayDate(value)}
+            // minDate={field === 'return' ? parseDisplayDateLocal(departureDate) ?? undefined : undefined}
+            footerLabel={tripType === 'RoundTrip' ? 'Select travel dates' : field === 'departure' ? 'Departure date' : 'Return date'}
+            initialDate={parseDisplayDate(
+              tripType === 'RoundTrip' ? departureDate : value
+            )}
+            initialReturnDate={
+              tripType === 'RoundTrip'
+                ? parseDisplayDate(returnDate)
+                : null
+            }
+            selectionMode={tripType === 'RoundTrip' ? 'range' : 'single'}
+            minDate={
+              tripType === 'RoundTrip'
+                ? undefined
+                : field === 'return'
+                  ? parseDisplayDateLocal(departureDate) ?? undefined
+                  : undefined
+            }
             origin={fieldOrigin?.code}
             destination={fieldDestination?.code}
             showAddReturnLink={field === 'departure' && tripType === 'RoundTrip' && !returnDate}
             onAddReturnDate={() => setActiveDropdown({ type: 'return', segmentIndex: null })}
-            onConfirm={(date) => {
-              const formatted = formatDisplayDate(date);
-              if (segIndex !== null) updateMultiCitySegment(segIndex, { date: formatted });
-              else if (field === 'departure') setDepartureDate(formatted);
-              else setReturnDate(formatted);
+            // onConfirm={(date) => {
+            //   const formatted = formatDisplayDate(date);
+            //   if (segIndex !== null) updateMultiCitySegment(segIndex, { date: formatted });
+            //   else if (field === 'departure') setDepartureDate(formatted);
+            //   else setReturnDate(formatted);
+            //   closeDropdown();
+            // }}
+            onConfirm={(date, selectedReturnDate) => {
+              if (segIndex !== null) {
+                // Keep MultiCity behavior unchanged.
+                updateMultiCitySegment(segIndex, {
+                  date: formatDisplayDate(date),
+                });
+              } else if (tripType === 'RoundTrip' && selectedReturnDate) {
+                // Save both dates together for RoundTrip.
+                setDepartureDate(formatDisplayDate(date));
+                setReturnDate(formatDisplayDate(selectedReturnDate));
+              } else if (field === 'departure') {
+                setDepartureDate(formatDisplayDate(date));
+              } else {
+                setReturnDate(formatDisplayDate(date));
+              }
+
               closeDropdown();
             }}
           />
@@ -433,9 +468,25 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
       <div className={`relative min-w-0 ${extraClass}`}>
         <button
           type="button"
-          onClick={() =>
-            setActiveDropdown((cur) => (cur?.type === field && cur.segmentIndex === segIndex ? null : { type: field, segmentIndex: segIndex }))
-          }
+          // onClick={() =>
+          //   setActiveDropdown((cur) => (cur?.type === field && cur.segmentIndex === segIndex ? null : { type: field, segmentIndex: segIndex }))
+          // }
+
+          
+          onClick={() => {
+            // Selecting Return on a one-way trip switches to round trip
+            // and opens the return date picker.
+            if (field === 'return' && tripType === 'OneWay') {
+              setTripType('RoundTrip');
+            }
+
+            setActiveDropdown((cur) =>
+              cur?.type === field && cur.segmentIndex === segIndex
+                ? null
+                : { type: field, segmentIndex: segIndex }
+            );
+          }}
+
           className={fieldButton}
         >
           <Calendar size={20} className="text-[#3E4B64] shrink-0" />
@@ -447,19 +498,50 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
           <div className="absolute z-40 top-full left-0 mt-2 w-0">
             <FareCalendarDropdown
               footerLabel={field === 'departure' ? 'Departure date' : 'Return date'}
-              initialDate={parseDisplayDate(value)}
+              // initialDate={parseDisplayDate(value)}
+              initialDate={parseDisplayDate(
+                tripType === 'RoundTrip' ? departureDate : value
+              )}
+                            initialReturnDate={
+                tripType === 'RoundTrip'
+                  ? parseDisplayDate(returnDate)
+                  : null
+              }
+              selectionMode={
+                tripType === 'RoundTrip' ? 'range' : 'single'
+              }
               minDate={field === 'return' ? parseDisplayDateLocal(departureDate) ?? undefined : undefined}
               origin={from?.code}
               destination={to?.code}
               showAddReturnLink={false}
               onAddReturnDate={() => undefined}
-              onConfirm={(date) => {
-                const formatted = formatDisplayDate(date);
-                if (segIndex !== null) updateMultiCitySegment(segIndex, { date: formatted });
-                else if (field === 'departure') setDepartureDate(formatted);
-                else setReturnDate(formatted);
-                closeDropdown();
-              }}
+              // onConfirm={(date) => {
+              //   const formatted = formatDisplayDate(date);
+              //   if (segIndex !== null) updateMultiCitySegment(segIndex, { date: formatted });
+              //   else if (field === 'departure') setDepartureDate(formatted);
+              //   else setReturnDate(formatted);
+              //   closeDropdown();
+              // }}
+            onConfirm={(date, selectedReturnDate) => {
+              if (segIndex !== null) {
+                updateMultiCitySegment(segIndex, {
+                  date: formatDisplayDate(date),
+                });
+              } else if (
+                tripType === 'RoundTrip' &&
+                selectedReturnDate
+              ) {
+                setDepartureDate(formatDisplayDate(date));
+                setReturnDate(formatDisplayDate(selectedReturnDate));
+              } else if (field === 'departure') {
+                setDepartureDate(formatDisplayDate(date));
+              } else {
+                setReturnDate(formatDisplayDate(date));
+              }
+
+              closeDropdown();
+            }}
+
             />
           </div>
         )}
@@ -552,7 +634,17 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
               {airportField('origin', null, origin, setOrigin, 'w-[24%]')}
               {airportField('destination', null, destination, setDestination, 'w-[22%]')}
               {dateField('departure', null, departureDate, origin, destination, 'w-[11%] min-w-[128px]')}
-              {tripType === 'RoundTrip' && dateField('return', null, returnDate, destination, origin, 'w-[11%] min-w-[128px]')}
+              {/* {tripType === 'RoundTrip' && dateField('return', null, returnDate, destination, origin, 'w-[11%] min-w-[128px]')} */}
+              
+              {dateField(
+                'return',
+                null,
+                tripType === 'RoundTrip' ? returnDate : '',
+                destination,
+                origin,
+                'w-[11%] min-w-[128px]'
+              )}
+
               {travellersField('flex-1', 'rounded-r-lg')}
             </div>
             {searchButton}
