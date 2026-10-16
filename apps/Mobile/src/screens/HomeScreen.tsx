@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { showComingSoon } from '../components/comingSoon';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SvgXml } from 'react-native-svg';
 import { GlowPill, PillIcon } from '../components/GlowPill';
@@ -14,6 +13,7 @@ interface HomeScreenProps {
   onSelectFlightsAndHotels: () => void;
   onSelectHotels: () => void;
   onSelectFlights: () => void;
+  onSelectVoyloAI: () => void;
 }
 
 const SPARKLE_SVG = `<svg width="19" height="18" viewBox="-1 -1 19 18" xmlns="http://www.w3.org/2000/svg"><path d="M11 15C12.2 11.322 13.526 9.995 17 9C13.526 8.005 12.2 6.678 11 3C9.8 6.678 8.474 8.005 5 9C8.474 9.995 9.8 11.322 11 15ZM3 6C3.6 4.16 4.263 3.497 6 3C4.263 2.503 3.6 1.84 3 0C2.4 1.84 1.737 2.503 0 3C1.737 3.497 2.4 4.16 3 6ZM4.5 16C4.8 15.08 5.131 14.749 6 14.5C5.131 14.251 4.8 13.92 4.5 13C4.2 13.92 3.869 14.251 3 14.5C3.869 14.749 4.2 15.08 4.5 16Z" fill="none" stroke="#7C1AEE" stroke-width="2" stroke-linejoin="round"/></svg>`;
@@ -25,12 +25,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onSelectFlightsAndHotels,
   onSelectHotels,
   onSelectFlights,
+  onSelectVoyloAI,
 }) => (
   <View style={styles.screen}>
     <TouchableOpacity
       style={styles.banner}
       activeOpacity={0.8}
-      onPress={() => showComingSoon('Voylo AI')}
+      onPress={onSelectVoyloAI}
       accessibilityLabel="Voylo AI"
     >
       <LinearGradient colors={['#9335FF', '#5731FF']} style={styles.bannerBorder}>

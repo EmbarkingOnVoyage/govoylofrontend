@@ -18,6 +18,10 @@ import {
   decodeFlightSearch,
   encodeFlightSearch,
   flightSearchQueryKey,
+  ComingSoonPageWeb,
+  COMING_SOON_PATHS,
+  setComingSoonNavigator,
+  type ComingSoonFeature,
 } from "@workspace/ui";
 import { ErrorBoundary, NavigationRule } from "@workspace/core";
 import { useWebFlowNavigation } from "./navigation/useWebFlowNavigation";
@@ -55,6 +59,12 @@ const AppWorkflowRouter: React.FC = () => {
   // already guards against unmapped rules at runtime (see useWebFlowNavigation),
   // so this cast just restores the type-erased shape those components expect.
   const onNavigateLoose = (rule: string) => navigateByRule(rule as NavigationRule);
+
+  // Shared components open the Hotels / Flights + Hotels / Voylo AI pages through this.
+  React.useEffect(() => {
+    setComingSoonNavigator((path) => navigate(path));
+    return () => setComingSoonNavigator(null);
+  }, [navigate]);
 
   return (
     <>
@@ -136,6 +146,22 @@ const AppWorkflowRouter: React.FC = () => {
           }
         />
         <Route path="/profile" element={<ProfileStep1 onNavigate={onNavigateLoose} />} />
+        {(Object.entries(COMING_SOON_PATHS) as [ComingSoonFeature, string][]).map(([feature, path]) => (
+          <Route
+            key={path}
+            path={path}
+            element={
+              <ComingSoonPageWeb
+                feature={feature}
+                onNavigate={onNavigateLoose}
+                onSearchFlights={() => {
+                  navigate("/");
+                  window.scrollTo(0, 0);
+                }}
+              />
+            }
+          />
+        ))}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       <AuthModal />

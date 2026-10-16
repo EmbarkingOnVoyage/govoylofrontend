@@ -101,6 +101,8 @@ export interface FlightSearchFormInitialValues {
 interface FlightSearchFormScreenProps {
   onBack: () => void;
   onResults: (offers: FlightOffer[], summary: FlightSearchSummary) => void;
+  // The Flights | Voylo AI switch: opens the Voylo AI "Coming soon" screen.
+  onVoyloAI?: () => void;
   initialValues?: FlightSearchFormInitialValues;
   // 'screen' (default): fills the device height, as when opened from Home.
   // 'overlay': sized to its content with rounded bottom corners, matching
@@ -111,6 +113,7 @@ interface FlightSearchFormScreenProps {
 export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
   onBack,
   onResults,
+  onVoyloAI,
   initialValues,
   variant = 'screen',
 }) => {
@@ -493,7 +496,7 @@ export const FlightSearchFormScreen: React.FC<FlightSearchFormScreenProps> = ({
                 >
                   <Text style={styles.pillActiveText}>Flights</Text>
                 </LinearGradient>
-                <TouchableOpacity style={styles.pillInactive} onPress={() => showComingSoon('Voylo AI')} activeOpacity={0.7}>
+                <TouchableOpacity style={styles.pillInactive} onPress={() => (onVoyloAI ? onVoyloAI() : showComingSoon('Voylo AI'))} activeOpacity={0.7}>
                   <Text style={styles.pillInactiveText}>Voylo AI</Text>
                 </TouchableOpacity>
               </View>

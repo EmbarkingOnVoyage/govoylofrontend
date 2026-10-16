@@ -39,6 +39,9 @@ vi.mock('@workspace/ui', async () => {
     decodeFlightSearch: () => null,
     encodeFlightSearch: () => '',
     flightSearchQueryKey: () => ['flight-search'],
+    ComingSoonPageWeb: () => <div>Coming Soon Mock</div>,
+    COMING_SOON_PATHS: { Hotels: '/hotels', 'Flights + Hotels': '/flights-hotels', 'Voylo AI': '/voylo-ai' },
+    setComingSoonNavigator: vi.fn(),
   };
 });
 
