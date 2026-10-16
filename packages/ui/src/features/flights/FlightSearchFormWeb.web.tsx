@@ -17,6 +17,7 @@ import iconFlights from '../../assets/images/icon-flights.png';
 import iconHotels from '../../assets/images/icon-hotels.png';
 import iconFlightsHotels from '../../assets/images/icon-flights-hotels.png';
 import { showComingSoon } from '../../components/comingSoon.web';
+import { openComingSoonPage, type ComingSoonFeature } from '../comingSoon/comingSoonPage.web';
 
 // Web Dev Desktop-7 / Desktop-13 colours and shadows (from the Figma export).
 const HERO_GRADIENT =
@@ -662,14 +663,25 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
         <div className="max-w-[1440px] mx-auto px-[42px] relative">
           {/* Product tabs: 92px #E8EEFF pill, 12px padding, 146x67 tabs 9px apart. */}
           <div className="absolute z-20 -top-[51px] left-1/2 -translate-x-1/2 flex items-center gap-[9px] bg-[#E8EEFF] rounded-[9999px] p-[12px]">
-            {[
+            {([
               { icon: iconFlights, label: 'Flights', active: true },
-              { icon: iconHotels, label: 'Hotels', active: false },
-              { icon: iconFlightsHotels, label: 'Flights\n+\nHotels', active: false },
-            ].map((item) => (
+              { icon: iconHotels, label: 'Hotels', active: false, feature: 'Hotels' },
+              { icon: iconFlightsHotels, label: 'Flights\n+\nHotels', active: false, feature: 'Flights + Hotels' },
+            ] as { icon: string; label: string; active: boolean; feature?: ComingSoonFeature }[]).map((item) => (
               <div
                 key={item.label}
-                className={['relative w-[145.5px] h-[67.5px]', item.active ? 'tab-active-ring' : ''].join(' ')}
+                role={item.feature ? 'button' : undefined}
+                tabIndex={item.feature ? 0 : undefined}
+                aria-label={item.feature}
+                onClick={item.feature ? () => openComingSoonPage(item.feature!) : undefined}
+                onKeyDown={
+                  item.feature
+                    ? (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') openComingSoonPage(item.feature!);
+                      }
+                    : undefined
+                }
+                className={['relative w-[145.5px] h-[67.5px]', item.active ? 'tab-active-ring' : 'cursor-pointer'].join(' ')}
               >
                 <div
                   className="absolute inset-[3px] flex items-center gap-2 pl-[7.4px] rounded-[9999px] bg-white"
@@ -719,7 +731,7 @@ export const FlightSearchFormWeb: React.FC<FlightSearchFormWebProps> = ({
                 </span>
                 <button
                   type="button"
-                  onClick={() => showComingSoon('Voylo AI')}
+                  onClick={() => openComingSoonPage('Voylo AI')}
                   className="w-[66px] h-6 rounded-[12px] flex items-center justify-center text-black text-[12.5px] font-medium"
                 >
                   Voylo AI

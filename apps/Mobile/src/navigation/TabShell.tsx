@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { TAB_ICON_SVG } from '../components/figmaIcons';
 import { ProfileScreen } from '../screens/profile/ProfileScreen';
 import { PersonalDetailsScreen } from '../screens/profile/PersonalDetailsScreen';
 import { CoTravellerScreen } from '../screens/profile/CoTravellerScreen';
-import { showComingSoon } from '../components/comingSoon';
+import { ComingSoonScreen, type ComingSoonFeature } from '../screens/ComingSoonScreen';
 import { CoTravellerFormScreen } from '../screens/profile/CoTravellerFormScreen';
 import { BookingTravellerFormScreen } from '../screens/flights/BookingTravellerFormScreen';
 import { PlaceholderScreen } from '../screens/profile/PlaceholderScreen';
@@ -87,6 +87,10 @@ const GUEST_RESTRICTED_TABS: TabKey[] = ['Profile'];
 
 export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequireLogin }) => {
   const [activeTab, setActiveTab] = useState<TabKey>('Home');
+  // Hotels / Flights + Hotels / Voylo AI aren't built yet: their "Coming soon"
+  // screen opens over the Home stack, which stays as it was underneath.
+  const [comingSoon, setComingSoon] = useState<ComingSoonFeature | null>(null);
+  useEffect(() => setComingSoon(null), [activeTab]);
   const [profileScreen, setProfileScreen] = useState<ProfileStackScreen>('Hub');
   const [editingTravellerId, setEditingTravellerId] = useState<string | null>(null);
   // "Add yourself": the new traveller is the signed-in customer.
@@ -123,8 +127,9 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
     if (homeScreen === 'Buttons') {
       return (
         <HomeScreen
-          onSelectFlightsAndHotels={() => showComingSoon('Flights + Hotels')}
-          onSelectHotels={() => showComingSoon('Hotels')}
+          onSelectFlightsAndHotels={() => setComingSoon('Flights + Hotels')}
+          onSelectHotels={() => setComingSoon('Hotels')}
+          onSelectVoyloAI={() => setComingSoon('Voylo AI')}
           onSelectFlights={() => setHomeScreen('FlightSearch')}
         />
       );
@@ -146,6 +151,7 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
           'FlightSearch',
           <FlightSearchFormScreen
             onBack={() => setHomeScreen('Buttons')}
+            onVoyloAI={() => setComingSoon('Voylo AI')}
             onResults={(offers, summary) => {
               setFlightOffers(offers);
               setFlightSearchSummary(summary);
@@ -159,6 +165,7 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
             offers={flightOffers}
             summary={flightSearchSummary}
             onBack={() => setHomeScreen('FlightSearch')}
+            onVoyloAI={() => setComingSoon('Voylo AI')}
             onContinueToTravelerDetails={(legs, legLabels, passengerCounts, tripType) => {
               setTravelerLegs(legs);
               setTravelerLegLabels(legLabels);
@@ -270,7 +277,21 @@ export const TabShell: React.FC<TabShellProps> = ({ onSignOut, isGuest, onRequir
       case 'Profile':
         return renderProfileStack();
       case 'Home':
-        return renderHomeStack();
+        return comingSoon ? (
+          <>
+            <View style={styles.hiddenHomeLayer}>{renderHomeStack()}</View>
+            <ComingSoonScreen
+              feature={comingSoon}
+              onBack={() => setComingSoon(null)}
+              onSearchFlights={() => {
+                setComingSoon(null);
+                setHomeScreen('FlightSearch');
+              }}
+            />
+          </>
+        ) : (
+          renderHomeStack()
+        );
       case 'Deals':
         return <PlaceholderScreen title="Deals" onBack={() => setActiveTab('Home')} />;
       case 'MyTrips':

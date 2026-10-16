@@ -1672,6 +1672,8 @@ interface FlightResultsScreenProps {
     // The search's trip type — the convenience fee depends on it.
     tripType: TripType | undefined
   ) => void;
+  // The Modify search popup's Voylo AI switch.
+  onVoyloAI?: () => void;
 }
 
 const RULE_TONE_COLORS: Record<FareRuleSummary['tone'] | 'loading', string> = {
@@ -1792,6 +1794,7 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
   summary,
   onBack,
   onContinueToTravelerDetails,
+  onVoyloAI,
 }) => {
   const [activeOffers, setActiveOffers] = useState(offers);
   const [activeSummary, setActiveSummary] = useState(summary);
@@ -2512,6 +2515,14 @@ export const FlightResultsScreen: React.FC<FlightResultsScreenProps> = ({
             <FlightSearchFormScreen
               variant="overlay"
               onBack={() => setEditVisible(false)}
+              onVoyloAI={
+                onVoyloAI
+                  ? () => {
+                      setEditVisible(false);
+                      onVoyloAI();
+                    }
+                  : undefined
+              }
               onResults={(newOffers, newSummary) => {
                 setActiveOffers(newOffers);
                 setActiveSummary(newSummary);
